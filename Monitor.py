@@ -1,0 +1,124 @@
+import signal
+from threading import Thread
+from tkinter import *
+
+import pika
+
+import window
+from functions import PROD_RabbitMQ_Config
+from functions.Functions import *
+
+
+def quit_window():
+    os.kill(os.getpid(), signal.SIGTERM)
+
+
+def show_master_top(event):
+    masterTop.deiconify()
+    master.withdraw()
+
+
+def close_secondary():
+    master.deiconify()
+    masterTop.withdraw()
+
+
+master: Tk = Tk()
+masterTop = Toplevel()
+mainWindow = window.MainApplication(master)
+secondaryWindow = window.SecondaryWindow(master, masterTop)
+masterTop.withdraw()
+
+mainWindow._list = Listbox(mainWindow._frame)
+mainWindow._list.configure(bg=mainWindow._background_color, foreground="white")
+mainWindow._list.grid(row=7, column=0, padx=5, pady=5, sticky=E + W + N + S)
+master.protocol("WM_DELETE_WINDOW", quit_window)
+master.bind("<Unmap>", show_master_top)
+
+img = PhotoImage(file=r"./img/icon.png").subsample(5, 5)
+
+btn = Button(masterTop, text='Monitor:', image=img, borderwidth=0, highlightthickness=0, command=close_secondary)
+btn.grid(row=0, column=0, padx=0, pady=15)
+btn.config(bg='#152532', fg='white')
+
+
+label_text = Label(masterTop, bg="#152532")
+label_text.configure(fg="#FCBD1E")
+label_text.grid(row=0, column=1, padx=5, pady=.5, sticky=W)
+
+
+def process_inbound(body):
+    inbound = json.loads(body.decode(encoding="utf8"))
+    process = inbound["process"]
+
+    if process == "partial_transfer":
+        response = partial_transfer(inbound)
+    elif process == "partial_transfer_confirmed":
+        response = partial_transfer_confirmed(inbound)
+    else:
+        response = f'Invalid process: {process}'
+    return response
+
+
+def insert_text(request):
+    inbound = json.loads(request)
+    station = inbound["station"]
+    serial_num = inbound["serial_num"]
+    material = inbound["material"]
+    quantity = inbound["cantidad"]
+    process = inbound["process"]
+    global label_text
+    if len(station) > 5:
+        station = "WEB"
+
+    mainWindow._list.insert(END,
+                            f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}')
+    mainWindow._list.see(END)
+
+
+    label_text["text"] =  f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}'
+    masterTop.lift()
+
+def insert_response(response):
+    inbound = json.loads(response)
+    serial = inbound["serial"]
+    material = inbound["material"]
+    quantity = inbound["cantidad"]
+    error = inbound["error"]
+    global label_text
+    if error == "N/A":
+        mainWindow._list.insert(END, f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}')
+        mainWindow._list.see(END)
+        label_text["text"] = f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}'
+        masterTop.lift()
+    else:
+        mainWindow._list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
+        mainWindow._list.see(END)
+        label_text["text"] = f' Res     [Error]:   S/N: {serial} Err: {error}'
+        masterTop.lift()
+
+
+def receiver():
+    def on_request(ch, method, props, body):
+        print("Request:    [x] %s" % body.decode(encoding="utf8"))
+        sap_login()
+
+        insert_text(body.decode(encoding="utf8"))
+        response = process_inbound(body)
+        insert_response(response)
+
+        print("Response:   [x] %s" % str(response))
+        ch.basic_publish(exchange='', routing_key=props.reply_to,
+                         properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    PROD_RabbitMQ_Config.channel.basic_qos(prefetch_count=1)
+    PROD_RabbitMQ_Config.channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+
+    print(" [x] Awaiting RPC requests")
+    PROD_RabbitMQ_Config.channel.start_consuming()
+
+
+receive_thread = Thread(target=receiver)
+receive_thread.start()
+master.mainloop()
