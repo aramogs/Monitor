@@ -41,7 +41,7 @@ Optional:
 - DB_CONFIG_NAME=****
 - DB_PT_NAME=****
 
-###Building Executable
+### Building Executable
 >Open terminal in the root directory and run the following commands:
 
 ```vbs
