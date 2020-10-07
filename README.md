@@ -8,6 +8,8 @@
 <center><p>Program dedicated to receive requests and process them via SAPscript</p></center>
 <center><p>Using RabbitMQ RPC protocol the Monitor receives and process requests from the clients</p></center>
 
+___
+
 ### Prerequisites 
 
 Required:  
