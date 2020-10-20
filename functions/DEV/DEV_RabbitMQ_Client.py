@@ -21,7 +21,6 @@ class RmqClient(object):
     def on_response(self, ch, method, props, body):
         if self.corr_id == props.correlation_id:
             self.response = body
-            print(self.response)
 
     def call(self, n):
         self.response = None
@@ -41,5 +40,5 @@ class RmqClient(object):
 
 request = RmqClient()
 print(" [x] Requesting Storage_Unit(1030875648)")
-response = request.call('{"station":"312","serial_num":1030875648,"process":"partial_transfer"}')
+response = request.call('{"station":"8677469d-8877-4d54-967b-d91dab63835c","serial_num":"0171171326,0171171328","process":"transfer_fg_confirmed", "material": "null", "material_description": "null","storage_bin": "FA0103", "cantidad":"null", "cantidad_restante":"null", "user_id":86259}')
 print(" [.] Got %r" % response.decode(encoding="utf8"))

@@ -5,37 +5,43 @@ import requests
 
 from db.Functions import *
 from functions import SAP_Alive
-from functions import SAP_ErrorWindows
-from functions import SAP_LT01
-from functions import SAP_LT09
 from functions import SAP_Login
-from functions import SAP_MM03
+from functions import SAP_ErrorWindows
+from functions.PartialTransfer import SAP_LT01
+from functions.PartialTransfer import SAP_MM03
+from functions.PartialTransfer import SAP_LT09
+
 
 current_directory = os.path.abspath(os.getcwd())
 
 
 def partial_transfer(inbound):
-    serial_num = inbound["serial_num"]
+    try:
+        serial_num = inbound["serial_num"]
 
-    response = json.loads(SAP_LT09.Main(serial_num))
+        response = json.loads(SAP_LT09.Main(serial_num))
 
-    material_number = response["material_number"]
-    material_description = response["material_description"]
-    quant = response["quant"].replace(".000", "").replace(",", "")
+        material_number = response["material_number"]
+        material_description = response["material_description"]
+        quant = response["quant"].replace(".000", "").replace(",", "")
 
-    error = response["error"]
+        error = response["error"]
 
-    if material_number != "N/A":
-        material_w = material_weigth(material_number)
-    else:
-        material_w = "N/A"
+        if material_number != "N/A":
+            material_w = material_weigth(material_number)
+        else:
+            material_w = "N/A"
 
-    if error == "":
-        sap_error_windows()
+        if error == "":
+            sap_error_windows()
 
-    response = {"serial": serial_num, "material": material_number, "material_description": material_description,
-                "material_w": material_w, "cantidad": quant, "error": error}
-    return json.dumps(response)
+        response = {"serial": serial_num, "material": material_number, "material_description": material_description,
+                    "material_w": material_w, "cantidad": quant, "error": error}
+        return json.dumps(response)
+    except KeyError:
+        response = {"serial": "N/A", "material": "N/A", "material_description": "N/A",
+                    "material_w": "N/A", "cantidad": "N/A", "error": "VERIFY JSON"}
+        return json.dumps(response)
 
 
 def material_weigth(_material):
@@ -65,13 +71,14 @@ def partial_transfer_confirmed(inbound):
             print_label(station, material, material_description, serial_num, cantidad_restante)
             if len(station) > 5:
                 station = "web"
-            # TODO cambiar usuario por usuario real
-            DB.insert_data(emp_num=user_id, part_num=material, no_serie=serial_num, linea=station,
-                           transfer_order=result_insert)
-
+            DB.insert_partial_transfer(emp_num=user_id, part_num=material, no_serie=serial_num, linea=station,
+                                       transfer_order=result_insert)
 
     response = {"serial": serial_num, "material": material, "cantidad": cantidad, "result": result, "error": error}
     return json.dumps(response)
+
+
+
 
 
 def sap_login():

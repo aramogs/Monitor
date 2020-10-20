@@ -6,7 +6,8 @@ import pika
 
 import window
 from functions import PROD_RabbitMQ_Config
-from functions.Functions import *
+from functions.FG.Functions import *
+from functions.PartialTransfer.Functions import *
 
 
 def quit_window():
@@ -36,12 +37,9 @@ master.protocol("WM_DELETE_WINDOW", quit_window)
 master.bind("<Unmap>", show_master_top)
 
 img = PhotoImage(file=r"./img/icon.png").subsample(5, 5)
-
 btn = Button(masterTop, text='Monitor:', image=img, borderwidth=0, highlightthickness=0, command=close_secondary)
 btn.grid(row=0, column=0, padx=0, pady=15)
 btn.config(bg='#152532', fg='white')
-
-
 label_text = Label(masterTop, bg="#152532")
 label_text.configure(fg="#FCBD1E")
 label_text.grid(row=0, column=1, padx=5, pady=.5, sticky=W)
@@ -55,47 +53,76 @@ def process_inbound(body):
         response = partial_transfer(inbound)
     elif process == "partial_transfer_confirmed":
         response = partial_transfer_confirmed(inbound)
+    elif process == "transfer_fg":
+        response = transfer_fg(inbound)
+    elif process == "transfer_fg_confirmed":
+        response = transfer_fg_confirmed(inbound)
     else:
-        response = f'Invalid process: {process}'
+        response = json.dumps({"error": f'invalid_process: {process}'})
     return response
 
 
 def insert_text(request):
     inbound = json.loads(request)
-    station = inbound["station"]
-    serial_num = inbound["serial_num"]
-    material = inbound["material"]
-    quantity = inbound["cantidad"]
-    process = inbound["process"]
-    global label_text
-    if len(station) > 5:
-        station = "WEB"
+    try:
+        station = inbound["station"]
+        serial_num = inbound["serial_num"]
+        material = inbound["material"]
+        quantity = inbound["cantidad"]
+        process = inbound["process"]
+        global label_text
+        if len(station) > 5:
+            station = "WEB"
 
-    mainWindow._list.insert(END,
-                            f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}')
-    mainWindow._list.see(END)
+        mainWindow._list.insert(END,
+                                f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}')
+        mainWindow._list.see(END)
+        label_text[
+            "text"] = f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}'
+        masterTop.lift()
+    except KeyError:
+        mainWindow._list.insert(END, f' Req    [Err] VERIFY JSON')
+        mainWindow._list.see(END)
+        label_text["text"] = f' Req    [Err] VERIFY JSON'
 
-
-    label_text["text"] =  f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}'
-    masterTop.lift()
 
 def insert_response(response):
     inbound = json.loads(response)
-    serial = inbound["serial"]
-    material = inbound["material"]
-    quantity = inbound["cantidad"]
-    error = inbound["error"]
     global label_text
-    if error == "N/A":
-        mainWindow._list.insert(END, f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}')
-        mainWindow._list.see(END)
-        label_text["text"] = f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}'
-        masterTop.lift()
-    else:
-        mainWindow._list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
-        mainWindow._list.see(END)
-        label_text["text"] = f' Res     [Error]:   S/N: {serial} Err: {error}'
-        masterTop.lift()
+    try:
+        if type(inbound["result"]) == type([]) or type(json.loads(re.sub(r"'", "\"", inbound["result"]))) == type([]):
+            mainWindow._list.insert(END, f' Res     [Success]:  Proceso terminado')
+            mainWindow._list.see(END)
+            label_text["text"] = f' Res     [Success]:   Proceso terminado'
+            masterTop.lift()
+    except KeyError:
+        try:
+            serial = inbound["serial"]
+            material = inbound["material"]
+            quantity = inbound["cantidad"]
+            error = inbound["error"]
+
+            if error == "N/A":
+                mainWindow._list.insert(END, f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}')
+                mainWindow._list.see(END)
+                label_text["text"] = f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}'
+                masterTop.lift()
+            else:
+                mainWindow._list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
+                mainWindow._list.see(END)
+                label_text["text"] = f' Res     [Error]:   S/N: {serial} Err: {error}'
+                masterTop.lift()
+        except KeyError:
+            try:
+                mainWindow._list.insert(END, f' Res     [Error]:  Invalid Process : {inbound["invalid_process"]}')
+                mainWindow._list.see(END)
+                label_text["text"] = f' Res     [Error]:   Invalid Process : {inbound["invalid_process"]}'
+                masterTop.lift()
+            except KeyError:
+                mainWindow._list.insert(END, f' Res     [Error]:  Invalid Process : {inbound["error"]}')
+                mainWindow._list.see(END)
+                label_text["text"] = f' Res     [Error]:   Invalid Process : {inbound["error"]}'
+                masterTop.lift()
 
 
 def receiver():

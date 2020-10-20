@@ -34,11 +34,22 @@ class DB:
         return result[0][0]
 
     @staticmethod
-    def insert_data(emp_num, part_num, no_serie, linea, transfer_order):
+    def insert_partial_transfer(emp_num, part_num, no_serie, linea, transfer_order):
         db = mysql.connector.connect(**almacen_config)
         query = f'INSERT INTO partial_transfer (emp_num, part_num, no_serie, linea, transfer_order) ' \
                 f'VALUES ({emp_num}, "{part_num}", {no_serie}, "{linea}", {transfer_order})'
 
+        cursor = db.cursor()
+        cursor.execute(query)
+        db.commit()
+        db.close()
+        return cursor.rowcount
+
+    @staticmethod
+    def insert_complete_transfer(emp_num,no_serie,result):
+        db = mysql.connector.connect(**almacen_config)
+        query = f'INSERT INTO complete_transfer (emp_num, no_serie, result) ' \
+                f'VALUES ({emp_num}, {no_serie}, "{result}")'
         cursor = db.cursor()
         cursor.execute(query)
         db.commit()

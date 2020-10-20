@@ -37,8 +37,8 @@ class MainApplication:
         self._labelGI = Label(self.parent, text="General Info", bg=self._background_color)
         self._labelName = Label(self.parent, text="Computer Name:\t  {}".format(self._my_system.node),
                                 bg=self._background_color)
-        self._labelUser = Label(self.parent, text="User Name:\t  {}".format(os.environ['USERNAME']),
-                                bg=self._background_color)
+        self._labelUser = Label(self.parent, text="User Name:\t  {}".format(os.environ['USERNAME']),bg=self._background_color)
+        self._labelModel = Label(self.parent, text="Machine Model:\t  {}".format(self._model), bg=self._background_color)
         self._labelSerial = Label(self.parent, text="Service Tag:\t  {}".format(self._service_tag),
                                   bg=self._background_color, cursor="hand2")
         self._labelSerial = Label(self.parent, text="Service Tag:\t  {}".format(self._service_tag),
@@ -56,23 +56,25 @@ class MainApplication:
         self._line_style.configure("Line.TSeparator", background=self._text_color)
         self._labelName.configure(fg=self._text_color)
         self._labelUser.configure(fg=self._text_color)
+        self._labelModel.configure(fg=self._text_color)
         self._labelSerial.configure(fg=self._text_color)
         self._labelOs.configure(fg=self._text_color)
         self._frame.configure(bg=self._background_color)
 
         self.parent.columnconfigure(0, weight=1)
-        self.parent.rowconfigure(7, weight=1)
-        self._frame.rowconfigure(7, weight=1)
+        self.parent.rowconfigure(8, weight=1)
         self._frame.columnconfigure(0, weight=1)
+        self._frame.rowconfigure(7, weight=1)
 
         self._label.grid(row=0, column=0, columnspan=2, padx=90, pady=10)
         self._labelGI.grid(row=1, column=0, columnspan=1, padx=5, pady=.5, sticky=W)
         self._line.grid(row=2, columnspan=2, sticky=E + W)
         self._labelName.grid(row=3, column=0, padx=5, pady=.5, sticky=W)
         self._labelUser.grid(row=4, column=0, padx=5, pady=.5, sticky=W)
-        self._labelSerial.grid(row=5, column=0, padx=5, pady=.5, sticky=W)
-        self._labelOs.grid(row=6, column=0, padx=5, pady=.5, sticky=W)
-        self._frame.grid(row=7, column=0, columnspan=2, padx=5, pady=10, sticky=E + W + N + S)
+        self._labelModel.grid(row=5, column=0, padx=5, pady=.5, sticky=W)
+        self._labelSerial.grid(row=6, column=0, padx=5, pady=.5, sticky=W)
+        self._labelOs.grid(row=7, column=0, padx=5, pady=.5, sticky=W)
+        self._frame.grid(row=8, column=0, columnspan=2, padx=5, pady=10, sticky=E + W + N + S)
 
         self.parent.wm_attributes("-alpha", .9)
         self.parent.resizable(False, True)
