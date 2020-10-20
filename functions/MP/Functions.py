@@ -7,9 +7,9 @@ from db.Functions import *
 from functions import SAP_Alive
 from functions import SAP_Login
 from functions import SAP_ErrorWindows
-from functions.PartialTransfer import SAP_LT01
-from functions.PartialTransfer import SAP_MM03
-from functions.PartialTransfer import SAP_LT09
+from functions.MP import SAP_LT01
+from functions.MP import SAP_MM03
+from functions.MP import SAP_LT09
 
 
 current_directory = os.path.abspath(os.getcwd())

@@ -7,7 +7,7 @@ import pika
 import window
 from functions import PROD_RabbitMQ_Config
 from functions.FG.Functions import *
-from functions.PartialTransfer.Functions import *
+from functions.MP.Functions import *
 
 
 def quit_window():
