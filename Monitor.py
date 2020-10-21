@@ -89,12 +89,22 @@ def insert_text(request):
 def insert_response(response):
     inbound = json.loads(response)
     global label_text
+    print(inbound)
+    print(inbound["error"])
     try:
-        if type(inbound["result"]) == type([]) or type(json.loads(re.sub(r"'", "\"", inbound["result"]))) == type([]):
-            mainWindow._list.insert(END, f' Res     [Success]:  Proceso terminado')
+        if inbound["error"] == "N/A":
+            if type(inbound["result"]) == type([]) or type(json.loads(re.sub(r"'", "\"", inbound["result"]))) == type(
+                    []):
+                mainWindow._list.insert(END, f' Res     [Success]:  Proceso terminado')
+                mainWindow._list.see(END)
+                label_text["text"] = f' Res     [Success]:   Proceso terminado'
+                masterTop.lift()
+        else:
+            mainWindow._list.insert(END, f' Res     [Error]:  {inbound["error"]}')
             mainWindow._list.see(END)
-            label_text["text"] = f' Res     [Success]:   Proceso terminado'
+            label_text["text"] = f' Res     [Success]:   {inbound["error"]}'
             masterTop.lift()
+
     except KeyError:
         try:
             serial = inbound["serial"]
@@ -129,6 +139,7 @@ def receiver():
     def on_request(ch, method, props, body):
         print("Request:    [x] %s" % body.decode(encoding="utf8"))
         sap_login()
+
 
         insert_text(body.decode(encoding="utf8"))
         response = process_inbound(body)

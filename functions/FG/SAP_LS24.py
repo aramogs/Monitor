@@ -41,33 +41,44 @@ def Main(part_num):
         session.findById("wnd[0]/usr/ctxtRL01S-LGTYP").text = "FG"
         session.findById("wnd[0]/usr/ctxtRL01S-LISTV").text = "/DEL"
         session.findById("wnd[0]").sendVKey(0)
-        session.findById("wnd[0]/usr/lbl[58,6]").caretPosition = 6
-        session.findById("wnd[0]").sendVKey(2)
-        session.findById("wnd[0]/tbar[1]/btn[40]").press()
 
 
         try:
-            list = []
-            while 1 > 0:
-                y = 8
-                for i in range(45):
-                    q = {
-                        "storage_bin": session.findById(f'wnd[0]/usr/lbl[5,{y}]').Text,
-                        "gr_date": session.findById(f'wnd[0]/usr/lbl[58,{y}]').Text,
-                        "storage_unit": session.findById(f'wnd[0]/usr/lbl[69,{y}]').Text
-                    }
-                    y += 1
-                    list.append(q)
-                session.findById("wnd[0]/usr").verticalScrollbar.position += 45
-
-
+            error = session.findById("wnd[0]/sbar/pane[0]").Text
+            if error != "":
+                session.findById("wnd[0]/tbar[0]/btn[15]").press()
+                session.findById("wnd[0]/tbar[0]/btn[15]").press()
+                response = {"result": "N/A", "error": error}
+                return (json.dumps(response))
+            else:
+                raise Exception('I know Python!')
         except:
-            pass
+            session.findById("wnd[0]/usr/lbl[54,6]").caretPosition = 6
+            session.findById("wnd[0]").sendVKey(2)
+            session.findById("wnd[0]/tbar[1]/btn[40]").press()
+            try:
+                list = []
+                while 1 > 0:
+                    y = 8
+                    for i in range(45):
+                        q = {
+                            "storage_bin": session.findById(f'wnd[0]/usr/lbl[5,{y}]').Text,
+                            "gr_date": session.findById(f'wnd[0]/usr/lbl[54,{y}]').Text,
+                            "storage_unit": session.findById(f'wnd[0]/usr/lbl[65,{y}]').Text
+                        }
+                        y += 1
+                        list.append(q)
+                    session.findById("wnd[0]/usr").verticalScrollbar.position += 45
 
-        session.findById("wnd[0]/tbar[0]/btn[15]").press()
-        session.findById("wnd[0]/tbar[0]/btn[15]").press()
-        response = {"result": list, "error": "N/A"}
-        return (json.dumps(response))
+
+            except:
+                pass
+            session.findById("wnd[0]/tbar[0]/btn[15]").press()
+            session.findById("wnd[0]/tbar[0]/btn[15]").press()
+            response = {"result": list, "error": "N/A"}
+            return (json.dumps(response))
+
+
     except:
         # print(sys.exc_info()[0])
         error = session.findById("wnd[0]/sbar/pane[0]").Text
