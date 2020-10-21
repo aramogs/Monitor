@@ -89,8 +89,6 @@ def insert_text(request):
 def insert_response(response):
     inbound = json.loads(response)
     global label_text
-    print(inbound)
-    print(inbound["error"])
     try:
         if inbound["error"] == "N/A":
             if type(inbound["result"]) == type([]) or type(json.loads(re.sub(r"'", "\"", inbound["result"]))) == type(
