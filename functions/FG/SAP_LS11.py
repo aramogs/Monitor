@@ -50,7 +50,8 @@ def Main(storage_bin):
     except:
       session.findById("wnd[0]/tbar[0]/btn[15]").press()
       session.findById("wnd[0]/tbar[0]/btn[15]").press()
-      response = {"result": "N/A", "error": "bin_not_found"}
+      error = session.findById("wnd[0]/sbar/pane[0]").Text
+      response = {"result": "N/A", "error": error}
       return json.dumps(response)
 
     finally:

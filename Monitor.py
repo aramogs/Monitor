@@ -8,6 +8,7 @@ import window
 from functions import PROD_RabbitMQ_Config
 from functions.FG.Functions import *
 from functions.MP.Functions import *
+from functions import SAP_ErrorWindows
 
 
 def quit_window():
@@ -136,6 +137,7 @@ def insert_response(response):
 def receiver():
     def on_request(ch, method, props, body):
         print("Request:    [x] %s" % body.decode(encoding="utf8"))
+        SAP_ErrorWindows.error_windows()
         sap_login()
 
 

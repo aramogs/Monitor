@@ -6,14 +6,21 @@ from functions.FG import SAP_LS11
 from functions.FG import SAP_LS24
 from functions.FG import SAP_LT09_Query
 from functions.FG import SAP_LT09_Transfer
+from functions import SAP_Alive
+from functions import SAP_Login
+from functions import SAP_ErrorWindows
 
 
 def transfer_fg(inbound):
     serial_num = inbound["serial_num"]
     result_lt09 = json.loads(SAP_LT09_Query.Main(serial_num))
 
+
+
     if result_lt09["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f'{result_lt09["error"]}'})
+        if result_lt09["error"] == "":
+            sap_error_windows()
     else:
         material_number = result_lt09["material_number"]
         response = SAP_LS24.Main(material_number)
@@ -25,11 +32,12 @@ def transfer_fg_confirmed(inbound):
     serials = (inbound["serial_num"]).split(",")
     emp_num = inbound["user_id"]
 
-
     bin_exist = SAP_LS11.Main(storage_bin)
-
     if json.loads(bin_exist)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": "Storage Bin does not exist"})
+        if json.loads(bin_exist)["error"] == "":
+            sap_error_windows()
+
     else:
         response = SAP_LT09_Transfer.Main(serials, storage_bin)
         if json.loads(response)["error"] != "N/A":
@@ -43,3 +51,19 @@ def transfer_fg_confirmed(inbound):
             pass
 
     return response
+
+
+def sap_login():
+    if json.loads(SAP_Alive.Main())["sap_status"] == "error":
+        print("Error - SAP Connection Down")
+        if json.loads(SAP_Login.Main())["sap_status"] != "ok":
+            sap_login()
+    else:
+        # print("Success - SAP Connection Up")
+        pass
+
+
+def sap_error_windows():
+    error = json.loads(SAP_ErrorWindows.error_windows())
+    print(error)
+    sap_login()
