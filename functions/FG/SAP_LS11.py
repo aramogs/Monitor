@@ -27,7 +27,10 @@ def Main(storage_bin):
             application = None
             SapGuiAuto = None
             return
-
+        try:
+            session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
+        except:
+            pass
         # session.findById("wnd[0]").resizeWorkingPane(133, 38, 0)
         session.findById("wnd[0]/tbar[0]/okcd").text = "/nLS11"
         session.findById("wnd[0]").sendVKey(0)
@@ -41,8 +44,10 @@ def Main(storage_bin):
         bin = session.findById("wnd[0]/usr/lbl[5,6]").Text
         # session.findById("wnd[0]/usr/lbl[5,6]").caretPosition = 6
         # session.findById("wnd[0]").sendVKey(2)
-        session.findById("wnd[0]/tbar[0]/btn[15]").press()
-        session.findById("wnd[0]/tbar[0]/btn[15]").press()
+        # session.findById("wnd[0]/tbar[0]/btn[15]").press()
+        # session.findById("wnd[0]/tbar[0]/btn[15]").press()
+        session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
+        session.findById("wnd[0]").sendVKey(0)
 
 
         response = {"result": bin, "error": "N/A"}
