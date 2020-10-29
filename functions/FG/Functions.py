@@ -35,8 +35,8 @@ def transfer_fg_confirmed(inbound):
     bin_exist = SAP_LS11.Main(storage_bin)
     if json.loads(bin_exist)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": "Storage Bin does not exist"})
-        if json.loads(bin_exist)["error"] == "":
-            sap_error_windows()
+        # if json.loads(bin_exist)["error"] == "":
+        #     response = json.dumps({"serial": "N/A", "error": "No Storage Bin like this in Storage Type FG"})
 
     else:
         response = SAP_LT09_Transfer.Main(serials, storage_bin)

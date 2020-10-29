@@ -31,6 +31,7 @@ def Main(storage_bin):
         # session.findById("wnd[0]").resizeWorkingPane(133, 38, 0)
         session.findById("wnd[0]/tbar[0]/okcd").text = "/nLS11"
         session.findById("wnd[0]").sendVKey(0)
+        session.findById("wnd[0]/usr/ctxtS1_LGNUM").text = "521"
         session.findById("wnd[0]/usr/ctxtS1_LGTYP-LOW").text = "FG"
         session.findById("wnd[0]/usr/ctxtS1_LGPLA-LOW").text = storage_bin
         session.findById("wnd[0]/usr/ctxtS1_LGPLA-LOW").setFocus()

@@ -9,7 +9,7 @@ folders = [
 ]
 
 a = Analysis(['Monitor.py'],
-             pathex=['C:\\Users\\aram.guillen\\PycharmProjects\\Monitor - Copy'],
+             pathex=['%USERPROFILE%\\PycharmProjects\\Monitor'],
              binaries=[],
              datas=folders,
              hiddenimports=['pywintypes'],
@@ -20,8 +20,9 @@ a = Analysis(['Monitor.py'],
              win_private_assemblies=False,
              cipher=block_cipher,
              noarchive=False)
-pyz = PYZ(a.pure, a.zipped_data,
-             cipher=block_cipher)
+pyz = PYZ(a.pure,
+            a.zipped_data,
+            cipher=block_cipher)
 exe = EXE(pyz,
           a.scripts,
           [],
@@ -31,7 +32,8 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=False,
-          console=False , icon='.\\img\image.ico')
+          console=True,
+          icon='.\\img\image.ico')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,

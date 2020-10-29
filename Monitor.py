@@ -6,9 +6,9 @@ import pika
 
 import window
 from functions import PROD_RabbitMQ_Config
+from functions import SAP_ErrorWindows
 from functions.FG.Functions import *
 from functions.MP.Functions import *
-from functions import SAP_ErrorWindows
 
 
 def quit_window():
@@ -139,7 +139,6 @@ def receiver():
         print("Request:    [x] %s" % body.decode(encoding="utf8"))
         SAP_ErrorWindows.error_windows()
         sap_login()
-
 
         insert_text(body.decode(encoding="utf8"))
         response = process_inbound(body)
