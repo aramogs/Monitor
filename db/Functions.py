@@ -46,10 +46,10 @@ class DB:
         return cursor.rowcount
 
     @staticmethod
-    def insert_complete_transfer(emp_num,no_serie,result):
+    def insert_complete_transfer(emp_num, no_serie, result, area):
         db = mysql.connector.connect(**almacen_config)
-        query = f'INSERT INTO complete_transfer (emp_num, no_serie, result) ' \
-                f'VALUES ({emp_num}, {no_serie}, "{result}")'
+        query = f'INSERT INTO complete_transfer (emp_num, no_serie, result, area) ' \
+                f'VALUES ({emp_num}, {no_serie}, "{result}", "{area}")'
         cursor = db.cursor()
         cursor.execute(query)
         db.commit()

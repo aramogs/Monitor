@@ -3,10 +3,9 @@ from threading import Thread
 from tkinter import *
 
 import pika
-
+import time
 import window
-from functions import PROD_RabbitMQ_Config
-from functions import SAP_ErrorWindows
+
 from functions.FG.Functions import *
 from functions.MP.Functions import *
 
@@ -54,6 +53,8 @@ def process_inbound(body):
         response = partial_transfer(inbound)
     elif process == "partial_transfer_confirmed":
         response = partial_transfer_confirmed(inbound)
+    elif process == "transfer_mp_confirmed":
+        response = transfer_mp_confirmed(inbound)
     elif process == "transfer_fg":
         response = transfer_fg(inbound)
     elif process == "transfer_fg_confirmed":
@@ -92,8 +93,8 @@ def insert_response(response):
     global label_text
     try:
         if inbound["error"] == "N/A":
-            if type(inbound["result"]) == type([]) or type(json.loads(re.sub(r"'", "\"", inbound["result"]))) == type(
-                    []):
+            if type(inbound["result"]) == type([]) \
+                    or type(json.loads(re.sub(r"'", "\"", inbound["result"]))) == type([]):
                 mainWindow._list.insert(END, f' Res     [Success]:  Proceso terminado')
                 mainWindow._list.see(END)
                 label_text["text"] = f' Res     [Success]:   Proceso terminado'
@@ -148,12 +149,27 @@ def receiver():
         ch.basic_publish(exchange='', routing_key=props.reply_to,
                          properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
+    try:
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        channel = connection.channel()
+        channel.queue_declare(queue='rpc_queue', durable=True)
 
-    PROD_RabbitMQ_Config.channel.basic_qos(prefetch_count=1)
-    PROD_RabbitMQ_Config.channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+        channel.basic_qos(prefetch_count=1)
+        channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+        print(" [x] Awaiting RPC requests")
 
-    print(" [x] Awaiting RPC requests")
-    PROD_RabbitMQ_Config.channel.start_consuming()
+        mainWindow._list.insert(END, f' Res     [Success]:  Pika Connection Established')
+        mainWindow._list.see(END)
+        label_text["text"] = f' Res     [success]:   Pika Connection Established'
+
+        channel.start_consuming()
+    except:
+        mainWindow._list.insert(END, f' Res     [Error]:  Pika Connection Down')
+        mainWindow._list.see(END)
+        label_text["text"] = f' Res     [Error]:   Pika Connection Down'
+
+        time.sleep(60)
+        receiver()
 
 
 receive_thread = Thread(target=receiver)

@@ -2,10 +2,10 @@ import json
 import re
 from db.Functions import *
 
-from functions.FG import SAP_LS11
+from functions import SAP_LS11
 from functions.FG import SAP_LS24
 from functions.FG import SAP_LT09_Query
-from functions.FG import SAP_LT09_Transfer
+from functions import SAP_LT09_Transfer
 from functions import SAP_Alive
 from functions import SAP_Login
 from functions import SAP_ErrorWindows
@@ -31,15 +31,16 @@ def transfer_fg_confirmed(inbound):
     storage_bin = inbound["storage_bin"]
     serials = (inbound["serial_num"]).split(",")
     emp_num = inbound["user_id"]
+    storage_type = "FG"
 
-    bin_exist = SAP_LS11.Main(storage_bin)
+    bin_exist = SAP_LS11.Main(storage_type, storage_bin)
     if json.loads(bin_exist)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": "Storage Bin does not exist"})
         # if json.loads(bin_exist)["error"] == "":
         #     response = json.dumps({"serial": "N/A", "error": "No Storage Bin like this in Storage Type FG"})
 
     else:
-        response = SAP_LT09_Transfer.Main(serials, storage_bin)
+        response = SAP_LT09_Transfer.Main(serials, storage_type, storage_bin)
         if json.loads(response)["error"] != "N/A":
             response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
             # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "
@@ -47,7 +48,7 @@ def transfer_fg_confirmed(inbound):
             # json.loads(re.sub... Carga cada arreglo dentro de la respuesta a un json
             # for x in json.loads cada respuesta cargada del arreglo es iterada
         for x in json.loads(re.sub(r"'", "\"", json.loads(response)["result"])):
-            DB.insert_complete_transfer(emp_num=emp_num, no_serie=x["serial_num"],result=x["result"])
+            DB.insert_complete_transfer(emp_num=emp_num, no_serie=x["serial_num"],result=x["result"], area="FG")
             pass
 
     return response

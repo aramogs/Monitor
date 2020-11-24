@@ -2,7 +2,7 @@
 
 # -Sub Main--------------------------------------------------------------
 
-def Main(storage_bin):
+def Main(storage_type, storage_bin):
     import json
     import sys
     import win32com.client
@@ -35,7 +35,7 @@ def Main(storage_bin):
         session.findById("wnd[0]/tbar[0]/okcd").text = "/nLS11"
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/usr/ctxtS1_LGNUM").text = "521"
-        session.findById("wnd[0]/usr/ctxtS1_LGTYP-LOW").text = "FG"
+        session.findById("wnd[0]/usr/ctxtS1_LGTYP-LOW").text = storage_type
         session.findById("wnd[0]/usr/ctxtS1_LGPLA-LOW").text = storage_bin
         session.findById("wnd[0]/usr/ctxtS1_LGPLA-LOW").setFocus()
         # session.findById("wnd[0]/usr/ctxtS1_LGPLA-LOW").caretPosition = 6
@@ -69,6 +69,6 @@ def Main(storage_bin):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("FA0102")
+    Main("MP1", "FA0102")
 
 # -End-------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 # -Sub Main--------------------------------------------------------------
 
-def Main(serial_num_list, storage_bin):
+def Main(serial_num_list, storage_type, storage_bin):
     import json
     import re
     import win32com.client
@@ -38,7 +38,7 @@ def Main(serial_num_list, storage_bin):
                 session.findById("wnd[0]/usr/txtLEIN-LENUM").text = serial_num
                 session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").text = "998"
                 session.findById("wnd[0]").sendVKey(0)
-                session.findById("wnd[0]/usr/ctxt*LTAP-NLTYP").text = "FG"
+                session.findById("wnd[0]/usr/ctxt*LTAP-NLTYP").text = storage_type
                 session.findById("wnd[0]/usr/txt*LTAP-NLPLA").text = storage_bin
                 session.findById("wnd[0]/tbar[0]/btn[11]").press()
                 result = session.findById("wnd[0]/sbar/pane[0]").Text
@@ -82,6 +82,6 @@ def Main(serial_num_list, storage_bin):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("0171349693", "FA0105")
+    Main("0171349693", "MP1", "P0501")
 
 # -End-------------------------------------------------------------------

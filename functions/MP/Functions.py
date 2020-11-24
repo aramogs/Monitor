@@ -10,6 +10,9 @@ from functions import SAP_ErrorWindows
 from functions.MP import SAP_LT01
 from functions.MP import SAP_MM03
 from functions.MP import SAP_LT09
+from functions import SAP_LS11
+from functions import SAP_LT09_Transfer
+
 
 
 current_directory = os.path.abspath(os.getcwd())
@@ -73,11 +76,35 @@ def partial_transfer_confirmed(inbound):
                 station = "web"
             DB.insert_partial_transfer(emp_num=user_id, part_num=material, no_serie=serial_num, linea=station,
                                        transfer_order=result_insert)
+    else:
+        error = result
 
-    response = {"serial": serial_num, "material": material, "cantidad": cantidad, "result": result, "error": error}
+    response = {"serial": serial_num, "material": material, "cantidad": cantidad, "result": f'"{result}"', "error": error}
     return json.dumps(response)
 
 
+def transfer_mp_confirmed(inbound):
+    storage_bin = inbound["storage_bin"]
+    serials = (inbound["serial_num"]).split(",")
+    emp_num = inbound["user_id"]
+    storage_type = "MP1"
+
+    bin_exist = SAP_LS11.Main(storage_type, storage_bin)
+    if json.loads(bin_exist)["error"] != "N/A":
+        response = json.dumps({"serial": "N/A", "error": "Storage Bin does not exist"})
+    else:
+        response = SAP_LT09_Transfer.Main(serials, storage_type, storage_bin)
+        if json.loads(response)["error"] != "N/A":
+            response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
+            # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "
+            # json.loads(response)["result"] carga la respuesta en formato json(Esta seccion convierte ' en "
+            # json.loads(re.sub... Carga cada arreglo dentro de la respuesta a un json
+            # for x in json.loads cada respuesta cargada del arreglo es iterada
+        for x in json.loads(re.sub(r"'", "\"", json.loads(response)["result"])):
+            DB.insert_complete_transfer(emp_num=emp_num, no_serie=x["serial_num"],result=x["result"], area="MP")
+            pass
+
+    return response
 
 
 
