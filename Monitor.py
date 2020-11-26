@@ -163,7 +163,8 @@ def receiver():
         label_text["text"] = f' Res     [success]:   Pika Connection Established'
 
         channel.start_consuming()
-    except:
+    except Exception as e:
+        print("Response:   [x] %s" % str(e))
         mainWindow._list.insert(END, f' Res     [Error]:  Pika Connection Down')
         mainWindow._list.see(END)
         label_text["text"] = f' Res     [Error]:   Pika Connection Down'

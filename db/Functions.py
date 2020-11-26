@@ -25,33 +25,45 @@ almacen_config = {
 class DB:
     @staticmethod
     def get_printer(station):
-        db = mysql.connector.connect(**b10_config)
-        query = f'SELECT impre FROM b10.station_conf WHERE no_estacion = "{station}"'
-        cursor = db.cursor()
-        cursor.execute(query)
-        result = cursor.fetchall()
-        db.close()
-        return result[0][0]
+        try:
+            db = mysql.connector.connect(**b10_config)
+            query = f'SELECT impre FROM b10.station_conf WHERE no_estacion = "{station}"'
+            cursor = db.cursor()
+            cursor.execute(query)
+            result = cursor.fetchall()
+            db.close()
+            return result[0][0]
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            pass
 
     @staticmethod
     def insert_partial_transfer(emp_num, part_num, no_serie, linea, transfer_order):
-        db = mysql.connector.connect(**almacen_config)
-        query = f'INSERT INTO partial_transfer (emp_num, part_num, no_serie, linea, transfer_order) ' \
-                f'VALUES ({emp_num}, "{part_num}", {no_serie}, "{linea}", {transfer_order})'
+        try:
+            db = mysql.connector.connect(**almacen_config)
+            query = f'INSERT INTO partial_transfer (emp_num, part_num, no_serie, linea, transfer_order) ' \
+                    f'VALUES ({emp_num}, "{part_num}", {no_serie}, "{linea}", {transfer_order})'
 
-        cursor = db.cursor()
-        cursor.execute(query)
-        db.commit()
-        db.close()
-        return cursor.rowcount
+            cursor = db.cursor()
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            return cursor.rowcount
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            pass
 
     @staticmethod
     def insert_complete_transfer(emp_num, no_serie, result, area):
-        db = mysql.connector.connect(**almacen_config)
-        query = f'INSERT INTO complete_transfer (emp_num, no_serie, result, area) ' \
-                f'VALUES ({emp_num}, {no_serie}, "{result}", "{area}")'
-        cursor = db.cursor()
-        cursor.execute(query)
-        db.commit()
-        db.close()
-        return cursor.rowcount
+        try:
+            db = mysql.connector.connect(**almacen_config)
+            query = f'INSERT INTO complete_transfer (emp_num, no_serie, result, area) ' \
+                    f'VALUES ({emp_num}, {no_serie}, "{result}", "{area}")'
+            cursor = db.cursor()
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            return cursor.rowcount
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            pass
