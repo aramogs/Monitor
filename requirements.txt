@@ -6,3 +6,5 @@ pystray==0.17.1
 python-dotenv==0.14.0
 pywin32==228
 requests==2.24.0
+future~=0.18.2
+setproctitle~=1.1.10

@@ -8,6 +8,7 @@ import window
 
 from functions.FG.Functions import *
 from functions.MP.Functions import *
+from functions.SA.Functions import *
 
 
 def quit_window():
@@ -59,6 +60,10 @@ def process_inbound(body):
         response = transfer_fg(inbound)
     elif process == "transfer_fg_confirmed":
         response = transfer_fg_confirmed(inbound)
+    elif process == "transfer_sa":
+        response = transfer_sa(inbound)
+    elif process == "transfer_sa_return":
+        response = transfer_sa_return(inbound)
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
     return response

@@ -131,8 +131,7 @@ def print_label(station, material, material_description, serial, cantidad_restan
     printer = DB.get_printer(f'{station}')
 
     data = {"material": f'{material}', "descripcion": f'{material_description}', "serial": f'{serial}',
-            "cantidad": f'{cantidad_restante}',
-            "printer": f'{printer}'}
+            "cantidad": f'{cantidad_restante}',"printer": f'{printer}'}
 
     r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/TRA/Execute/',
                       data=json.dumps(data))

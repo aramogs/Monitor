@@ -15,7 +15,6 @@ windll.shell32.SetCurrentProcessExplicitAppUserModelID("app_icon")
 class MainApplication:
     def __init__(self, parent):
         self._img_icon = "./img/image.ico"
-        # TODO agregar ._model a la pantalla principal
         self._model = os.popen("wmic csproduct get name").read().replace("\n", "").replace("  ", "").replace("Name", "")
         self._service_tag = os.popen("wmic bios get serialnumber").read().replace("\n", "").replace("  ", "").replace(
             " ", "").replace("SerialNumber", "")
