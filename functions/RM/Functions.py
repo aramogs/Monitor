@@ -1,3 +1,12 @@
+"""
+Raw Material Functions
+
+Functions for Raw Materials at the warehouse
+
+Created to transfer material between bins
+
+"""
+
 import json
 import re
 
@@ -7,11 +16,12 @@ from db.Functions import *
 from functions import SAP_Alive
 from functions import SAP_Login
 from functions import SAP_ErrorWindows
-from functions.MP import SAP_LT01
-from functions.MP import SAP_MM03
-from functions.MP import SAP_LT09
 from functions import SAP_LS11
 from functions import SAP_LT09_Transfer
+from functions.RM import SAP_LT01
+from functions.RM import SAP_MM03
+from functions.RM import SAP_LT09
+
 
 
 
@@ -19,6 +29,10 @@ current_directory = os.path.abspath(os.getcwd())
 
 
 def partial_transfer(inbound):
+    """
+    Function takes a serial number and gets the material number, description and current quantity
+    After that it returns the requested information
+    """
     try:
         serial_num = inbound["serial_num"]
 
@@ -48,11 +62,19 @@ def partial_transfer(inbound):
 
 
 def material_weigth(_material):
+    """
+    Function takes material number, checks material weight and returns it
+    """
     response = json.loads(SAP_MM03.Main(_material))
     return response["net_weight"]
 
 
 def partial_transfer_confirmed(inbound):
+    """
+    Function takes the necessary information to perform a transfer order
+    Function gets the serial number of a Handling Unit and withdraws the requested material from it
+    After that prints a label
+    """
     station = inbound["station"]
     serial_num = inbound["serial_num"]
     material = inbound["material"]
@@ -84,6 +106,10 @@ def partial_transfer_confirmed(inbound):
 
 
 def transfer_mp_confirmed(inbound):
+    """
+    Function takes one or several serial numbers and performs the corresponding transfer orders to the corresponding bin
+    After everything is done it sends a list of errors if there are any
+    """
     storage_bin = inbound["storage_bin"]
     serials = (inbound["serial_num"]).split(",")
     emp_num = inbound["user_id"]
@@ -101,7 +127,7 @@ def transfer_mp_confirmed(inbound):
             # json.loads(re.sub... Carga cada arreglo dentro de la respuesta a un json
             # for x in json.loads cada respuesta cargada del arreglo es iterada
         for x in json.loads(re.sub(r"'", "\"", json.loads(response)["result"])):
-            DB.insert_complete_transfer(emp_num=emp_num, no_serie=x["serial_num"],result=x["result"], area="MP")
+            DB.insert_complete_transfer(emp_num=emp_num, no_serie=x["serial_num"],result=x["result"], area="RM")
             pass
 
     return response
@@ -125,6 +151,9 @@ def sap_error_windows():
 
 
 def print_label(station, material, material_description, serial, cantidad_restante):
+    """
+    Function prints the corresponding label
+    """
     if len(station) > 5:
         station = "web"
 

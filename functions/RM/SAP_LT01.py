@@ -9,6 +9,10 @@
 
 
 def Main(material, quantity, serial_num):
+    """
+    Function takes material number, quantity and serial number
+    Then gets the serial number and withdraws the quantity from the serial number
+    """
     import sys
     import win32com.client
     import json

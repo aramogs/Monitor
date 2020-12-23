@@ -8,6 +8,9 @@
 
 
 def Main(material):
+    """
+    Function gets material number and returns the net weight
+    """
     # material = sys.argv[1]
     import sys
     import win32com.client

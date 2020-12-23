@@ -5,6 +5,9 @@
 
 #-Sub Main--------------------------------------------------------------
 def Main():
+    """
+    Function opens SAP and access it as a user depending on .env file
+    """
     import win32com.client
     import subprocess
     import ctypes

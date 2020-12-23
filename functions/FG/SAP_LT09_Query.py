@@ -9,7 +9,10 @@
 
 
 def Main(serial_num):
-    import sys
+    """
+    Function used to get the Material Number corresponding the Serial Number
+    """
+
     import json
     import win32com.client
     import pythoncom
@@ -64,11 +67,9 @@ def Main(serial_num):
 
         # session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").setFocus()
         # session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").caretPosition = 6
-        material_number = session.findById(
-            "wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").Text
+        material_number = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").Text
         quant = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtRL03T-ANFME[1,0]").Text
-        material_description = session.findById(
-            "wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtLTAP-MAKTX[12,0]").Text
+        material_description = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtLTAP-MAKTX[12,0]").Text
 
         session.findById("wnd[0]/tbar[0]/btn[12]").press()
         session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
@@ -98,7 +99,7 @@ def Main(serial_num):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main()
+    Main(123456789)
 # -End-------------------------------------------------------------------
 
 

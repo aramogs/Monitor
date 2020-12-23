@@ -3,6 +3,9 @@
 # -Sub Main--------------------------------------------------------------
 
 def Main(storage_type, storage_bin):
+    """
+    Function checks if storage bin is part of storage type
+    """
     import json
     import sys
     import win32com.client

@@ -5,6 +5,10 @@
 
 # -Sub Main--------------------------------------------------------------
 def Main(part_num):
+    """
+    Function used to check the available quantity of material
+    In this case is used to check all the storage units corresponding the the Part Number and the FIFO dates
+    """
     import json
     import win32com.client
     import pythoncom

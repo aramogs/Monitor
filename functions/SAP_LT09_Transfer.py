@@ -3,6 +3,9 @@
 # -Sub Main--------------------------------------------------------------
 
 def Main(serial_num_list, storage_type, storage_bin):
+    """
+    Function takes a list of storage units and transfers them to the storage type nad bin selected
+    """
     import json
     import re
     import win32com.client

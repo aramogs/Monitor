@@ -9,6 +9,9 @@
 
 
 def Main(serial_num):
+    """
+    Function gets serial number and performs a transfer order
+    """
     import sys
     import json
     import win32com.client

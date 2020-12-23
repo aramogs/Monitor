@@ -5,10 +5,12 @@ from tkinter import *
 import pika
 import time
 import window
+import logging
 
 from functions.FG.Functions import *
-from functions.MP.Functions import *
+from functions.RM.Functions import *
 from functions.SA.Functions import *
+from functions.SF.Functions import *
 
 
 def quit_window():
@@ -41,14 +43,21 @@ img = PhotoImage(file=r"./img/icon.png").subsample(5, 5)
 btn = Button(masterTop, text='Monitor:', image=img, borderwidth=0, highlightthickness=0, command=close_secondary)
 btn.grid(row=0, column=0, padx=0, pady=15)
 btn.config(bg='#152532', fg='white')
+
+#####################
+# Global variables
+#####################
 label_text = Label(masterTop, bg="#152532")
 label_text.configure(fg="#FCBD1E")
 label_text.grid(row=0, column=1, padx=5, pady=.5, sticky=W)
+current_process = ""
 
 
 def process_inbound(body):
     inbound = json.loads(body.decode(encoding="utf8"))
     process = inbound["process"]
+    global current_process
+    current_process = process
 
     if process == "partial_transfer":
         response = partial_transfer(inbound)
@@ -64,6 +73,18 @@ def process_inbound(body):
         response = transfer_sa(inbound)
     elif process == "transfer_sa_return":
         response = transfer_sa_return(inbound)
+    elif process == "reprint_sa":
+        response = reprint_sa(inbound)
+    elif process == "handling_sf":
+        response = handling_sf(inbound)
+    elif process == "transfer_sf":
+        response = transfer_sf(inbound)
+    elif process == "transfer_sfr":
+        response = transfer_sfr(inbound)
+    elif process == "transfer_sfr_return":
+        response = transfer_sfr_return(inbound)
+    elif process == "reprint_sf":
+        response = reprint_sf(inbound)
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
     return response
@@ -96,48 +117,71 @@ def insert_text(request):
 def insert_response(response):
     inbound = json.loads(response)
     global label_text
-    try:
-        if inbound["error"] == "N/A":
-            if type(inbound["result"]) == type([]) \
-                    or type(json.loads(re.sub(r"'", "\"", inbound["result"]))) == type([]):
-                mainWindow._list.insert(END, f' Res     [Success]:  Proceso terminado')
-                mainWindow._list.see(END)
-                label_text["text"] = f' Res     [Success]:   Proceso terminado'
-                masterTop.lift()
-        else:
-            mainWindow._list.insert(END, f' Res     [Error]:  {inbound["error"]}')
-            mainWindow._list.see(END)
-            label_text["text"] = f' Res     [Success]:   {inbound["error"]}'
-            masterTop.lift()
+    global current_process
 
-    except KeyError:
-        try:
-            serial = inbound["serial"]
-            material = inbound["material"]
-            quantity = inbound["cantidad"]
-            error = inbound["error"]
+    lists = {
+        "process1": ["partial_transfer", "partial_transfer_confirmed"],
+        "process2": ["handling_sf", "transfer_sa", "transfer_sa_return", "transfer_sfr",
+                     "transfer_sfr_return", "reprint_sa", "reprint_sf", "transfer_sf"],
+        "process3": ["transfer_fg", "transfer_fg_confirmed", "transfer_mp_confirmed"]
+    }
+    match = False
+    for li, processes in lists.items():
+        for process in processes:
+            if process == current_process:
+                match = True
 
-            if error == "N/A":
-                mainWindow._list.insert(END, f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}')
-                mainWindow._list.see(END)
-                label_text["text"] = f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}'
-                masterTop.lift()
-            else:
-                mainWindow._list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
-                mainWindow._list.see(END)
-                label_text["text"] = f' Res     [Error]:   S/N: {serial} Err: {error}'
-                masterTop.lift()
-        except KeyError:
-            try:
-                mainWindow._list.insert(END, f' Res     [Error]:  Invalid Process : {inbound["invalid_process"]}')
-                mainWindow._list.see(END)
-                label_text["text"] = f' Res     [Error]:   Invalid Process : {inbound["invalid_process"]}'
-                masterTop.lift()
-            except KeyError:
-                mainWindow._list.insert(END, f' Res     [Error]:  Invalid Process : {inbound["error"]}')
-                mainWindow._list.see(END)
-                label_text["text"] = f' Res     [Error]:   Invalid Process : {inbound["error"]}'
-                masterTop.lift()
+                if li == "process1":
+                    serial = inbound["serial"]
+                    material = inbound["material"]
+                    quantity = inbound["cantidad"]
+                    error = inbound["error"]
+
+                    if error == "N/A":
+                        mainWindow._list.insert(END, f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}')
+                        mainWindow._list.see(END)
+                        label_text["text"] = f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}'
+                        masterTop.lift()
+                    else:
+                        mainWindow._list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
+                        mainWindow._list.see(END)
+                        label_text["text"] = f' Res     [Error]:   S/N: {serial} Err: {error}'
+                        masterTop.lift()
+
+                if li == "process2":
+                    result = inbound["result"]
+                    serial = inbound["serial"]
+                    error = inbound["error"]
+
+                    if error == "N/A":
+                        mainWindow._list.insert(END, f' Res     [Success]: S/N: {serial} Result: {result}')
+                        mainWindow._list.see(END)
+                        label_text["text"] = f' Res     [Success]: S/N: {serial} Result: {result}'
+                        masterTop.lift()
+                    else:
+                        mainWindow._list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
+                        mainWindow._list.see(END)
+                        label_text["text"] = f' Res     [Error]:   S/N: {serial} Err: {error}'
+                        masterTop.lift()
+
+                if li == "process3":
+                    error = inbound["error"]
+                    if error == "N/A":
+                        mainWindow._list.insert(END, f' Res     [Success]:  Proceso terminado')
+                        mainWindow._list.see(END)
+                        label_text["text"] = f' Res     [Success]:   Proceso terminado'
+                        masterTop.lift()
+                    else:
+                        mainWindow._list.insert(END, f' Res     [Error]:  {inbound["error"]}')
+                        mainWindow._list.see(END)
+                        label_text["text"] = f' Res     [Success]:   {inbound["error"]}'
+                        masterTop.lift()
+    if not match:
+        print(inbound)
+        mainWindow._list.insert(END, f' Res     [Error]:  {inbound["error"]}')
+        mainWindow._list.see(END)
+        label_text["text"] = f' Res     [Error]:   {inbound["error"]}'
+        masterTop.lift()
 
 
 def receiver():
@@ -154,6 +198,15 @@ def receiver():
         ch.basic_publish(exchange='', routing_key=props.reply_to,
                          properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    # channel = connection.channel()
+    # channel.queue_declare(queue='rpc_queue', durable=True)
+    # channel.basic_qos(prefetch_count=1)
+    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+    # print(" [x] Awaiting RPC requests")
+    # channel.start_consuming()
+
     try:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         channel = connection.channel()
@@ -170,6 +223,14 @@ def receiver():
         channel.start_consuming()
     except Exception as e:
         print("Response:   [x] %s" % str(e))
+
+
+        logging.basicConfig(filename='error.log', filemode='w',format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+        logging.error(e, exc_info=True)  # Con esto se logea
+        logging.error("==============================================================================================")
+        print(logging.error(e, exc_info=True))
+
         mainWindow._list.insert(END, f' Res     [Error]:  Pika Connection Down')
         mainWindow._list.see(END)
         label_text["text"] = f' Res     [Error]:   Pika Connection Down'

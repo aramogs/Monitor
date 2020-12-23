@@ -1,10 +1,18 @@
+"""
+Finished Goods Functions
+
+Functions for finished goods products, currently used to transfer material between bins
+
+"""
+
 import json
 import re
 from db.Functions import *
 
-from functions import SAP_LS11
+
 from functions.FG import SAP_LS24
 from functions.FG import SAP_LT09_Query
+from functions import SAP_LS11
 from functions import SAP_LT09_Transfer
 from functions import SAP_Alive
 from functions import SAP_Login
@@ -12,6 +20,10 @@ from functions import SAP_ErrorWindows
 
 
 def transfer_fg(inbound):
+    """
+    Functions takes a Finished Goods serial number and finds
+    the corresponding material number
+    """
     serial_num = inbound["serial_num"]
     result_lt09 = json.loads(SAP_LT09_Query.Main(serial_num))
 
@@ -28,10 +40,16 @@ def transfer_fg(inbound):
 
 
 def transfer_fg_confirmed(inbound):
+    """
+    Function takes: Storage Type, Storage Bin, Serial number(s) and Employee Tag
+    With this information the function Transfers the serial(s) to the corresponding Storage Bin
+    And also saves this information to a database
+    """
+    storage_type = "FG"
     storage_bin = inbound["storage_bin"]
     serials = (inbound["serial_num"]).split(",")
     emp_num = inbound["user_id"]
-    storage_type = "FG"
+
 
     bin_exist = SAP_LS11.Main(storage_type, storage_bin)
     if json.loads(bin_exist)["error"] != "N/A":
@@ -55,6 +73,9 @@ def transfer_fg_confirmed(inbound):
 
 
 def sap_login():
+    """
+    Function checks if SAP is on or not
+    """
     if json.loads(SAP_Alive.Main())["sap_status"] == "error":
         print("Error - SAP Connection Down")
         if json.loads(SAP_Login.Main())["sap_status"] != "ok":
@@ -65,6 +86,9 @@ def sap_login():
 
 
 def sap_error_windows():
+    """
+    Function to check if there are any error windows in the current computer regarding SAP
+    """
     error = json.loads(SAP_ErrorWindows.error_windows())
     print(error)
     sap_login()

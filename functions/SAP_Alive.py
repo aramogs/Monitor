@@ -7,6 +7,9 @@ import sys
 
 # -Sub Main--------------------------------------------------------------
 def Main():
+    """
+    Function checks if SAP has a window open if not sends an error
+    """
     import win32com.client
     import json
     import pythoncom

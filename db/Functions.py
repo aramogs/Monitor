@@ -33,6 +33,9 @@ almacen_config = {
 class DB:
     @staticmethod
     def get_printer(station):
+        """
+        Function to get the printer information from the station id
+        """
         try:
             db = mysql.connector.connect(**b10_config)
             query = f'SELECT impre FROM b10.station_conf WHERE no_estacion = "{station}"'
@@ -47,6 +50,9 @@ class DB:
 
     @staticmethod
     def insert_partial_transfer(emp_num, part_num, no_serie, linea, transfer_order):
+        """
+        Function to insert information about transfer order
+        """
         try:
             db = mysql.connector.connect(**almacen_config)
             query = f'INSERT INTO partial_transfer (emp_num, part_num, no_serie, linea, transfer_order) ' \
@@ -63,6 +69,9 @@ class DB:
 
     @staticmethod
     def insert_complete_transfer(emp_num, no_serie, result, area):
+        """
+        Function to insert information about transfer order
+        """
         try:
             db = mysql.connector.connect(**almacen_config)
             query = f'INSERT INTO complete_transfer (emp_num, no_serie, result, area) ' \
@@ -78,6 +87,9 @@ class DB:
 
     @staticmethod
     def select_tables():
+            """
+            Function to get table names from database
+            """
             db = mysql.connector.connect(**b10_bartender_config)
             query = f'SELECT table_name FROM information_schema.tables WHERE table_schema = "{os.getenv("DB_BARTENDER_NAME")}"'
             cursor = db.cursor(buffered=True)
@@ -88,6 +100,9 @@ class DB:
 
     @staticmethod
     def select_printer(estacion):
+        """
+        Function to get printer from station id
+        """
         db = mysql.connector.connect(**b10_config)
         query = f'SELECT impre FROM station_conf WHERE no_estacion = "{estacion}"'
         cursor = db.cursor(buffered=True)
@@ -98,6 +113,9 @@ class DB:
 
     @staticmethod
     def search_union(no_sap):
+        """
+        Function to find material number and all of its information in multiple tables
+        """
         tables = DB.select_tables()
         for table in tables:
             db = mysql.connector.connect(**b10_bartender_config)
