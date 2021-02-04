@@ -4,7 +4,8 @@ import json
 import win32con
 import win32gui
 
-error_window = ["SAP GUI for Windows 730", "SAP GUI for Windows 740", "SAP GUI for Windows 760", "MessageBox", "Print"]
+error_window = ["SAP GUI for Windows 730", "SAP GUI for Windows 740", "SAP GUI for Windows 760", "MessageBox", "Print",
+                "SAP Logon for Windows has stop working"]
 titles = []
 
 enum_windows = ctypes.windll.user32.EnumWindows
@@ -15,7 +16,6 @@ is_window_visible = ctypes.windll.user32.IsWindowVisible
 
 
 def foreach_window(hwnd, lParam):
-
     if is_window_visible(hwnd):
         length = get_window_text_length(hwnd)
         buff = ctypes.create_unicode_buffer(length + 1)
@@ -24,11 +24,7 @@ def foreach_window(hwnd, lParam):
     return True
 
 
-
-
-
 def error_windows():
-
     enum_windows(enum_window_process(foreach_window), 0)
     for w in titles:
         for z in error_window:
@@ -52,5 +48,3 @@ def monitor_visible():
         # if 'Monitor' in title:
         #     print(title)
         #     return True
-
-

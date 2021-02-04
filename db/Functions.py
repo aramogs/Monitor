@@ -86,6 +86,24 @@ class DB:
             pass
 
     @staticmethod
+    def insert_master_transfer(emp_num ,part_num, no_serie_uc, no_serie_um,transfer_order):
+        """
+        Function to insert information about transfer order
+        """
+        try:
+            db = mysql.connector.connect(**almacen_config)
+            query = f'INSERT INTO master_transfer (emp_num,part_num, no_serie_uc,no_serie_um,transfer_order) ' \
+                    f'VALUES ({emp_num}, "{part_num}", {no_serie_uc}, {no_serie_um}, {transfer_order})'
+            cursor = db.cursor()
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            return cursor.rowcount
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            pass
+
+    @staticmethod
     def select_tables():
             """
             Function to get table names from database
@@ -129,8 +147,7 @@ class DB:
             if len(values) != 0:
 
                 db = mysql.connector.connect(**b10_bartender_config)
-                query = f'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS ' \
-                        f'WHERE TABLE_SCHEMA="{os.getenv("DB_BARTENDER_NAME")}" AND TABLE_NAME="{table[0]}";'
+                query = f'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA="{os.getenv("DB_BARTENDER_NAME")}" AND TABLE_NAME="{table[0]}";'
                 cursor2 = db.cursor(buffered=True)
                 cursor2.execute(query)
                 db.commit()
@@ -139,6 +156,34 @@ class DB:
                 # print("Columnas", columns)
                 # print("Valores", values)
                 return columns, values[0]
+
+    @staticmethod
+    def client_part_number(no_sap):
+        """
+        Function to find material number and all of its information in multiple tables
+        """
+        tables = DB.select_tables()
+        for table in tables:
+            db = mysql.connector.connect(**b10_bartender_config)
+            query = f'SELECT cust_part FROM {table[0]} WHERE no_sap = "{no_sap}"'
+            cursor = db.cursor(buffered=True)
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            values = cursor.fetchall()
+
+            if len(values) != 0:
+
+                db = mysql.connector.connect(**b10_bartender_config)
+                query = f'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA="{os.getenv("DB_BARTENDER_NAME")}" AND TABLE_NAME="{table[0]}";'
+                cursor2 = db.cursor(buffered=True)
+                cursor2.execute(query)
+                db.commit()
+                db.close()
+                columns = cursor2.fetchall()
+                # print("Columnas", columns)
+                # print("Valores", values)
+                return values[0]
 
 
 

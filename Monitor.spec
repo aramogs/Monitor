@@ -2,17 +2,12 @@
 
 block_cipher = None
 
-folders = [
-('.\\img', '.\\img'),
-('.\\db', '.\\db'),
-('.\\functions', '.\\functions')
-]
 
 a = Analysis(['Monitor.py'],
-             pathex=['%USERPROFILE%\\PycharmProjects\\Monitor'],
+             pathex=['C:\\Users\\aram.guillen\\PycharmProjects\\Monitor'],
              binaries=[],
-             datas=folders,
-             hiddenimports=['pywintypes'],
+             datas=[],
+             hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -20,9 +15,8 @@ a = Analysis(['Monitor.py'],
              win_private_assemblies=False,
              cipher=block_cipher,
              noarchive=False)
-pyz = PYZ(a.pure,
-            a.zipped_data,
-            cipher=block_cipher)
+pyz = PYZ(a.pure, a.zipped_data,
+             cipher=block_cipher)
 exe = EXE(pyz,
           a.scripts,
           [],
@@ -31,14 +25,13 @@ exe = EXE(pyz,
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
-          upx=False,
-          console=True,
-          icon='.\\img\image.ico')
+          upx=True,
+          console=True )
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
                a.datas,
                strip=False,
-               upx=False,
+               upx=True,
                upx_exclude=[],
                name='Monitor')

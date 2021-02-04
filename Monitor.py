@@ -3,14 +3,17 @@ from threading import Thread
 from tkinter import *
 
 import pika
+import datetime
 import time
 import window
 import logging
+import mysql.connector
 
 from functions.FG.Functions import *
 from functions.RM.Functions import *
 from functions.SA.Functions import *
 from functions.SF.Functions import *
+from functions.RW.Functions import *
 
 
 def quit_window():
@@ -85,6 +88,15 @@ def process_inbound(body):
         response = transfer_sfr_return(inbound)
     elif process == "reprint_sf":
         response = reprint_sf(inbound)
+    elif process == "master_fg_gm_verify":
+        response = master_fg_gm_verify(inbound)
+    elif process == "master_fg_gm_create":
+        response = master_fg_gm_create(inbound)
+    elif process == "transfer_rework_in":
+        response = transfer_rework_in(inbound)
+    elif process == "transfer_rework_out":
+        response = transfer_rework_out(inbound)
+
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
     return response
@@ -122,8 +134,8 @@ def insert_response(response):
     lists = {
         "process1": ["partial_transfer", "partial_transfer_confirmed"],
         "process2": ["handling_sf", "transfer_sa", "transfer_sa_return", "transfer_sfr",
-                     "transfer_sfr_return", "reprint_sa", "reprint_sf", "transfer_sf"],
-        "process3": ["transfer_fg", "transfer_fg_confirmed", "transfer_mp_confirmed"]
+                     "transfer_sfr_return", "reprint_sa", "reprint_sf", "transfer_sf","transfer_rework_in","transfer_rework_out"],
+        "process3": ["transfer_fg", "transfer_fg_confirmed", "transfer_mp_confirmed", "master_fg_gm_verify"]
     }
     match = False
     for li, processes in lists.items():
@@ -177,7 +189,6 @@ def insert_response(response):
                         label_text["text"] = f' Res     [Success]:   {inbound["error"]}'
                         masterTop.lift()
     if not match:
-        print(inbound)
         mainWindow._list.insert(END, f' Res     [Error]:  {inbound["error"]}')
         mainWindow._list.see(END)
         label_text["text"] = f' Res     [Error]:   {inbound["error"]}'
@@ -199,44 +210,49 @@ def receiver():
                          properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
+    params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
+    connection = pika.BlockingConnection(params)
     # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    # channel = connection.channel()
-    # channel.queue_declare(queue='rpc_queue', durable=True)
-    # channel.basic_qos(prefetch_count=1)
-    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    # print(" [x] Awaiting RPC requests")
-    # channel.start_consuming()
+    channel = connection.channel()
+    channel.queue_declare(queue='rpc_queue', durable=True)
+    channel.basic_qos(prefetch_count=1)
+    channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+    print(" [x] Awaiting RPC requests")
+    channel.start_consuming()
 
-    try:
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
-        channel.queue_declare(queue='rpc_queue', durable=True)
-
-        channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-        print(" [x] Awaiting RPC requests")
-
-        mainWindow._list.insert(END, f' Res     [Success]:  Pika Connection Established')
-        mainWindow._list.see(END)
-        label_text["text"] = f' Res     [success]:   Pika Connection Established'
-
-        channel.start_consuming()
-    except Exception as e:
-        print("Response:   [x] %s" % str(e))
-
-
-        logging.basicConfig(filename='error.log', filemode='w',format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-        logging.error(e, exc_info=True)  # Con esto se logea
-        logging.error("==============================================================================================")
-        print(logging.error(e, exc_info=True))
-
-        mainWindow._list.insert(END, f' Res     [Error]:  Pika Connection Down')
-        mainWindow._list.see(END)
-        label_text["text"] = f' Res     [Error]:   Pika Connection Down'
-
-        time.sleep(60)
-        receiver()
+    # try:
+    #     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    #     channel = connection.channel()
+    #     channel.queue_declare(queue='rpc_queue', durable=True)
+    #
+    #     channel.basic_qos(prefetch_count=1)
+    #     channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+    #     print(" [x] Awaiting RPC requests")
+    #
+    #     mainWindow._list.insert(END, f' Res     [Success]:  Pika Connection Established')
+    #     mainWindow._list.see(END)
+    #     label_text["text"] = f' Res     [success]:   Pika Connection Established'
+    #
+    #     channel.start_consuming()
+    # except Exception as e:
+    #     print("Response:   [x] %s" % str(e))
+    #
+    #     now = datetime.datetime.now()
+    #     error_time = now.strftime("%Y-%m-%d_%H-%M")
+    #
+    #     logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_time), filemode='w',
+    #                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    #
+    #     logging.error(f'START - {e}', exc_info=True)  # Con esto se logea
+    #     logging.error(f'END - ########################################################################################')
+    #     # print(logging.error(e, exc_info=True))
+    #
+    #     mainWindow._list.insert(END, f' Res     [Error]:  Pika Connection Down')
+    #     mainWindow._list.see(END)
+    #     label_text["text"] = f' Res     [Error]:   Pika Connection Down'
+    #
+    #     time.sleep(10)
+    #     receiver()
 
 
 receive_thread = Thread(target=receiver)
