@@ -32,6 +32,8 @@ Required:
 - SAP_USER=****
 - SAP_PASS=****
 - SAP_NAME=****
+- SAP_DEST_STYPE=****
+- SAP_DEST_SBIN=****
 
 Optional:
 - PRINT_SERVER=****
@@ -42,6 +44,7 @@ Optional:
 - DB_HOST=****
 - DB_CONFIG_NAME=****
 - DB_PT_NAME=****
+- DB_BARTENDER_NAME=****
 
 ### Building Executable
 >Open terminal in the root directory and run the following commands:

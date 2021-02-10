@@ -130,6 +130,20 @@ class DB:
         return cursor.fetchall()
 
     @staticmethod
+    def select_alt_printer(estacion):
+        """
+        Function to get printer from station id
+        """
+        db = mysql.connector.connect(**b10_config)
+        query = f'SELECT impre_alt FROM station_conf WHERE no_estacion = "{estacion}"'
+        cursor = db.cursor(buffered=True)
+        cursor.execute(query)
+        db.commit()
+        db.close()
+        return cursor.fetchall()
+
+
+    @staticmethod
     def search_union(no_sap):
         """
         Function to find material number and all of its information in multiple tables
@@ -155,7 +169,7 @@ class DB:
                 columns = cursor2.fetchall()
                 # print("Columnas", columns)
                 # print("Valores", values)
-                return columns, values[0]
+                return columns, values[0], table[0]
 
     @staticmethod
     def client_part_number(no_sap):

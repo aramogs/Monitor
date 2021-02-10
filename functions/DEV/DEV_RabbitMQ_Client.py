@@ -39,6 +39,6 @@ class RmqClient(object):
 
 
 request = RmqClient()
-print(" [x] Requesting Storage_Unit(1030875648)")
-response = request.call('{"station":"8677469d-8877-4d54-967b-d91dab63835c","serial_num":"0171689042,0171689043,0171688969,0171688970,0171689046,0171689047,0171689048,0171689049,0171689050,0171689051","process":"master_fg_gm_verify", "material": "null", "material_description": "null","storage_bin": "null", "cantidad":"null", "cantidad_restante":"null", "user_id":86259}')
+print(" [x] Requesting ")
+response = request.call('{"station":"700","material":"P7000021467A0","cantidad":"15","serial_num":"N/A","process":"create_pr_hu_del","employee":"700170"}')
 print(" [.] Got %r" % response.decode(encoding="utf8"))
