@@ -32,7 +32,7 @@ def Main(container, part_number, client_part_number, serials):
             SapGuiAuto = None
             return
         weight = 0
-        session.findById("wnd[0]").resizeWorkingPane(80, 38, 0)
+        session.findById("wnd[0]").resizeWorkingPane(80, 40, 0)
         session.findById("wnd[0]/tbar[0]/okcd").text = "/nHU02"
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS").select()
@@ -68,8 +68,7 @@ def Main(container, part_number, client_part_number, serials):
                 session.findById("wnd[0]").sendVKey(0)
                 single_container = session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_003/ctxtV51VE-VHILM[1,0]").Text
 
-                w = session.findById(
-                    "wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_003/txtV51VE-BRGEW[3,0]").Text
+                w = session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_003/txtV51VE-BRGEW[3,0]").Text
                 weight += float(w)
                 x += 1
 

@@ -125,49 +125,7 @@ def master_fg_gm_verify(inbound):
 
     else:
         return response
-        #     lt09_response = json.loads((re.sub(r"'", "\"", json.loads(response)["result"])))
-        #
-        #     part_number_list = []
-        #     lower_gr_date = datetime.datetime.strptime("01/01/3000", "%m/%d/%Y").date()
-        #     # For loop to get unique part numbers from lto0_response
-        #     # The part numbers are checked one by one and added to the array part_number_list only if they are unique
-        #     for x in lt09_response:
-        #         part_number_list.append(x["part_number"]) if x["part_number"] not in part_number_list else part_number_list
-        #         # Verifying every date to see get the lowest date of them all
-        #         if datetime.datetime.strptime(f'{x["gr_date"]}', "%m/%d/%Y").date() <= lower_gr_date:
-        #             lower_gr_date = datetime.datetime.strptime(f'{x["gr_date"]}', "%m/%d/%Y").date()
-        #     # For loop to verify every date individually to see if its in range of 30 days as requested by GM
-        #     for x in lt09_response:
-        #         if lower_gr_date <= datetime.datetime.strptime(f'{x["gr_date"]}',"%m/%d/%Y").date() <= lower_gr_date + datetime.timedelta(days=30):
-        #             pass
-        #         else:
-        #             # If date is not in range of 30 days then the function sends the following error
-        #             return json.dumps(
-        #                 {"serial": "N/A", "error": f'{" Verify Handling Units - Dates not in range of 30 days"}'})
-        #     # If the length of part_number_list array is bigger than one it means one or more part numbers are not the same
-        #     # This corresponds to an error that the function returns
-        #     if len(part_number_list) > 1:
-        #         return json.dumps({"serial": "N/A", "error": f'{" Verify Handling Units - Multiple part numbers selected"}'})
-        #
-        #     # if len(serials) > 35:
-        #     #     humo_result = json.loads(SAP_HUMO.Main(serials))
-        #     #     result = json.loads((re.sub(r"'", "\"", humo_result["result"])))
-        #     # else:
-        #     #     hu03_result = json.loads(SAP_HU03.Main(serials))
-        #     #     result = json.loads((re.sub(r"'", "\"", hu03_result["result"])))
-        #
-        #     humo_result = json.loads(SAP_HUMO.Main(serials))
-        #     result = json.loads((re.sub(r"'", "\"", humo_result["result"])))
-        #     container_list = []
-        #     for x in result:
-        #         container_list.append(x["container"]) if x["container"] not in container_list else container_list
-        #
-        #     if len(container_list) > 1:
-        #         return json.dumps({"serial": "N/A", "error": f'{" Verify Handling Units - Diferent containers selected"}'})
-        #         pass
-        # res = json.loads(response)
-        #
-        # res.update({"lower_gr_date": f'{lower_gr_date}'})
+
 
 
 def master_fg_gm_create(inbound):
@@ -222,7 +180,7 @@ def master_fg_gm_create(inbound):
             emp_num = inbound["user_id"]
             master_serial = packing_result["result"]
             total_weight = int(float(packing_result["gross_weigth"]))
-            total_quant = int(round(float(packing_result["total_quantity"])))
+            total_quant = int(round(float(re.sub(r",", "", packing_result["total_quantity"]))))
             # After the master HU is created the material remains in the same storage_type 923, storage_bin pack.bin
             # This process moves the material to a new location assigned by Logistics
             # Taking the master handling unit, storage type and storage bin

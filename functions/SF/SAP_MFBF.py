@@ -5,14 +5,14 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(printer):
+def Main(material, cantidad, serial, plan_id):
     import sys
-    import json
     import win32com.client
     import pythoncom
+    import json
+    import re
     try:
         pythoncom.CoInitialize()
-
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
 
         application = SapGuiAuto.GetScriptingEngine
@@ -34,33 +34,30 @@ def Main(printer):
             SapGuiAuto = None
             return
 
-        session.findById("wnd[0]/tbar[0]/okcd").text = "/nZ_UC_DEL"
+
+        session.findById("wnd[0]/tbar[0]/okcd").text = "/nMFBF"
         session.findById("wnd[0]").sendVKey(0)
-        session.findById("wnd[0]/usr/ctxtV_DISPO").text = "001"
-        session.findById("wnd[0]/usr/ctxtB_DISPO").text = "999"
-        session.findById("wnd[0]/usr/ctxtP_LDEST").text = printer
-        session.findById("wnd[0]/usr/chkCOPY").selected = -1
-        # session.findById("wnd[0]/usr/ctxtP_LDEST").setFocus()
-        # session.findById("wnd[0]/usr/ctxtP_LDEST").caretPosition = 4
-        session.findById("wnd[0]/tbar[1]/btn[8]").press()
 
-        try:
-            error = session.findById("wnd[1]/usr/txtMESSTXT1").Text
-            session.findById("wnd[1]/tbar[0]/btn[0]").press()
-            session.findById("wnd[0]/tbar[0]/btn[3]").press()
-            response = {"result": "N/A", "error": error}
-        except:
-            response = {"result": "OK", "error": "N/A"}
-            session.findById("wnd[0]/tbar[0]/btn[3]").press()
+        session.findById("wnd[0]/usr/tabsTAB800/tabpLAGER/ssubTABSUB800:SAPLBARM:0801/ctxtRM61B-MATNR").text = material
+        session.findById("wnd[0]/usr/subSUB800:SAPLBARM:0811/txtRM61B-ERFMG").text = "1"
+        session.findById("wnd[0]/usr/txtRM61B-BKTXT").text = f'EXT-{plan_id}'
+        session.findById("wnd[0]/usr/tabsTAB800/tabpLAGER/ssubTABSUB800:SAPLBARM:0801/ctxtRM61B-VERID").text = "1"
 
+        session.findById("wnd[0]/tbar[0]/btn[11]").press()
+
+        result = session.findById("wnd[0]/sbar/pane[0]").Text
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
+
+        if "GR and GI" in result:
+            response = {"serial_num": serial, "result": int(re.sub(r"\D", "", result, 0)), "error": "N/A"}
+        else:
+            response = {"serial_num": serial, "result": 'N/A', "error": f'{result}'}
 
 
         return json.dumps(response)
 
-    except Exception as e:
-        print(e)
+    except:
         try:
             error = session.findById("wnd[1]/usr/txtSPOP-TEXTLINE1").Text
             session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
@@ -85,5 +82,6 @@ def Main(printer):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("dummy")
+    Main("5000010057A0","2")
+
 # -End-------------------------------------------------------------------

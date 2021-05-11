@@ -8,6 +8,7 @@ from functions.PR import SAP_Z_UC_DEL
 from functions.PR import SAP_Z_UC_WM
 from functions.PR import SAP_MFP11_ALT
 from functions.PR import SAP_MFHU
+from functions.PR import SAP_LT09
 from functions import SAP_ErrorWindows
 from db.Functions import *
 
@@ -49,7 +50,7 @@ def create_pr_hu(inbound):
         data.update({"station": f'{station}'})
         data.update({"alternate_container": "NO"})
 
-        r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/{table}_V2/Execute/', data=json.dumps(data))
+        r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/{table}/Execute/', data=json.dumps(data))
         # print(r.text)
 
     if error == "":
@@ -61,9 +62,9 @@ def create_pr_hu(inbound):
 
 def confirm_pr_hu(inbound):
     """
-    Function takes a Handling Unit number and creates a backflush
-    If there are no errors the function returns a transfer order number
-    """
+           Function takes a Handling Unit number and creates a back flush
+           If there are no errors the function returns a transfer order number
+           """
     serial_num = inbound["serial_num"]
 
     response = json.loads(SAP_MFHU.Main(serial_num))
@@ -72,18 +73,85 @@ def confirm_pr_hu(inbound):
     error = response["error"]
 
     if error == "N/A":
-        response = {"serial": serial_num, "result": "OK", "error": "N/A"}
-        print("OK",response)
+        # response = {"serial": serial_num, "result": "OK", "error": "N/A"}
+        # print("OK", response)
+        # return json.dumps(response)
+        response = json.loads(SAP_LT09.Main(serial_num))
+
+        result = response["result"]
+        error = response["error"]
+
+        if error == "":
+            SAP_ErrorWindows.error_windows()
+
+        response = {"serial": serial_num, "result": f'"{result}"', "error": error}
         return json.dumps(response)
     else:
         response = {"serial": "N/A", "result": f'"{result}"', "error": error}
         print("error", response)
         return json.dumps(response)
 
+def confirm_pr_hu_transfer(inbound):
+    """
+        Function takes a Handling Unit number and creates a back flush
+        If there are no errors the function returns a transfer order number
+        """
+    serial_num = inbound["serial_num"]
+
+    response = json.loads(SAP_MFHU.Main(serial_num))
+
+    result = response["result"]
+    error = response["error"]
+
+    if error == "N/A":
+        # response = {"serial": serial_num, "result": "OK", "error": "N/A"}
+        # print("OK", response)
+        # return json.dumps(response)
+        response = json.loads(SAP_LT09.Main(serial_num))
+
+        result = response["result"]
+        error = response["error"]
+
+        if error == "":
+            SAP_ErrorWindows.error_windows()
+
+        response = {"serial": serial_num, "result": f'"{result}"', "error": error}
+        return json.dumps(response)
+    else:
+        response = {"serial": "N/A", "result": f'"{result}"', "error": error}
+        print("error", response)
+        return json.dumps(response)
 
 def no_confirm_pr_hu(inbound):
-    response = {"serial": "N/A", "result": "OK", "error": "N/A"}
-    return json.dumps(response)
+    """
+            Function takes a Handling Unit number and creates a back flush
+            If there are no errors the function returns a transfer order number
+            """
+    serial_num = inbound["serial_num"]
+
+    response = json.loads(SAP_MFHU.Main(serial_num))
+
+    result = response["result"]
+    error = response["error"]
+
+    if error == "N/A":
+        # response = {"serial": serial_num, "result": "OK", "error": "N/A"}
+        # print("OK", response)
+        # return json.dumps(response)
+        response = json.loads(SAP_LT09.Main(serial_num))
+
+        result = response["result"]
+        error = response["error"]
+
+        if error == "":
+            SAP_ErrorWindows.error_windows()
+
+        response = {"serial": serial_num, "result": f'"{result}"', "error": error}
+        return json.dumps(response)
+    else:
+        response = {"serial": "N/A", "result": f'"{result}"', "error": error}
+        print("error", response)
+        return json.dumps(response)
 
 
 def create_alternate_pr_hu(inbound):
@@ -123,7 +191,7 @@ def create_alternate_pr_hu(inbound):
         data.update({"station": f'{station}'})
         data.update({"alternate_container": "YES"})
 
-        r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/{table}_V2/Execute/', data=json.dumps(data))
+        r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/{table}/Execute/', data=json.dumps(data))
         # print(r.text)
 
     if error == "":

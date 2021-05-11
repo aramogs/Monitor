@@ -5,13 +5,11 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(printer):
-    import sys
+def Main():
     import json
+    import sys
     import win32com.client
-    import pythoncom
     try:
-        pythoncom.CoInitialize()
 
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
 
@@ -34,33 +32,31 @@ def Main(printer):
             SapGuiAuto = None
             return
 
-        session.findById("wnd[0]/tbar[0]/okcd").text = "/nZ_UC_DEL"
+        session.findById("wnd[0]/tbar[0]/okcd").text = "/nLB12"
         session.findById("wnd[0]").sendVKey(0)
-        session.findById("wnd[0]/usr/ctxtV_DISPO").text = "001"
-        session.findById("wnd[0]/usr/ctxtB_DISPO").text = "999"
-        session.findById("wnd[0]/usr/ctxtP_LDEST").text = printer
-        session.findById("wnd[0]/usr/chkCOPY").selected = -1
-        # session.findById("wnd[0]/usr/ctxtP_LDEST").setFocus()
-        # session.findById("wnd[0]/usr/ctxtP_LDEST").caretPosition = 4
-        session.findById("wnd[0]/tbar[1]/btn[8]").press()
+        session.findById("wnd[0]").sendVKey(0)
+        session.findById("wnd[0]/tbar[1]/btn[44]").press()
+        session.findById("wnd[0]/tbar[1]/btn[5]").press()
+        session.findById("wnd[0]/usr/ctxtLTAP-LETYP").text = "001"
+        session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
+        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "102"
+        session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
+        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "GREEN"
+        # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").setFocus()
+        # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").caretPosition = 5
+        session.findById("wnd[0]").sendVKey(0)
+        session.findById("wnd[0]").sendVKey(0)
+        session.findById("wnd[0]/tbar[0]/btn[11]").press()
 
-        try:
-            error = session.findById("wnd[1]/usr/txtMESSTXT1").Text
-            session.findById("wnd[1]/tbar[0]/btn[0]").press()
-            session.findById("wnd[0]/tbar[0]/btn[3]").press()
-            response = {"result": "N/A", "error": error}
-        except:
-            response = {"result": "OK", "error": "N/A"}
-            session.findById("wnd[0]/tbar[0]/btn[3]").press()
-
+        result = session.findById("wnd[0]/sbar/pane[0]").Text
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 
+        response = {"result": f'{result}', "error": "N/A"}
 
         return json.dumps(response)
 
     except Exception as e:
-        print(e)
         try:
             error = session.findById("wnd[1]/usr/txtSPOP-TEXTLINE1").Text
             session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
@@ -85,5 +81,6 @@ def Main(printer):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("dummy")
+    Main()
+
 # -End-------------------------------------------------------------------

@@ -72,7 +72,7 @@ def transfer_sa_return(inbound):
         data.update({"line": f'{subline}'})
 
         r = requests.post(
-            f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC_RE_V2/Execute/',
+            f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC_RE/Execute/',
             data=json.dumps(data))
         # print(r.text)
 
@@ -113,7 +113,7 @@ def reprint_sa(inbound):
     data.update({"line": f'{subline}'})
 
     r = requests.post(
-        f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC_RE_V2/Execute/',
+        f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC_RE/Execute/',
         data=json.dumps(data))
     # print(r.text)
 

@@ -16,7 +16,26 @@ from functions.SF import SAP_LT01
 from functions.SF import SAP_LT09
 from functions.SF import SAP_MFHU
 from functions.SF import SAP_LB12
+from functions.SF import SAP_LB12_EXT
+from functions.SF import SAP_LT01_EXT
+from functions.SF import SAP_MFBF
 from db.Functions import *
+
+
+def sap_login():
+    if json.loads(SAP_Alive.Main())["sap_status"] == "error":
+        print("Error - SAP Connection Down")
+        if json.loads(SAP_Login.Main())["sap_status"] != "ok":
+            sap_login()
+    else:
+        # print("Success - SAP Connection Up")
+        pass
+
+
+def sap_error_windows():
+    error = json.loads(SAP_ErrorWindows.error_windows())
+    print(error)
+    sap_login()
 
 def handling_sf(inbound):
     """
@@ -55,7 +74,7 @@ def handling_sf(inbound):
         data.update({"line": f'{subline}'})
 
         r = requests.post(
-            f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC_V2/Execute/',
+            f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC/Execute/',
             data=json.dumps(data))
         # print(r.text)
 
@@ -65,6 +84,7 @@ def handling_sf(inbound):
 
     response = {"serial": f'{serial_num}', "result": f'"{result}"', "error": error}
     return json.dumps(response)
+
 
 def transfer_sfr_return(inbound):
     """
@@ -99,14 +119,12 @@ def transfer_sfr_return(inbound):
         data.update({"line": f'{subline}'})
 
         r = requests.post(
-            f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC_RE_V2/Execute/',
+            f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC_RE/Execute/',
             data=json.dumps(data))
         # print(r.text)
 
     response = {"serial": serial_num, "result": f'"{transfer_order}"', "error": error}
     return json.dumps(response)
-
-
 
 
 def transfer_sf(inbound):
@@ -137,6 +155,7 @@ def transfer_sf(inbound):
     response = {"serial": serial_num,"result": f'"{result}"', "error": error}
     return json.dumps(response)
 
+
 def transfer_sfr(inbound):
     """
     Function takes a serial number and performs a transfer of the material
@@ -156,6 +175,7 @@ def transfer_sfr(inbound):
 
     response = {"serial": serial_num, "result": f'"{result}"', "error": error}
     return json.dumps(response)
+
 
 def reprint_sf(inbound):
     """
@@ -191,24 +211,53 @@ def reprint_sf(inbound):
     data.update({"line": f'{subline}'})
 
     r = requests.post(
-        f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC_V2/Execute/',
+        f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC/Execute/',
         data=json.dumps(data))
     # print(r.text)
 
     response = {"serial": serial_num, "result": f'"Reprint OK"', "error": "N/A"}
     return json.dumps(response)
 
-def sap_login():
-    if json.loads(SAP_Alive.Main())["sap_status"] == "error":
-        print("Error - SAP Connection Down")
-        if json.loads(SAP_Login.Main())["sap_status"] != "ok":
-            sap_login()
-    else:
-        # print("Success - SAP Connection Up")
-        pass
+
+def confirm_ext_hu(inbound):
+    material_list = inbound['data']
+    response_list = []
+    for material in material_list:
+
+        numero_parte = material['numero_parte']
+        cantidad = material['cantidad']
+        serial = material['serial']
+        plan_id = material['plan_id']
+
+        response = json.loads(SAP_MFBF.Main(numero_parte, cantidad, serial, plan_id))
+        response_list.append(response)
+        if response['result'] != 'N/A':
+            transfer = json.loads(SAP_LB12_EXT.Main())
+
+    return json.dumps({"result": response_list, "error": "N/A"})
 
 
-def sap_error_windows():
-    error = json.loads(SAP_ErrorWindows.error_windows())
-    print(error)
-    sap_login()
+def transfer_ext_rp(inbound):
+    """
+    Function takes necessary information to perform a transfer order
+    """
+    material_list = inbound['data']
+    response_list = []
+    for material in material_list:
+
+        serial = material["serial"]
+        plan_id = material["plan_id"]
+        numero_parte = material["numero_parte"]
+        cantidad = material["cantidad"]
+
+
+        response = json.loads(SAP_LT01_EXT.Main(numero_parte, cantidad, "103", "GREEN"))
+
+        transfer_order = response["result"]
+        error = response["error"]
+        response_list.append({"serial": serial, "transfer_order": transfer_order, "error": error})
+
+    response = {"serial": "", "result": response_list, "error": "N/A"}
+    return json.dumps(response)
+
+

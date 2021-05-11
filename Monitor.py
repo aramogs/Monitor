@@ -102,6 +102,8 @@ def process_inbound(body):
         response = create_pr_hu(inbound)
     elif process == "confirm_pr_hu":
         response = confirm_pr_hu(inbound)
+    elif process == "confirm_pr_hu_transfer":
+        response = confirm_pr_hu_transfer(inbound)
     elif process == "no_confirm_pr_hu":
         response = no_confirm_pr_hu(inbound)
     elif process == "create_alternate_pr_hu":
@@ -110,6 +112,10 @@ def process_inbound(body):
         response = create_pr_hu_del(inbound)
     elif process == "create_pr_hu_wm":
         response = create_pr_hu_wm(inbound)
+    elif process == "confirm_ext_hu":
+        response = confirm_ext_hu(inbound)
+    elif process == "transfer_ext_rp":
+        response = transfer_ext_rp(inbound)
 
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
@@ -149,7 +155,7 @@ def insert_response(response):
         "process1": ["partial_transfer", "partial_transfer_confirmed"],
         "process2": ["handling_sf", "transfer_sa", "transfer_sa_return", "transfer_sfr","transfer_sfr_return", "reprint_sa", "reprint_sf", "transfer_sf","transfer_rework_in",
                      "transfer_rework_out", "create_pr_hu", "confirm_pr_hu", "no_confirm_pr_hu", "create_alternate_pr_hu", "create_pr_hu_del", "create_pr_hu_wm"],
-        "process3": ["transfer_fg", "transfer_fg_confirmed", "transfer_mp_confirmed", "master_fg_gm_verify"]
+        "process3": ["transfer_fg", "transfer_fg_confirmed", "transfer_mp_confirmed", "master_fg_gm_verify","confirm_ext_hu","transfer_ext_rp"]
     }
     match = False
     for li, processes in lists.items():
@@ -227,6 +233,7 @@ def sap_error_windows():
 
 def receiver():
     def on_request(ch, method, props, body):
+
         print("Request:    [x] %s" % body.decode(encoding="utf8"))
         SAP_ErrorWindows.error_windows()
 
@@ -245,8 +252,7 @@ def receiver():
         insert_response(response)
 
         print("Response:   [x] %s" % str(response))
-        ch.basic_publish(exchange='', routing_key=props.reply_to,
-                         properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
+        ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
@@ -260,14 +266,17 @@ def receiver():
     # channel.start_consuming()
 
     try:
-        params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
+        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
         connection = pika.BlockingConnection(params)
         # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         channel = connection.channel()
         channel.queue_declare(queue='rpc_queue', durable=True)
+        channel.queue_declare(queue='rpc_queue_low', durable=True)
 
         channel.basic_qos(prefetch_count=1)
         channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+        channel.basic_consume(queue='rpc_queue_low', on_message_callback=on_request)
+
         print(" [x] Awaiting RPC requests")
 
         mainWindow._list.insert(END, f' Res     [Success]:  Pika Connection Established')
