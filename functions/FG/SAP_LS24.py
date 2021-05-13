@@ -62,27 +62,42 @@ def Main(part_num):
             # session.findById("wnd[0]/usr/lbl[54,6]").caretPosition = 3
             # session.findById("wnd[0]").sendVKey(2)
             # session.findById("wnd[0]/tbar[1]/btn[40]").press()
+            original_position = 0
+            maxScroll = session.findById("wnd[0]/usr").verticalScrollbar.Maximum
             try:
-                list = []
+                y = 8
+                for i in range(100):
+                    q = session.findById(f'wnd[0]/usr/lbl[5,{y}]').Text
+                    y += 1
+                    original_position += 1
+
+            except:
+                pass
+            try:
+                info_list = []
                 while 1 > 0:
                     y = 8
-                    for i in range(45):
+                    for x in range(original_position):
                         q = {
                             "storage_bin": session.findById(f'wnd[0]/usr/lbl[5,{y}]').Text,
                             "gr_date": session.findById(f'wnd[0]/usr/lbl[54,{y}]').Text,
                             "storage_unit": session.findById(f'wnd[0]/usr/lbl[65,{y}]').Text
                         }
                         y += 1
-                        list.append(q)
-                    session.findById("wnd[0]/usr").verticalScrollbar.position += 45
+                        info_list.append(q)
+                    if maxScroll != 0:
+                        session.findById("wnd[0]/usr").verticalScrollbar.position += original_position
+                    else:
+                        raise Exception ("Nothing to do here")
 
-
-            except:
+            except Exception as error:
                 pass
+
+
             session.findById("wnd[0]/tbar[0]/btn[15]").press()
             session.findById("wnd[0]/tbar[0]/btn[15]").press()
-            response = {"result": list, "error": "N/A"}
-            return (json.dumps(response))
+            response = {"result": info_list, "error": "N/A"}
+            return json.dumps(response)
 
 
     except:
@@ -103,6 +118,6 @@ def Main(part_num):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    print(len(Main("7000023287A0")))
+    Main("7000025767A0")
 
 # -End-------------------------------------------------------------------

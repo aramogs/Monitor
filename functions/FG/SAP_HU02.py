@@ -32,7 +32,7 @@ def Main(container, part_number, client_part_number, serials):
             SapGuiAuto = None
             return
         weight = 0
-        session.findById("wnd[0]").resizeWorkingPane(80, 40, 0)
+        # session.findById("wnd[0]").resizeWorkingPane(80, 40, 0)
         session.findById("wnd[0]/tbar[0]/okcd").text = "/nHU02"
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS").select()
@@ -55,14 +55,30 @@ def Main(container, part_number, client_part_number, serials):
         x = 1
         scroll = 1
         scroll2 = 1
+        original_position = 0
+        original_position2 = 0
+        try:
+
+            for i in range(100):
+                q = session.findById(f"wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_003/ctxtV51VE-EXIDV[0,{original_position}]")
+                original_position += 1
+        except:
+            pass
+        try:
+
+            for i in range(100):
+                q = session.findById(f"wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_004/ctxtVEKPVB-EXIDV[0,{original_position2}]")
+                original_position2 += 1
+        except:
+            pass
 
         for serial in serials:
             try:
-                if x < 13:
+                if x < original_position:
                     session.findById(f'wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_003/ctxtV51VE-EXIDV[0,{x}]').text = serial
                 else:
                     session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_003").verticalScrollbar.position = scroll
-                    session.findById(f'wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_003/ctxtV51VE-EXIDV[0,{12}]').text = serial
+                    session.findById(f'wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_003/ctxtV51VE-EXIDV[0,{original_position-1}]').text = serial
                     scroll += 1
                     pass
                 session.findById("wnd[0]").sendVKey(0)
@@ -82,7 +98,7 @@ def Main(container, part_number, client_part_number, serials):
 
         session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_003").getAbsoluteRow(x - 1).selected = -1
         for y in range(x - 1):
-            if y < 15:
+            if y < original_position2:
                 session.findById(f'wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_004').getAbsoluteRow(y).selected = -1
             else:
                 session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6HUS/ssubTAB:SAPLV51G:6020/tblSAPLV51GTC_HU_004").verticalScrollbar.position = scroll2
@@ -138,6 +154,7 @@ def Main(container, part_number, client_part_number, serials):
 # -Main------------------------------------------------------------------
 
 if __name__ == '__main__':
-    Main("4MP0055","7000019691A0", ["171689403", "171689404", "171689405","171689406","171689407","171689408","171689409","171689410","171689411","171689412","171689413","171689414","171689415"
-                     ,"171689416","171689417","171689418","171689419","171689420","171689421","171689422","171689423"])
+    Main("4MP0055", "7000019691A0", "8626005",
+         ["175716287", "175716288", "175716289", "175716290", "175716291", "175716292", "175716293", "175716294", "175716295", "175716296", "175716297", "175716298", "175716299"
+          , "175716300", "175716301", "175716302", "175716303", "175716304", "175716305", "175716306"])
 # -End-------------------------------------------------------------------

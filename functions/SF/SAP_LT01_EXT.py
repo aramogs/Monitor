@@ -56,7 +56,6 @@ def Main(sap_num, quant, source_bin, destination_bin):
         session.findById("wnd[0]").sendVKey(0)
         result = session.findById("wnd[0]/sbar/pane[0]").Text
         session.findById("wnd[0]/tbar[0]/btn[15]").press()
-        print(re.sub(r"\D", "", result, 0))
         if re.sub(r"\D", "", result, 0) != "":
             response = {"result": int(re.sub(r"\D", "", result, 0)), "error": "N/A"}
         else:
@@ -94,6 +93,6 @@ def Main(sap_num, quant, source_bin, destination_bin):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("5000010050A0", "6")
+    Main("5000010050A0", "6", "103", "GREEN")
 
 # -End-------------------------------------------------------------------

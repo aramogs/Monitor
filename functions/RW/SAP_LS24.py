@@ -51,7 +51,7 @@ def Main(sap_num, storage_type, storage_bin):
                 session.findById("wnd[0]/tbar[0]/btn[15]").press()
                 session.findById("wnd[0]/tbar[0]/btn[15]").press()
                 response = {"result": "N/A", "error": error}
-                return (json.dumps(response))
+                return json.dumps(response)
             else:
                 raise Exception('I know Python!')
         except:
@@ -65,7 +65,7 @@ def Main(sap_num, storage_type, storage_bin):
 
             response = {"result": int(float(re.sub(r",", "", quantity).strip())), "error": "N/A"}
 
-            return (json.dumps(response))
+            return json.dumps(response)
 
     except Exception as e:
         print(e)
