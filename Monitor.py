@@ -3,12 +3,9 @@ from threading import Thread
 from tkinter import *
 
 import pika
-import datetime
 import time
 import window
 import logging
-import json
-import mysql.connector
 
 from functions.FG.Functions import *
 from functions.RM.Functions import *
@@ -116,6 +113,8 @@ def process_inbound(body):
         response = confirm_ext_hu(inbound)
     elif process == "transfer_ext_rp":
         response = transfer_ext_rp(inbound)
+    elif process == "transfer_ext_pr":
+        response = transfer_ext_pr(inbound)
 
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})

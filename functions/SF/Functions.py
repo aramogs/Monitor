@@ -17,7 +17,9 @@ from functions.SF import SAP_LT09
 from functions.SF import SAP_MFHU
 from functions.SF import SAP_LB12
 from functions.SF import SAP_LB12_EXT
-from functions.SF import SAP_LT01_EXT
+from functions.SF import SAP_LT01_EXT_RP
+from functions.SF import SAP_LT01_EXT_PR
+from functions.SF import SAP_LS24
 from functions.SF import SAP_MFBF
 from db.Functions import *
 
@@ -139,15 +141,6 @@ def transfer_sf(inbound):
     result = response["result"]
     error = response["error"]
 
-    # if error == "N/A":
-    #     response2 = json.loads(SAP_LB12.Main(serial_num))
-    #     result = response2["result"]
-    #     error2 = error
-    # else:
-    #     error2 = ""
-    # response = {"result": f'"{result}"', "error": error2, "error_array": error}
-    #
-    # return json.dumps(response)
     if error == "N/A":
         response2 = json.loads(SAP_LB12.Main(serial_num))
         result = response2["result"]
@@ -249,9 +242,54 @@ def transfer_ext_rp(inbound):
         plan_id = material["plan_id"]
         numero_parte = material["numero_parte"]
         cantidad = material["cantidad"]
+        from_Sbin = "103"
+        to_Sbin = "GREEN"
+
+        response = json.loads(SAP_LS24.Main(numero_parte, from_Sbin))
+        if response["error"] != "N/A":
+            response_list.append({"serial": serial, "transfer_order": "N/A", "error": f'{response["error"]}'})
+        else:
+            if int(response["result"]) < int(cantidad):
+                err = round(((int(cantidad) - int(response["result"])) / int(response["result"])) * 100, 2)
+                response_list.append({"serial": serial, "transfer_order": "N/A", "error": f'Requested amount exceeded by {err}% of available material'})
+                # return json.dumps({"serial": "", "result": response_list, "error": "N/A"})
+            else:
+                response = json.loads(SAP_LT01_EXT_RP.Main(numero_parte, cantidad, from_Sbin, to_Sbin))
+
+                transfer_order = response["result"]
+                error = response["error"]
+                response_list.append({"serial": serial, "transfer_order": transfer_order, "error": error})
+
+    response = {"serial": "", "result": response_list, "error": "N/A"}
+    return json.dumps(response)
 
 
-        response = json.loads(SAP_LT01_EXT.Main(numero_parte, cantidad, "103", "GREEN"))
+def transfer_ext_pr(inbound):
+    """
+    Function takes necessary information to perform a transfer order
+    """
+    material_list = inbound['data']
+    response_list = []
+    for material in material_list:
+
+        serial = material["serial"]
+        plan_id = material["plan_id"]
+        numero_parte = material["numero_parte"]
+        cantidad = material["cantidad"]
+        from_Sbin = "GREEN"
+        to_Sbin = "103"
+
+        response = json.loads(SAP_LS24.Main(numero_parte, from_Sbin))
+        if response["error"] != "N/A":
+            return json.dumps({"serial": "N/A", "result": "N/A", "error": f'{response["error"]}'})
+        else:
+            if int(response["result"]) < int(cantidad):
+                err = round(((int(cantidad) - int(response["result"])) / int(response["result"])) * 100, 2)
+                response_list.append({"serial": serial, "transfer_order": "N/A", "error": f'Requested amount exceeded by {err}% of available material'})
+                return json.dumps({"serial": "", "result": response_list, "error": "N/A"})
+            else:
+                response = json.loads(SAP_LT01_EXT_PR.Main(numero_parte, cantidad, from_Sbin, to_Sbin))
+
 
         transfer_order = response["result"]
         error = response["error"]
@@ -259,5 +297,4 @@ def transfer_ext_rp(inbound):
 
     response = {"serial": "", "result": response_list, "error": "N/A"}
     return json.dumps(response)
-
 

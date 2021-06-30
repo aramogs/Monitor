@@ -39,7 +39,7 @@ def Main(material, cantidad, serial, plan_id):
         session.findById("wnd[0]").sendVKey(0)
 
         session.findById("wnd[0]/usr/tabsTAB800/tabpLAGER/ssubTABSUB800:SAPLBARM:0801/ctxtRM61B-MATNR").text = material
-        session.findById("wnd[0]/usr/subSUB800:SAPLBARM:0811/txtRM61B-ERFMG").text = "1"
+        session.findById("wnd[0]/usr/subSUB800:SAPLBARM:0811/txtRM61B-ERFMG").text = cantidad
         session.findById("wnd[0]/usr/txtRM61B-BKTXT").text = f'EXT-{plan_id}'
         session.findById("wnd[0]/usr/tabsTAB800/tabpLAGER/ssubTABSUB800:SAPLBARM:0801/ctxtRM61B-VERID").text = "1"
 

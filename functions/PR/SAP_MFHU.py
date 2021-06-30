@@ -50,7 +50,7 @@ def Main(serial_num):
             if error != "":
                 session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
                 session.findById("wnd[0]").sendVKey(0)
-                response = {"serial_num": serial_num, "result": "N/A", "error": error}
+                response = {"serial_num": serial_num, "result": "N/A", "error": [error]}
                 return json.dumps(response)
             else:
                 raise Exception()
@@ -75,10 +75,12 @@ def Main(serial_num):
         if "not" in messages[0]:
             #messages.pop(0)
             error = messages
+            result = "N/A"
         else:
-            error = "N/A"
+            error = ["N/A"]
+            result = "Successfully BackFlushed"
 
-        response = {"serial_num": serial_num, "result": "N/A", "error": error}
+        response = {"serial_num": serial_num, "result": result, "error": error}
         return json.dumps(response)
     except:
         try:
@@ -88,7 +90,7 @@ def Main(serial_num):
             session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
         except:
             error = session.findById("wnd[0]/sbar/pane[0]").Text
-        response = {"serial_num": "N/A", "result": "N/A", "error": error}
+        response = {"serial_num": "N/A", "result": "N/A", "error": [error]}
 
         # session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"

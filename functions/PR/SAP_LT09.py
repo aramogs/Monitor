@@ -44,27 +44,45 @@ def Main(serial_num):
     session.findById("wnd[0]").sendVKey(0)
     session.findById("wnd[0]/usr/ctxt*LTAP-NLTYP").text = "901"
     session.findById("wnd[0]/usr/ctxt*LTAP-NLBER").text = "001"
-    session.findById("wnd[0]/usr/txt*LTAP-NLPLA").text = "WE-ZONE"
+    session.findById("wnd[0]/usr/txt*LTAP-NLPLA").text = "FGENSAMBLE"
     session.findById("wnd[0]/tbar[0]/btn[11]").press()
     result = session.findById("wnd[0]/sbar/pane[0]").Text
+
     try:
         session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
     except:
         pass
-    response = {"result": f'{result}', "error": "N/A"}
+
+    try:
+      response = {"result": int(float(re.sub(r",", "", result).strip())), "error": "N/A"}
+    except:
+
+      session.findById("wnd[0]/tbar[0]/okcd").text = "/nMFHU"
+      session.findById("wnd[0]").sendVKey(0)
+      session.findById("wnd[0]/usr/ctxtVHURMEAE-EXIDV_I").text = serial_num
+      session.findById("wnd[0]/usr/ctxtVHURMEAE-WERKS").text = "5210"
+      session.findById("wnd[0]/usr/txtVHURMEAE-VERID").text = "1"
+
+      session.findById("wnd[0]").sendVKey(0)
+      session.findById("wnd[0]/usr/subHULIST:SAPLVHURMSUB:1000/subHULIST_TC:SAPLVHURMSUB:1100/tblSAPLVHURMSUBTC_HULIST").getAbsoluteRow(0).selected = -1
+      session.findById("wnd[0]/tbar[1]/btn[18]").press()
+      session.findById("wnd[0]/tbar[0]/btn[12]").press()
+      session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
+      session.findById("wnd[0]").sendVKey(0)
+      response = {"result": "N/A", "error": result}
 
     return json.dumps(response)
 
   except:
 
       error = session.findById("wnd[0]/sbar/pane[0]").Text
-      response = {"result": "N/A", "error": error}
+      response = {"result": "N/A", "error": [error]}
 
       # session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
       session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
       session.findById("wnd[0]").sendVKey(0)
 
-      return (json.dumps(response))
+      return json.dumps(response)
 
   finally:
     session = None
@@ -72,7 +90,7 @@ def Main(serial_num):
     application = None
     SapGuiAuto = None
 
-#-Main------------------------------------------------------------------
+# -Main------------------------------------------------------------------
 if __name__ == '__main__':
     Main("1030875658")
 

@@ -4,21 +4,20 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(serial_num):
+def Main(sap_num, quant, source_bin, destination_bin):
     """
-    Function process material document
-    Transfering the serial number from storage type 901 to storage type VUL/V01
+    Function takes a material number and quantity to perform transfer order
+    The transfer order is from 102/103 to VUL/V02
     """
-    import win32com.client
     import json
+    import re
+    import win32com.client
     import pythoncom
     try:
+
         pythoncom.CoInitialize()
-
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
-
         application = SapGuiAuto.GetScriptingEngine
-
         connection = application.Children(0)
 
         if connection.DisabledByServer == True:
@@ -36,36 +35,38 @@ def Main(serial_num):
             SapGuiAuto = None
             return
 
-        session.findById("wnd[0]/tbar[0]/okcd").text = "/nLB12"
+        session.findById("wnd[0]/tbar[0]/okcd").text = "/nLT01"
         session.findById("wnd[0]").sendVKey(0)
-        session.findById("wnd[0]").sendVKey(0)
-        session.findById("wnd[0]/tbar[1]/btn[44]").press()
-        # session.findById("wnd[0]/usr/ctxtRL03T-LETY2").text = "001"
-        # session.findById("wnd[0]/usr/ctxtRL03T-LGTY2").text = "VUL"
-        # session.findById("wnd[0]/usr/ctxtRL03T-LGTY2").setFocus()
-        # session.findById("wnd[0]/usr/ctxtRL03T-LGTY2").caretPosition = 3
+        session.findById("wnd[0]/usr/ctxtLTAK-LGNUM").text = "521"
+        session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").text = "998"
+        session.findById("wnd[0]/usr/ctxtLTAP-MATNR").text = sap_num
+        session.findById("wnd[0]/usr/txtRL03T-ANFME").text = quant
+        session.findById("wnd[0]/usr/ctxtLTAP-WERKS").text = "5210"
+        session.findById("wnd[0]/usr/ctxtLTAP-LGORT").text = "0012"
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/tbar[1]/btn[5]").press()
-        session.findById("wnd[0]/usr/ctxtLTAP-LETYP").text = "001"
         session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
-        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "VUL"
+        session.findById("wnd[0]/usr/ctxtLTAP-VLTYP").text = "102"
+        session.findById("wnd[0]/usr/ctxtLTAP-VLBER").text = "001"
+        session.findById("wnd[0]/usr/txtLTAP-VLPLA").text = source_bin
+        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "102"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
-        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "V01"
-        session.findById("wnd[0]/usr/ctxtLTAP-NLENR").text = f'0{serial_num}'
-        # session.findById("wnd[0]/usr/ctxtLTAP-NLENR").setFocus()
-        # session.findById("wnd[0]/usr/ctxtLTAP-NLENR").caretPosition = 10
+        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = destination_bin
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]").sendVKey(0)
-        session.findById("wnd[0]/tbar[0]/btn[11]").press()
         result = session.findById("wnd[0]/sbar/pane[0]").Text
+        session.findById("wnd[0]/tbar[0]/btn[15]").press()
+        if re.sub(r"\D", "", result, 0) != "":
+            response = {"result": int(re.sub(r"\D", "", result, 0)), "error": "N/A"}
+        else:
+            response = {"result": "N/A", "error": result}
 
-        session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
-        session.findById("wnd[0]").sendVKey(0)
+        try:
+            session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
+        except:
+            pass
 
-
-        response = {"result": f'{result}', "error": "N/A"}
-
-        return (json.dumps(response))
+        return json.dumps(response)
 
     except:
         try:
@@ -81,7 +82,7 @@ def Main(serial_num):
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 
-        return json.dumps(response)
+        return (json.dumps(response))
 
     finally:
         session = None
@@ -92,6 +93,6 @@ def Main(serial_num):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("174968934")
+    Main("5000010050A0", "6", "103", "GREEN")
 
 # -End-------------------------------------------------------------------

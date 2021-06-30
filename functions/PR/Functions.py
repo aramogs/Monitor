@@ -15,7 +15,7 @@ from db.Functions import *
 
 def create_pr_hu(inbound):
     """
-      Function takes Material Number, Quatity and creates a Handling unit
+      Function takes Material Number, Quantity and creates a Handling unit
       Gets the serial number and returns it to the client
       If there are no errors the function prints a label
       """
@@ -63,8 +63,7 @@ def create_pr_hu(inbound):
 def confirm_pr_hu(inbound):
     """
            Function takes a Handling Unit number and creates a back flush
-           If there are no errors the function returns a transfer order number
-           """
+    """
     serial_num = inbound["serial_num"]
 
     response = json.loads(SAP_MFHU.Main(serial_num))
@@ -72,38 +71,22 @@ def confirm_pr_hu(inbound):
     result = response["result"]
     error = response["error"]
 
-    if error == "N/A":
-        # response = {"serial": serial_num, "result": "OK", "error": "N/A"}
-        # print("OK", response)
-        # return json.dumps(response)
-        response = json.loads(SAP_LT09.Main(serial_num))
+    response = {"serial": serial_num, "result": f'"{result}"', "error": error}
+    return json.dumps(response)
 
-        result = response["result"]
-        error = response["error"]
-
-        if error == "":
-            SAP_ErrorWindows.error_windows()
-
-        response = {"serial": serial_num, "result": f'"{result}"', "error": error}
-        return json.dumps(response)
-    else:
-        response = {"serial": "N/A", "result": f'"{result}"', "error": error}
-        print("error", response)
-        return json.dumps(response)
 
 def confirm_pr_hu_transfer(inbound):
     """
         Function takes a Handling Unit number and creates a back flush
         If there are no errors the function returns a transfer order number
-        """
+    """
     serial_num = inbound["serial_num"]
 
     response = json.loads(SAP_MFHU.Main(serial_num))
 
     result = response["result"]
     error = response["error"]
-
-    if error == "N/A":
+    if error[0] == "N/A":
         # response = {"serial": serial_num, "result": "OK", "error": "N/A"}
         # print("OK", response)
         # return json.dumps(response)
@@ -115,43 +98,22 @@ def confirm_pr_hu_transfer(inbound):
         if error == "":
             SAP_ErrorWindows.error_windows()
 
-        response = {"serial": serial_num, "result": f'"{result}"', "error": error}
+        response = {"serial": serial_num, "result": f'"{result}"', "error": [error]}
         return json.dumps(response)
     else:
         response = {"serial": "N/A", "result": f'"{result}"', "error": error}
-        print("error", response)
+        # print("error", response)
         return json.dumps(response)
+
 
 def no_confirm_pr_hu(inbound):
     """
-            Function takes a Handling Unit number and creates a back flush
-            If there are no errors the function returns a transfer order number
-            """
+            Function simulates to do a Back flush but does nothing
+    """
     serial_num = inbound["serial_num"]
 
-    response = json.loads(SAP_MFHU.Main(serial_num))
-
-    result = response["result"]
-    error = response["error"]
-
-    if error == "N/A":
-        # response = {"serial": serial_num, "result": "OK", "error": "N/A"}
-        # print("OK", response)
-        # return json.dumps(response)
-        response = json.loads(SAP_LT09.Main(serial_num))
-
-        result = response["result"]
-        error = response["error"]
-
-        if error == "":
-            SAP_ErrorWindows.error_windows()
-
-        response = {"serial": serial_num, "result": f'"{result}"', "error": error}
-        return json.dumps(response)
-    else:
-        response = {"serial": "N/A", "result": f'"{result}"', "error": error}
-        print("error", response)
-        return json.dumps(response)
+    response = {"serial": serial_num, "result": "OK", "error": ["N/A"]}
+    return json.dumps(response)
 
 
 def create_alternate_pr_hu(inbound):
@@ -159,7 +121,7 @@ def create_alternate_pr_hu(inbound):
          Function takes Material Number, Quantity and creates a Handling unit
          Gets the serial number and returns it to the client
          If there are no errors the function prints a label
-         """
+    """
     material = inbound["material"]
     cantidad = inbound["cantidad"]
     employee = inbound["employee"]
@@ -206,7 +168,7 @@ def create_pr_hu_del(inbound):
       Function takes Material Number, Quantity and creates a Handling unit
       Gets the serial number and returns it to the client
       If there are no errors the function prints a label
-      """
+    """
     material = inbound["material"]
     cantidad = inbound["cantidad"]
     station = inbound["station"]
@@ -238,7 +200,7 @@ def create_pr_hu_wm(inbound):
           Function takes Material Number, Quantity and creates a Handling unit
           Gets the serial number and returns it to the client
           If there are no errors the function prints a label
-          """
+    """
     material = inbound["material"]
     cantidad = inbound["cantidad"]
     station = inbound["station"]
@@ -252,7 +214,7 @@ def create_pr_hu_wm(inbound):
     error = response["error"]
     result = response["result"]
     SAP_Z_UC.Main("dummy")
-    result_z_wm = json.loads(SAP_Z_UC_WM.Main(printer,serial_num))
+    result_z_wm = json.loads(SAP_Z_UC_WM.Main(printer, serial_num))
 
     if result_z_wm["error"] != "N/A":
         response = {"serial": "N/A", "result": "N/A", "error": result_z_wm["error"]}
