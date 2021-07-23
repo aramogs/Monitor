@@ -117,7 +117,7 @@ def transfer_mp_confirmed(inbound):
 
     bin_exist = SAP_LS11.Main(storage_type, storage_bin)
     if json.loads(bin_exist)["error"] != "N/A":
-        response = json.dumps({"serial": "N/A", "error": "Storage Bin does not exist"})
+        response = json.dumps({"serial": "N/A", "error": f"Storage Bin does not exist at Storage Type {storage_type}"})
     else:
         response = SAP_LT09_Transfer.Main(serials, storage_type, storage_bin)
         if json.loads(response)["error"] != "N/A":

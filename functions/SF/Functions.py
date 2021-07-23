@@ -78,7 +78,7 @@ def handling_sf(inbound):
         r = requests.post(
             f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC/Execute/',
             data=json.dumps(data))
-        # print(r.text)
+        print(r.text)
 
     if error == "":
         sap_error_windows()

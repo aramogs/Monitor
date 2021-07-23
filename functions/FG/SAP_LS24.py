@@ -57,7 +57,7 @@ def Main(part_num):
             else:
                 raise Exception('I know Python!')
         except:
-            # SAP 740 no detecta estas lineas asi que el sorte de fechas se hace ahora en Javascript
+            # SAP 740 no detecta estas lineas asi que el sorteo de fechas se hace ahora en Javascript
             # session.findById("wnd[0]/usr/lbl[54,6]").setFocus
             # session.findById("wnd[0]/usr/lbl[54,6]").caretPosition = 3
             # session.findById("wnd[0]").sendVKey(2)

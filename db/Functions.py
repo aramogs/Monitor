@@ -159,17 +159,19 @@ class DB:
             values = cursor.fetchall()
 
             if len(values) != 0:
-
-                db = mysql.connector.connect(**b10_bartender_config)
-                query = f'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA="{os.getenv("DB_BARTENDER_NAME")}" AND TABLE_NAME="{table[0]}";'
-                cursor2 = db.cursor(buffered=True)
-                cursor2.execute(query)
-                db.commit()
-                db.close()
-                columns = cursor2.fetchall()
-                # print("Columnas", columns)
-                # print("Valores", values)
-                return columns, values[0], table[0]
+                try:
+                    db = mysql.connector.connect(**b10_bartender_config)
+                    query = f'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA="{os.getenv("DB_BARTENDER_NAME")}" AND TABLE_NAME="{table[0]}";'
+                    cursor2 = db.cursor(buffered=True)
+                    cursor2.execute(query)
+                    db.commit()
+                    db.close()
+                    columns = cursor2.fetchall()
+                    # print("Columnas", columns)
+                    # print("Valores", values)
+                    return columns, values[0], table[0]
+                except Exception as e:
+                    print(e)
 
     @staticmethod
     def client_part_number(no_sap):
@@ -199,5 +201,23 @@ class DB:
                 # print("Valores", values)
                 return values[0]
 
+    @staticmethod
+    def insert_cycle_transfer(storage_type, storage_bin, storage_unit, emp_num, status, sap_result):
+        """
+        Function to insert information about transfer order related to cycle count
+        """
+        try:
+            db = mysql.connector.connect(**almacen_config)
+            query = f'INSERT INTO cycle_count (storage_type, storage_bin, storage_unit, emp_num, status, sap_result) ' \
+                    f'VALUES ("{storage_type}", "{storage_bin}", "{storage_unit}", "{emp_num}", "{status}", "{sap_result}")'
+
+            cursor = db.cursor()
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            return cursor.rowcount
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            pass
 
 

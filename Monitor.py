@@ -13,6 +13,7 @@ from functions.SA.Functions import *
 from functions.SF.Functions import *
 from functions.RW.Functions import *
 from functions.PR.Functions import *
+from functions.CC.Functions import *
 
 
 def quit_window():
@@ -115,6 +116,10 @@ def process_inbound(body):
         response = transfer_ext_rp(inbound)
     elif process == "transfer_ext_pr":
         response = transfer_ext_pr(inbound)
+    elif process == "cycle_count_status":
+        response = cycle_count_status(inbound)
+    elif process == "cycle_count_transfer":
+        response = cycle_count_transfer(inbound)
 
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
@@ -152,9 +157,9 @@ def insert_response(response):
 
     lists = {
         "process1": ["partial_transfer", "partial_transfer_confirmed"],
-        "process2": ["handling_sf", "transfer_sa", "transfer_sa_return", "transfer_sfr","transfer_sfr_return", "reprint_sa", "reprint_sf", "transfer_sf","transfer_rework_in",
+        "process2": ["handling_sf", "transfer_sa", "transfer_sa_return", "transfer_sfr", "transfer_sfr_return", "reprint_sa", "reprint_sf", "transfer_sf", "transfer_rework_in",
                      "transfer_rework_out", "create_pr_hu", "confirm_pr_hu", "no_confirm_pr_hu", "create_alternate_pr_hu", "create_pr_hu_del", "create_pr_hu_wm"],
-        "process3": ["transfer_fg", "transfer_fg_confirmed", "transfer_mp_confirmed", "master_fg_gm_verify","confirm_ext_hu","transfer_ext_rp"]
+        "process3": ["transfer_fg", "transfer_fg_confirmed", "transfer_mp_confirmed", "master_fg_gm_verify", "confirm_ext_hu", "transfer_ext_rp", "cycle_count_status"]
     }
     match = False
     for li, processes in lists.items():
