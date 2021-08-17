@@ -120,6 +120,14 @@ def process_inbound(body):
         response = cycle_count_status(inbound)
     elif process == "cycle_count_transfer":
         response = cycle_count_transfer(inbound)
+    elif process == "raw_delivery_verify":
+        response = raw_delivery_verify(inbound)
+    elif process == "raw_fifo_verify":
+        response = raw_fifo_verify(inbound)
+    elif process == "raw_mp_confirmed":
+        response = raw_mp_confirmed(inbound)
+    elif process == "raw_mp_confirmed_v":
+        response = raw_mp_confirmed_v(inbound)
 
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
@@ -159,7 +167,8 @@ def insert_response(response):
         "process1": ["partial_transfer", "partial_transfer_confirmed"],
         "process2": ["handling_sf", "transfer_sa", "transfer_sa_return", "transfer_sfr", "transfer_sfr_return", "reprint_sa", "reprint_sf", "transfer_sf", "transfer_rework_in",
                      "transfer_rework_out", "create_pr_hu", "confirm_pr_hu", "no_confirm_pr_hu", "create_alternate_pr_hu", "create_pr_hu_del", "create_pr_hu_wm"],
-        "process3": ["transfer_fg", "transfer_fg_confirmed", "transfer_mp_confirmed", "master_fg_gm_verify", "confirm_ext_hu", "transfer_ext_rp", "cycle_count_status"]
+        "process3": ["transfer_fg", "transfer_fg_confirmed", "transfer_mp_confirmed", "master_fg_gm_verify", "confirm_ext_hu", "transfer_ext_rp", "cycle_count_status",
+                     "raw_delivery_verify"]
     }
     match = False
     for li, processes in lists.items():

@@ -21,7 +21,7 @@ b10_bartender_config = {
     'raise_on_warnings': True
 }
 
-almacen_config = {
+warehouse_config = {
     'user': f'{os.getenv("DB_USER")}',
     'password': f'{os.getenv("DB_PASSWORD")}',
     'host': f'{os.getenv("DB_HOST")}',
@@ -54,7 +54,7 @@ class DB:
         Function to insert information about transfer order
         """
         try:
-            db = mysql.connector.connect(**almacen_config)
+            db = mysql.connector.connect(**warehouse_config)
             query = f'INSERT INTO partial_transfer (emp_num, part_num, no_serie, linea, transfer_order) ' \
                     f'VALUES ({emp_num}, "{part_num}", {no_serie}, "{linea}", {transfer_order})'
 
@@ -73,7 +73,7 @@ class DB:
         Function to insert information about transfer order
         """
         try:
-            db = mysql.connector.connect(**almacen_config)
+            db = mysql.connector.connect(**warehouse_config)
             query = f'INSERT INTO complete_transfer (emp_num, no_serie, result, area) ' \
                     f'VALUES ({emp_num}, {no_serie}, "{result}", "{area}")'
             cursor = db.cursor()
@@ -86,12 +86,12 @@ class DB:
             pass
 
     @staticmethod
-    def insert_master_transfer(emp_num ,part_num, no_serie_uc, no_serie_um,transfer_order):
+    def insert_master_transfer(emp_num, part_num, no_serie_uc, no_serie_um, transfer_order):
         """
         Function to insert information about transfer order
         """
         try:
-            db = mysql.connector.connect(**almacen_config)
+            db = mysql.connector.connect(**warehouse_config)
             query = f'INSERT INTO master_transfer (emp_num,part_num, no_serie_uc,no_serie_um,transfer_order) ' \
                     f'VALUES ({emp_num}, "{part_num}", {no_serie_uc}, {no_serie_um}, {transfer_order})'
             cursor = db.cursor()
@@ -105,16 +105,16 @@ class DB:
 
     @staticmethod
     def select_tables():
-            """
-            Function to get table names from database
-            """
-            db = mysql.connector.connect(**b10_bartender_config)
-            query = f'SELECT table_name FROM information_schema.tables WHERE table_schema = "{os.getenv("DB_BARTENDER_NAME")}"'
-            cursor = db.cursor(buffered=True)
-            cursor.execute(query)
-            db.commit()
-            db.close()
-            return cursor.fetchall()
+        """
+        Function to get table names from database
+        """
+        db = mysql.connector.connect(**b10_bartender_config)
+        query = f'SELECT table_name FROM information_schema.tables WHERE table_schema = "{os.getenv("DB_BARTENDER_NAME")}"'
+        cursor = db.cursor(buffered=True)
+        cursor.execute(query)
+        db.commit()
+        db.close()
+        return cursor.fetchall()
 
     @staticmethod
     def select_printer(estacion):
@@ -141,7 +141,6 @@ class DB:
         db.commit()
         db.close()
         return cursor.fetchall()
-
 
     @staticmethod
     def search_union(no_sap):
@@ -189,7 +188,6 @@ class DB:
             values = cursor.fetchall()
 
             if len(values) != 0:
-
                 db = mysql.connector.connect(**b10_bartender_config)
                 query = f'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA="{os.getenv("DB_BARTENDER_NAME")}" AND TABLE_NAME="{table[0]}";'
                 cursor2 = db.cursor(buffered=True)
@@ -207,7 +205,7 @@ class DB:
         Function to insert information about transfer order related to cycle count
         """
         try:
-            db = mysql.connector.connect(**almacen_config)
+            db = mysql.connector.connect(**warehouse_config)
             query = f'INSERT INTO cycle_count (storage_type, storage_bin, storage_unit, emp_num, status, sap_result) ' \
                     f'VALUES ("{storage_type}", "{storage_bin}", "{storage_unit}", "{emp_num}", "{status}", "{sap_result}")'
 
@@ -220,4 +218,37 @@ class DB:
             print("DB-Error:   [x] %s" % str(e))
             pass
 
+    @staticmethod
+    def insert_raw_delivery(values):
+        """
+        Function to insert information about transfer order
+        """
+        try:
+            db = mysql.connector.connect(**warehouse_config)
+            query = f'INSERT INTO raw_delivery (numero_sap, descripcion_sap, contenedores, sup_name, turno, status) VALUES (%s, %s, %s, %s, %s, %s)'
+            cursor = db.cursor()
+            cursor.executemany(query, values)
+            db.commit()
+            db.close()
+            return cursor.rowcount
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            pass
 
+    @staticmethod
+    def insert_raw_movement(raw_id, storage_type, emp_num, no_serie, result):
+        """
+        Function to insert information about transfer order
+        """
+        try:
+            db = mysql.connector.connect(**warehouse_config)
+            query = f'INSERT INTO raw_movement (raw_id, storage_type, emp_num, no_serie, sap_result) ' \
+                    f'VALUES ("{raw_id}", "{storage_type}", {emp_num}, {no_serie}, "{result}")'
+            cursor = db.cursor()
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            return cursor.rowcount
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            pass

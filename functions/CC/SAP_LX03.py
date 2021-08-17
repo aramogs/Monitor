@@ -42,7 +42,7 @@ def Main(storage_type, storage_bin):
 
         serial = session.findById("wnd[0]/usr/lbl[5,7]").Text
         #############
-        ## Testing scroll
+
         original_position = 0
         maxScroll = session.findById("wnd[0]/usr").verticalScrollbar.Maximum
         try:
