@@ -23,6 +23,7 @@ from functions.RM import SAP_MM03
 from functions.RM import SAP_LT09
 from functions.RM import SAP_SE16_MAKT
 from functions.RM import SAP_LS24
+from functions.RM import SAP_LS33
 
 current_directory = os.path.abspath(os.getcwd())
 
@@ -36,6 +37,11 @@ def partial_transfer(inbound):
         serial_num = inbound["serial_num"]
 
         response = json.loads(SAP_LT09.Main(serial_num))
+        storage_type = storage_unit_location(serial_num)
+        if storage_type != "MP":
+            response = {"serial": "N/A", "material": "N/A", "material_description": "N/A", "material_w": "N/A", "cantidad": "N/A",
+                        "error": "Partial Transfer only available for Storage Type MP"}
+            return json.dumps(response)
 
         material_number = response["material_number"]
         material_description = response["material_description"]
@@ -45,18 +51,17 @@ def partial_transfer(inbound):
 
         if material_number != "N/A":
             material_w = material_weigth(material_number)
+
         else:
             material_w = "N/A"
 
         if error == "":
             sap_error_windows()
 
-        response = {"serial": serial_num, "material": material_number, "material_description": material_description,
-                    "material_w": material_w, "cantidad": quant, "error": error}
+        response = {"serial": serial_num, "material": material_number, "material_description": material_description, "material_w": material_w, "cantidad": quant, "error": error}
         return json.dumps(response)
     except KeyError:
-        response = {"serial": "N/A", "material": "N/A", "material_description": "N/A",
-                    "material_w": "N/A", "cantidad": "N/A", "error": "VERIFY JSON"}
+        response = {"serial": "N/A", "material": "N/A", "material_description": "N/A", "material_w": "N/A", "cantidad": "N/A", "error": "VERIFY JSON"}
         return json.dumps(response)
 
 
@@ -66,6 +71,14 @@ def material_weigth(_material):
     """
     response = json.loads(SAP_MM03.Main(_material))
     return response["net_weight"]
+
+
+def storage_unit_location(_storage_unit):
+    """
+    Function takes storage unit, checks storage type and returns it
+    """
+    response = json.loads(SAP_LS33.Main(_storage_unit))
+    return response["storage_type"]
 
 
 def partial_transfer_confirmed(inbound):
@@ -112,7 +125,13 @@ def transfer_mp_confirmed(inbound):
     storage_bin = inbound["storage_bin"]
     serials = (inbound["serial_num"]).split(",")
     emp_num = inbound["user_id"]
-    storage_type = "MP1"
+    storage_type = inbound["storage_type"]
+
+    for serial in serials:
+        _storage_type = storage_unit_location(serial)
+        if storage_type != _storage_type:
+            response = {"serial": "N/A", "error": f"Storage Unit does not exist at Storage Type {storage_type}"}
+            return json.dumps(response)
 
     bin_exist = SAP_LS11.Main(storage_type, storage_bin)
     if json.loads(bin_exist)["error"] != "N/A":
@@ -213,11 +232,11 @@ def raw_mp_confirmed_v(inbound):
     storage_type = "MP"
 
     if shift == "T1":
-        storage_bin = "H0110"
+        storage_bin = "ITVINDEL1"
     elif shift == "T2":
-        storage_bin = "H0111"
+        storage_bin = "ITVINDEL2"
     elif shift == "T3":
-        storage_bin = "H0112"
+        storage_bin = "ITVINDEL3"
 
     response = SAP_LT09_Transfer.Main(serials, storage_type, storage_bin)
     if json.loads(response)["error"] != "N/A":

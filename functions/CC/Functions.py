@@ -84,16 +84,16 @@ def cycle_count_transfer(inbound):
     # In case an storage unit was in the bin but not physically the storage unit will be transfer to storage bin CICLICOFG or CICLICOMP
     # For finished goods the storage type after the transfer will change to 901 this to not interrupt master label creation as FG does not allow it
     # In case an storage unit was physically but not in the bin the material will be transfer to the same bin
-    case1fg_bin = "CICLICOFG"
-    case1fg_st = "901"
-    case1mp_bin = "CICLICORAW"
 
     if storage_type == "FG":
-        st = case1fg_st
-        sb = case1fg_bin
+        st = "901"
+        sb = "CICLICOFG"
     elif storage_type == "MP1":
         st = storage_type
-        sb = case1mp_bin
+        sb = "CICLICRAW1"
+    elif storage_type == "MP":
+        st = storage_type
+        sb = "CICLICORAW"
     #############################################################################################################################################
     #############################################################################################################################################
     #############################################################################################################################################
