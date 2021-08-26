@@ -54,7 +54,7 @@ def Main(material, quantity, serial_num):
         # session.findById("wnd[0]/usr/ctxtLTAP-LGORT").setFocus()
         # session.findById("wnd[0]/usr/ctxtLTAP-LGORT").caretPosition = 4
         session.findById("wnd[0]").sendVKey(0)
-        session.findById("wnd[0]/usr/ctxtLTAP-VLTYP").text = "MP1"
+        session.findById("wnd[0]/usr/ctxtLTAP-VLTYP").text = "MP"
         session.findById("wnd[0]/usr/ctxtLTAP-VLBER").text = "001"
         session.findById("wnd[0]/usr/ctxtLTAP-VLENR").text = serial_num
         session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "102"
