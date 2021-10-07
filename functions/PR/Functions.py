@@ -195,6 +195,39 @@ def create_pr_hu_del(inbound):
     return json.dumps(response)
 
 
+
+def create_alt_pr_hu_del(inbound):
+    """
+      Function takes Material Number, Quantity and creates a Handling unit
+      Gets the serial number and returns it to the client
+      If there are no errors the function prints a label
+    """
+    material = inbound["material"]
+    cantidad = inbound["cantidad"]
+    station = inbound["station"]
+
+    printe = DB.select_printer(station)
+    printer = printe[0][0]
+
+    response = json.loads(SAP_MFP11_ALT.Main(material[1:], cantidad))
+
+    serial_num = response["serial_num"]
+    error = response["error"]
+    result = response["result"]
+
+    result_z = json.loads(SAP_Z_UC_DEL.Main(printer))
+
+    if result_z["error"] != "N/A":
+        response = {"serial": "N/A", "result": "N/A", "error": result_z["error"]}
+        return json.dumps(response)
+
+    if error == "":
+        SAP_ErrorWindows.error_windows()
+
+    response = {"serial": f'{serial_num}', "result": f'"{result}"', "error": error}
+    return json.dumps(response)
+
+
 def create_pr_hu_wm(inbound):
     """
           Function takes Material Number, Quantity and creates a Handling unit
@@ -209,6 +242,39 @@ def create_pr_hu_wm(inbound):
     printer = printe[0][0]
 
     response = json.loads(SAP_MFP11.Main(material[1:], cantidad))
+
+    serial_num = response["serial_num"]
+    error = response["error"]
+    result = response["result"]
+    SAP_Z_UC.Main("dummy")
+    result_z_wm = json.loads(SAP_Z_UC_WM.Main(printer, serial_num))
+
+    if result_z_wm["error"] != "N/A":
+        response = {"serial": "N/A", "result": "N/A", "error": result_z_wm["error"]}
+        return json.dumps(response)
+
+    if error == "":
+        SAP_ErrorWindows.error_windows()
+
+    response = {"serial": f'{serial_num}', "result": f'"{result}"', "error": error}
+    return json.dumps(response)
+
+
+
+def create_alt_pr_hu_wm(inbound):
+    """
+          Function takes Material Number, Quantity and creates a Handling unit
+          Gets the serial number and returns it to the client
+          If there are no errors the function prints a label
+    """
+    material = inbound["material"]
+    cantidad = inbound["cantidad"]
+    station = inbound["station"]
+
+    printe = DB.select_alt_printer(station)
+    printer = printe[0][0]
+
+    response = json.loads(SAP_MFP11_ALT.Main(material[1:], cantidad))
 
     serial_num = response["serial_num"]
     error = response["error"]

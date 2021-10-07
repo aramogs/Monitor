@@ -128,6 +128,10 @@ def process_inbound(body):
         response = raw_mp_confirmed(inbound)
     elif process == "raw_mp_confirmed_v":
         response = raw_mp_confirmed_v(inbound)
+    elif process == "create_alt_pr_hu_del":
+        response = create_alt_pr_hu_del(inbound)
+    elif process == "create_alt_pr_hu_wm":
+        response = create_alt_pr_hu_wm(inbound)
 
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
