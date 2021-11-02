@@ -29,6 +29,14 @@ warehouse_config = {
     'raise_on_warnings': True
 }
 
+extrusion_config = {
+    'user': f'{os.getenv("DB_EX_USER")}',
+    'password': f'{os.getenv("DB_EX_PASSWORD")}',
+    'host': f'{os.getenv("DB_EX_HOST")}',
+    'database': f'{os.getenv("DB_EX_NAME")}',
+    'auth_plugin': 'mysql_native_password',
+    'raise_on_warnings': True
+}
 
 class DB:
     @staticmethod
