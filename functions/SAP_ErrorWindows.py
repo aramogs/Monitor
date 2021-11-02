@@ -4,8 +4,7 @@ import json
 import win32con
 import win32gui
 
-error_window = ["SAP GUI for Windows 730", "SAP GUI for Windows 740", "SAP GUI for Windows 760", "MessageBox", "Print",
-                "SAP Logon for Windows has stop working"]
+error_window = ["SAP GUI for Windows 730", "SAP GUI for Windows 740", "SAP GUI for Windows 760", "MessageBox", "Print", "SAP Logon for Windows has stop working"]
 titles = []
 
 enum_windows = ctypes.windll.user32.EnumWindows

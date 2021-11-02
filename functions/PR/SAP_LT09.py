@@ -54,9 +54,11 @@ def Main(serial_num):
         pass
 
     try:
-      response = {"result": int(float(re.sub(r",", "", result).strip())), "error": "N/A"}
-    except:
 
+      response = {"result": f'Transfer Order Created { int(float(re.findall("[0-9]+", result)[0])) }', "error": "N/A"}
+
+    except Exception as e:
+      print(e)
       session.findById("wnd[0]/tbar[0]/okcd").text = "/nMFHU"
       session.findById("wnd[0]").sendVKey(0)
       session.findById("wnd[0]/usr/ctxtVHURMEAE-EXIDV_I").text = serial_num
@@ -92,6 +94,6 @@ def Main(serial_num):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("1030875658")
+    Main("178080974")
 
 #-End-------------------------------------------------------------------

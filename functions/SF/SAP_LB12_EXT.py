@@ -41,7 +41,7 @@ def Main():
         session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
         session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "102"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
-        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "GREEN"
+        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "EXT"
         # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").setFocus()
         # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").caretPosition = 5
         session.findById("wnd[0]").sendVKey(0)

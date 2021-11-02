@@ -221,11 +221,15 @@ def confirm_ext_hu(inbound):
         cantidad = material['cantidad']
         serial = material['serial']
         plan_id = material['plan_id']
+        user_id = inbound['user_id']
 
         response = json.loads(SAP_MFBF.Main(numero_parte, cantidad, serial, plan_id))
         response_list.append(response)
         if response['result'] != 'N/A':
             transfer = json.loads(SAP_LB12_EXT.Main())
+            DB.update_ex_backflush(response['result'], response['serial_num'], user_id)
+        else:
+            DB.update_ex_backflush_error(response['error'], response['serial_num'], user_id)
 
     return json.dumps({"result": response_list, "error": "N/A"})
 
@@ -242,7 +246,7 @@ def transfer_ext_rp(inbound):
         plan_id = material["plan_id"]
         numero_parte = material["numero_parte"]
         cantidad = material["cantidad"]
-        from_Sbin = "103"
+        from_Sbin = "EXT"
         to_Sbin = "GREEN"
 
         response = json.loads(SAP_LS24.Main(numero_parte, from_Sbin))
@@ -277,11 +281,12 @@ def transfer_ext_pr(inbound):
         numero_parte = material["numero_parte"]
         cantidad = material["cantidad"]
         from_Sbin = "GREEN"
-        to_Sbin = "103"
+        to_Sbin = "EXT"
 
         response = json.loads(SAP_LS24.Main(numero_parte, from_Sbin))
         if response["error"] != "N/A":
-            return json.dumps({"serial": "N/A", "result": "N/A", "error": f'{response["error"]}'})
+
+            return json.dumps( {"serial": "", "result": [{"serial": serial, "transfer_order": "N/A", "error": f'{response["error"]}'}], "error": "N/A"})
         else:
             if int(response["result"]) < int(cantidad):
                 err = round(((int(cantidad) - int(response["result"])) / int(response["result"])) * 100, 2)
@@ -289,7 +294,6 @@ def transfer_ext_pr(inbound):
                 return json.dumps({"serial": "", "result": response_list, "error": "N/A"})
             else:
                 response = json.loads(SAP_LT01_EXT_PR.Main(numero_parte, cantidad, from_Sbin, to_Sbin))
-
 
         transfer_order = response["result"]
         error = response["error"]
