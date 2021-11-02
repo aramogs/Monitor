@@ -133,6 +133,9 @@ def process_inbound(body):
     elif process == "create_alt_pr_hu_wm":
         response = create_alt_pr_hu_wm(inbound)
 
+    elif process == "handling_ext":
+        response = handling_ext(inbound)
+
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
     return response

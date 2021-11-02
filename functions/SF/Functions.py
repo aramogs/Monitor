@@ -298,3 +298,49 @@ def transfer_ext_pr(inbound):
     response = {"serial": "", "result": response_list, "error": "N/A"}
     return json.dumps(response)
 
+
+def handling_ext(inbound):
+    """
+    Function takes Material Number, Quatity and creates a Handling unit
+    Gets the serial number and returns it to the client
+    If there are no errors the function prints a label
+    """
+    material = inbound["material"]
+    cantidad = inbound["cantidad"]
+    linea = inbound["linea"]
+
+    response = json.loads(SAP_MFP11.Main(material, cantidad))
+
+    serial_num = response["serial_num"]
+    error = response["error"]
+    result = response["result"]
+
+    if error == "N/A":
+        printe = DB.select_printer(linea)
+        printer = printe[0][0]
+
+        result2 = DB.search_union(material)
+        columns = result2[0]
+        values = result2[1]
+
+        data = json.loads('{}')
+
+        for column, value in zip(columns, values):
+            data.update({column[0]: f'{value}'})
+
+        data.update({"printer": f'{printer}'})
+        data.update({"serial_num": f'{serial_num}'})
+        data.update({"real_quant": f'{cantidad}'})
+        data.update({"line": f'{linea}'})
+
+        r = requests.post(
+            f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC/Execute/',
+            data=json.dumps(data))
+        print(r.text)
+
+    if error == "":
+        sap_error_windows()
+
+    response = {"serial": f'{serial_num}', "result": f'"{result}"', "error": error}
+    return json.dumps(response)
+
