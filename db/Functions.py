@@ -261,6 +261,39 @@ class DB:
             print("DB-Error:   [x] %s" % str(e))
             pass
 
+    @staticmethod
+    def update_ex_backflush(result_acred, serial_num, user_id):
+        """
+        Function to Update Extrusion labels successfully back flushed
+        """
+        try:
+            db = mysql.connector.connect(**extrusion_config)
+            query = f'UPDATE extrusion_labels SET status="Acreditado", result_acred="{result_acred}", emp_acred={user_id} WHERE serial={serial_num}'
+            cursor = db.cursor()
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            return cursor.rowcount
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            pass
+
+    @staticmethod
+    def update_ex_backflush_error(error, serial_num, user_id):
+        """
+        Function to Update Extrusion labels with errors at back flushed
+        """
+        try:
+            db = mysql.connector.connect(**extrusion_config)
+            query = f'UPDATE extrusion_labels SET result_acred="{error}", emp_acred={user_id} WHERE serial={serial_num}'
+            cursor = db.cursor()
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            return cursor.rowcount
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            pass
 
     @staticmethod
     def select_printer_ext(linea):
