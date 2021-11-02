@@ -294,3 +294,16 @@ class DB:
         except Exception as e:
             print("DB-Error:   [x] %s" % str(e))
             pass
+
+    @staticmethod
+    def select_printer_ext(linea):
+        """
+        Function to get printer from station id
+        """
+        db = mysql.connector.connect(**b10_config)
+        query = f'SELECT impre FROM station_conf WHERE no_estacion = "{linea}"'
+        cursor = db.cursor(buffered=True)
+        cursor.execute(query)
+        db.commit()
+        db.close()
+        return cursor.fetchall()
