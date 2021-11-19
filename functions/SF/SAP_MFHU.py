@@ -57,8 +57,18 @@ def Main(serial_num):
         except:
             pass
         session.findById("wnd[0]/tbar[0]/btn[11]").press()
-        session.findById("wnd[0]").sendVKey(5)
-        session.findById("wnd[0]/tbar[1]/btn[94]").press()
+        try:
+            error = session.findById("wnd[0]/sbar").Text
+            if error != "Handling unit backflush completed":
+                response = {"serial_num": serial_num, "result": "N/A", "error": error}
+                session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
+                session.findById("wnd[0]").sendVKey(0)
+                return json.dumps(response)
+            else:
+                raise Exception()
+        except:
+            session.findById("wnd[0]").sendVKey(5)
+            session.findById("wnd[0]/tbar[1]/btn[94]").press()
         try:
             messages = []
             y = 5
@@ -75,6 +85,7 @@ def Main(serial_num):
         if "not" in messages[0]:
             #messages.pop(0)
             error = messages
+            print(messages)
         else:
             error = "N/A"
 

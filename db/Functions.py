@@ -300,10 +300,80 @@ class DB:
         """
         Function to get printer from station id
         """
-        db = mysql.connector.connect(**b10_config)
-        query = f'SELECT impre FROM station_conf WHERE no_estacion = "{linea}"'
+        db = mysql.connector.connect(**extrusion_config)
+        query = f'SELECT printer FROM extrusion_conf WHERE linea = "{linea}"'
         cursor = db.cursor(buffered=True)
         cursor.execute(query)
         db.commit()
         db.close()
         return cursor.fetchall()
+
+    @staticmethod
+    def update_plan_ext(plan_id):
+        """
+        Function to get printer from station id
+        """
+        db = mysql.connector.connect(**extrusion_config)
+        query = f'UPDATE production_plan SET status = "Impreso" WHERE plan_id = "{plan_id}"'
+        cursor = db.cursor(buffered=True)
+        cursor.execute(query)
+        db.commit()
+        db.close()
+        # print(cursor.rowcount)
+
+    @staticmethod
+    def update_print_ext_return(serial_num, result):
+        """
+        Function to get printer from station id
+        """
+
+        db = mysql.connector.connect(**extrusion_config)
+        query = f'UPDATE extrusion_labels SET result_return = "{result}" WHERE serial = "{serial_num}"'
+        cursor = db.cursor(buffered=True)
+        cursor.execute(query)
+        db.commit()
+        db.close()
+        # return cursor.fetchall()
+
+    @staticmethod
+    def update_print_ext(serial_num, plan_id, material, emp_num, cantidad, impresoType):
+        """
+        Function to get printer from station id
+        """
+
+        db = mysql.connector.connect(**extrusion_config)
+        query = f'INSERT INTO extrusion_labels (serial, plan_id, numero_parte, emp_num, cantidad, status) VALUES({serial_num},"{plan_id}", "{material}", {emp_num}, {cantidad}, "{impresoType}")'
+        cursor = db.cursor(buffered=True)
+        cursor.execute(query)
+        db.commit()
+        db.close()
+        # return cursor.fetchall()
+
+    @staticmethod
+    def acred_print_ext(serial_num, result_acred, emp_num):
+        """
+        Function to get printer from station id
+        """
+
+        db = mysql.connector.connect(**extrusion_config)
+        query = f'UPDATE extrusion_labels SET status = "Acreditado", result_acred = "{result_acred}", emp_acred = "{emp_num}" WHERE serial = "{serial_num}"'
+        cursor = db.cursor(buffered=True)
+        cursor.execute(query)
+        db.commit()
+        db.close()
+        # return cursor.fetchall()
+
+    @staticmethod
+    def trannsfer_print_ext(serial_num, result_transfer, emp_transfer):
+        """
+        Function to get printer from station id
+        """
+
+        db = mysql.connector.connect(**extrusion_config)
+        query = f'UPDATE extrusion_labels SET status = "Transferido", result_transfer = "{result_transfer}", emp_transfer = "{emp_transfer}" WHERE serial = "{serial_num}"'
+        cursor = db.cursor(buffered=True)
+        cursor.execute(query)
+        db.commit()
+        db.close()
+        # return cursor.fetchall()
+

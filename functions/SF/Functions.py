@@ -4,6 +4,7 @@ Semi Finished Functions
 Functions for semi finished products, currently used for Vulcanized Hoses
 
 """
+import re
 import json
 import requests
 from functions import SAP_ErrorWindows
@@ -18,6 +19,7 @@ from functions.SF import SAP_MFHU
 from functions.SF import SAP_LB12
 from functions.SF import SAP_LB12_EXT
 from functions.SF import SAP_LT01_EXT_RP
+from functions.SF import SAP_LT09_EXT_RP
 from functions.SF import SAP_LT01_EXT_PR
 from functions.SF import SAP_LS24
 from functions.SF import SAP_MFBF
@@ -38,6 +40,7 @@ def sap_error_windows():
     error = json.loads(SAP_ErrorWindows.error_windows())
     print(error)
     sap_login()
+
 
 def handling_sf(inbound):
     """
@@ -82,7 +85,6 @@ def handling_sf(inbound):
 
     if error == "":
         sap_error_windows()
-
 
     response = {"serial": f'{serial_num}', "result": f'"{result}"', "error": error}
     return json.dumps(response)
@@ -145,7 +147,7 @@ def transfer_sf(inbound):
         response2 = json.loads(SAP_LB12.Main(serial_num))
         result = response2["result"]
 
-    response = {"serial": serial_num,"result": f'"{result}"', "error": error}
+    response = {"serial": serial_num, "result": f'"{result}"', "error": error}
     return json.dumps(response)
 
 
@@ -221,11 +223,15 @@ def confirm_ext_hu(inbound):
         cantidad = material['cantidad']
         serial = material['serial']
         plan_id = material['plan_id']
+        user_id = inbound['user_id']
 
-        response = json.loads(SAP_MFBF.Main(numero_parte, cantidad, serial, plan_id))
+        response = json.loads(SAP_MFHU.Main(serial))
         response_list.append(response)
-        if response['result'] != 'N/A':
-            transfer = json.loads(SAP_LB12_EXT.Main())
+        error = response["error"]
+        if error == 'N/A':
+            transfer = json.loads(SAP_LB12_EXT.Main(serial))
+            print(transfer['result'])
+            DB.acred_print_ext(serial, transfer['result'],user_id)
 
     return json.dumps({"result": response_list, "error": "N/A"})
 
@@ -235,6 +241,7 @@ def transfer_ext_rp(inbound):
     Function takes necessary information to perform a transfer order
     """
     material_list = inbound['data']
+    emp_num = inbound['user_id']
     response_list = []
     for material in material_list:
 
@@ -245,30 +252,24 @@ def transfer_ext_rp(inbound):
         from_Sbin = "103"
         to_Sbin = "GREEN"
 
-        response = json.loads(SAP_LS24.Main(numero_parte, from_Sbin))
-        if response["error"] != "N/A":
-            response_list.append({"serial": serial, "transfer_order": "N/A", "error": f'{response["error"]}'})
-        else:
-            if int(response["result"]) < int(cantidad):
-                err = round(((int(cantidad) - int(response["result"])) / int(response["result"])) * 100, 2)
-                response_list.append({"serial": serial, "transfer_order": "N/A", "error": f'Requested amount exceeded by {err}% of available material'})
-                # return json.dumps({"serial": "", "result": response_list, "error": "N/A"})
-            else:
-                response = json.loads(SAP_LT01_EXT_RP.Main(numero_parte, cantidad, from_Sbin, to_Sbin))
+        if len(str(serial)) < 10:
+            serial = "0" + str(serial)
 
-                transfer_order = response["result"]
-                error = response["error"]
-                response_list.append({"serial": serial, "transfer_order": transfer_order, "error": error})
+        response = SAP_LT09_EXT_RP.Main(serial)
+        if json.loads(response)["error"] == "N/A":
+            DB.trannsfer_print_ext(serial, json.loads(response)['result'], emp_num)
+        response_list.append(json.loads(response))
 
     response = {"serial": "", "result": response_list, "error": "N/A"}
     return json.dumps(response)
 
 
-def transfer_ext_pr(inbound):
+def transfer_ext_rp(inbound):
     """
     Function takes necessary information to perform a transfer order
     """
     material_list = inbound['data']
+    emp_num = inbound['user_id']
     response_list = []
     for material in material_list:
 
@@ -276,28 +277,19 @@ def transfer_ext_pr(inbound):
         plan_id = material["plan_id"]
         numero_parte = material["numero_parte"]
         cantidad = material["cantidad"]
-        from_Sbin = "GREEN"
-        to_Sbin = "103"
+        from_Sbin = "103"
+        to_Sbin = "GREEN"
 
-        response = json.loads(SAP_LS24.Main(numero_parte, from_Sbin))
-        if response["error"] != "N/A":
-            return json.dumps({"serial": "N/A", "result": "N/A", "error": f'{response["error"]}'})
-        else:
-            if int(response["result"]) < int(cantidad):
-                err = round(((int(cantidad) - int(response["result"])) / int(response["result"])) * 100, 2)
-                response_list.append({"serial": serial, "transfer_order": "N/A", "error": f'Requested amount exceeded by {err}% of available material'})
-                return json.dumps({"serial": "", "result": response_list, "error": "N/A"})
-            else:
-                response = json.loads(SAP_LT01_EXT_PR.Main(numero_parte, cantidad, from_Sbin, to_Sbin))
+        if len(str(serial)) < 10:
+            serial = "0" + str(serial)
 
-
-        transfer_order = response["result"]
-        error = response["error"]
-        response_list.append({"serial": serial, "transfer_order": transfer_order, "error": error})
+        response = SAP_LT09_EXT_RP.Main(serial)
+        if json.loads(response)["error"] == "N/A":
+            DB.trannsfer_print_ext(serial, json.loads(response)['result'], emp_num)
+        response_list.append(json.loads(response))
 
     response = {"serial": "", "result": response_list, "error": "N/A"}
     return json.dumps(response)
-
 
 def handling_ext(inbound):
     """
@@ -307,40 +299,113 @@ def handling_ext(inbound):
     """
     material = inbound["material"]
     cantidad = inbound["cantidad"]
-    linea = inbound["linea"]
+    station = inbound["station"]
+    operator_name = inbound["operator_name"]
+    numero_etiquetas = inbound["numero_etiquetas"]
+    operator_id = inbound["operator_id"]
+    plan_id = inbound["plan_id"]
+    impresoType = inbound["impresoType"]
 
-    response = json.loads(SAP_MFP11.Main(material, cantidad))
+    response_list = []
+    for i in range(numero_etiquetas):
+        response = json.loads(SAP_MFP11.Main(material, cantidad))
 
-    serial_num = response["serial_num"]
-    error = response["error"]
-    result = response["result"]
+        serial_num = response["serial_num"]
+        error = response["error"]
+        result = response["result"]
+        response_list.append({"serial_num": f'{serial_num}', "result": f'{result}', "error": error})
 
-    if error == "N/A":
-        printe = DB.select_printer(linea)
-        printer = printe[0][0]
+        if error == "N/A":
+            printe = DB.select_printer_ext(station)
+            printer = printe[0][0]
 
-        result2 = DB.search_union(material)
-        columns = result2[0]
-        values = result2[1]
+            result2 = DB.search_union(material)
+            columns = result2[0]
+            values = result2[1]
 
-        data = json.loads('{}')
+            data = json.loads('{}')
 
-        for column, value in zip(columns, values):
-            data.update({column[0]: f'{value}'})
+            for column, value in zip(columns, values):
+                data.update({column[0]: f'{value}'})
 
-        data.update({"printer": f'{printer}'})
-        data.update({"serial_num": f'{serial_num}'})
-        data.update({"real_quant": f'{cantidad}'})
-        data.update({"line": f'{linea}'})
+                data.update({"printer": f'{printer}'})
+                data.update({"serial": f'{serial_num}'})
+                data.update({"quant": f'{cantidad}'})
+                data.update({"line": f'{station}'})
+                data.update({"emp_num": f'{operator_name}'})
 
-        r = requests.post(
-            f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC/Execute/',
-            data=json.dumps(data))
-        print(r.text)
+            r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/EXT/Execute/', data=json.dumps(data))
+            # print(r.status_code)
+            if r.status_code == 200:
+                DB.update_plan_ext(plan_id)
+                DB.update_print_ext(serial_num, plan_id, material, operator_id, cantidad, impresoType)
 
-    if error == "":
-        sap_error_windows()
+            if error == "":
+                sap_error_windows()
 
-    response = {"serial": f'{serial_num}', "result": f'"{result}"', "error": error}
+    response = {"result": f'"{response_list}"', "error": error}
     return json.dumps(response)
+
+
+def storage_unit_ext_pr(inbound):
+    """
+       Function takes necessary information to perform a transfer order
+    """
+
+    serial_obsoleto = inbound["serial_num"]
+    plan_id = inbound["plan_id"]
+    numero_parte = inbound["material"]
+    cantidad = inbound["cantidad"]
+    station = inbound["station"]
+    operator_name = inbound["operator_name"]
+    operator_id = inbound["operator_id"]
+    impresoType = inbound["impresoType"]
+    from_Sbin = "GREEN"
+    to_Sbin = "TEMPR"
+
+    response = json.loads(SAP_LS24.Main(numero_parte, from_Sbin))
+    if response["error"] != "N/A":
+        return json.dumps({"serial": "N/A", "result": "N/A", "error": f'{response["error"]}'})
+    else:
+        if int(response["result"]) < int(cantidad):
+            err = round(((int(cantidad) - int(response["result"])) / int(response["result"])) * 100, 2)
+            return json.dumps({"serial": "serial", "transfer_order": "N/A", "error": f'Requested amount exceeded by {err}% of available material'})
+        else:
+            response = json.loads(SAP_LT01_EXT_PR.Main(numero_parte, cantidad, from_Sbin, to_Sbin))
+
+            serial_num = response["serial"]
+            result_ext_pr = response["result"]
+            printe = DB.select_printer_ext(station)
+            printer = printe[0][0]
+
+            result2 = DB.search_union(numero_parte)
+            columns = result2[0]
+            values = result2[1]
+
+            data = json.loads('{}')
+
+            for column, value in zip(columns, values):
+                data.update({column[0]: f'{value}'})
+
+                data.update({"printer": f'{printer}'})
+                data.update({"serial": f'{serial_num}'})
+                data.update({"quant": f'{cantidad}'})
+                data.update({"line": f'{station}'})
+                data.update({"emp_num": f'{operator_name}'})
+
+            r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/EXT_RE/Execute/', data=json.dumps(data))
+            if r.status_code == 200:
+                DB.update_plan_ext(plan_id)
+                DB.update_print_ext_return(serial_obsoleto,result_ext_pr)
+                DB.update_print_ext(serial_num, plan_id, numero_parte, operator_id, cantidad, impresoType)
+
+
+
+    transfer_order = response["result"]
+    error = response["error"]
+    response = {"serial": serial_num, "transfer_order": transfer_order, "error": error}
+
+    return json.dumps(response)
+
+
 

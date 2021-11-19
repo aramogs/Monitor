@@ -110,12 +110,7 @@ def process_inbound(body):
         response = create_pr_hu_del(inbound)
     elif process == "create_pr_hu_wm":
         response = create_pr_hu_wm(inbound)
-    elif process == "confirm_ext_hu":
-        response = confirm_ext_hu(inbound)
-    elif process == "transfer_ext_rp":
-        response = transfer_ext_rp(inbound)
-    elif process == "transfer_ext_pr":
-        response = transfer_ext_pr(inbound)
+
     elif process == "cycle_count_status":
         response = cycle_count_status(inbound)
     elif process == "cycle_count_transfer":
@@ -132,9 +127,15 @@ def process_inbound(body):
         response = create_alt_pr_hu_del(inbound)
     elif process == "create_alt_pr_hu_wm":
         response = create_alt_pr_hu_wm(inbound)
-
+    ##############Extrusion##################
     elif process == "handling_ext":
         response = handling_ext(inbound)
+    elif process == "confirm_ext_hu":
+        response = confirm_ext_hu(inbound)
+    elif process == "transfer_ext_rp":
+        response = transfer_ext_rp(inbound)
+    elif process == "storage_unit_ext_pr":
+        response = storage_unit_ext_pr(inbound)
 
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
@@ -275,53 +276,53 @@ def receiver():
         ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
-    # connection = pika.BlockingConnection(params)
-    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    # channel = connection.channel()
-    # channel.queue_declare(queue='rpc_queue', durable=True)
-    # channel.basic_qos(prefetch_count=1)
-    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    # print(" [x] Awaiting RPC requests")
-    # channel.start_consuming()
+    params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
+    connection = pika.BlockingConnection(params)
+    # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    channel = connection.channel()
+    channel.queue_declare(queue='rpc_queue', durable=True)
+    channel.basic_qos(prefetch_count=1)
+    channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+    print(" [x] Awaiting RPC requests")
+    channel.start_consuming()
 
-    try:
-        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
-        connection = pika.BlockingConnection(params)
-        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
-        channel.queue_declare(queue='rpc_queue', durable=True)
-        channel.queue_declare(queue='rpc_queue_low', durable=True)
-
-        channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-        channel.basic_consume(queue='rpc_queue_low', on_message_callback=on_request)
-
-        print(" [x] Awaiting RPC requests")
-
-        mainWindow._list.insert(END, f' Res     [Success]:  Pika Connection Established')
-        mainWindow._list.see(END)
-        label_text["text"] = f' Res     [success]:   Pika Connection Established'
-
-        channel.start_consuming()
-    except Exception as e:
-        print("Exception:   [x] %s" % str(e))
-
-        now = datetime.datetime.now()
-        error_time = now.strftime("%Y-%m-%d_%H-%M")
-
-        logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_time), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-        logging.error(f'START - {e}', exc_info=True)  # Con esto se logea
-        logging.error(f'END - ########################################################################################')
-        # print(logging.error(e, exc_info=True))
-
-        mainWindow._list.insert(END, f' Res     [Error]:  Pika Connection Down')
-        mainWindow._list.see(END)
-        label_text["text"] = f' Res     [Error]:   Pika Connection Down'
-
-        time.sleep(10)
-        receiver()
+    # try:
+    #     params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
+    #     connection = pika.BlockingConnection(params)
+    #     # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    #     channel = connection.channel()
+    #     channel.queue_declare(queue='rpc_queue', durable=True)
+    #     channel.queue_declare(queue='rpc_queue_low', durable=True)
+    #
+    #     channel.basic_qos(prefetch_count=1)
+    #     channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+    #     channel.basic_consume(queue='rpc_queue_low', on_message_callback=on_request)
+    #
+    #     print(" [x] Awaiting RPC requests")
+    #
+    #     mainWindow._list.insert(END, f' Res     [Success]:  Pika Connection Established')
+    #     mainWindow._list.see(END)
+    #     label_text["text"] = f' Res     [success]:   Pika Connection Established'
+    #
+    #     channel.start_consuming()
+    # except Exception as e:
+    #     print("Exception:   [x] %s" % str(e))
+    #
+    #     now = datetime.datetime.now()
+    #     error_time = now.strftime("%Y-%m-%d_%H-%M")
+    #
+    #     logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_time), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    #
+    #     logging.error(f'START - {e}', exc_info=True)  # Con esto se logea
+    #     logging.error(f'END - ########################################################################################')
+    #     # print(logging.error(e, exc_info=True))
+    #
+    #     mainWindow._list.insert(END, f' Res     [Error]:  Pika Connection Down')
+    #     mainWindow._list.see(END)
+    #     label_text["text"] = f' Res     [Error]:   Pika Connection Down'
+    #
+    #     time.sleep(10)
+    #     receiver()
 
 
 receive_thread = Thread(target=receiver)

@@ -5,7 +5,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main():
+def Main(serial):
     import json
     import sys
     import win32com.client
@@ -39,9 +39,10 @@ def Main():
         session.findById("wnd[0]/tbar[1]/btn[5]").press()
         session.findById("wnd[0]/usr/ctxtLTAP-LETYP").text = "001"
         session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
-        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "102"
+        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "EXT"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
-        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "GREEN"
+        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "TEMPB"
+        session.findById("wnd[0]/usr/ctxtLTAP-NLENR").text = f'0{serial}'
         # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").setFocus()
         # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").caretPosition = 5
         session.findById("wnd[0]").sendVKey(0)
