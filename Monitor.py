@@ -136,7 +136,10 @@ def process_inbound(body):
         response = transfer_ext_rp(inbound)
     elif process == "storage_unit_ext_pr":
         response = storage_unit_ext_pr(inbound)
-
+    elif process == "transfer_ext":
+        response = transfer_ext(inbound)
+    elif process == "transfer_EXT_confirmed":
+        response = transfer_ext_confirmed(inbound)
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
     return response

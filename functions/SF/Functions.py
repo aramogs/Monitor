@@ -25,6 +25,10 @@ from functions.SF import SAP_LS24
 from functions.SF import SAP_MFBF
 from db.Functions import *
 
+from functions import SAP_LS11
+from functions import SAP_LT09_Transfer
+from functions.SF import SAP_LT09_Query
+from functions.SF import SAP_LS24_EXT
 
 def sap_login():
     if json.loads(SAP_Alive.Main())["sap_status"] == "error":
@@ -408,4 +412,51 @@ def storage_unit_ext_pr(inbound):
     return json.dumps(response)
 
 
+def transfer_ext(inbound):
+    """
+        Functions takes a Finished Goods serial number and finds
+        the corresponding material number
+    """
+    serial_num = inbound["serial_num"]
+    result_lt09 = json.loads(SAP_LT09_Query.Main(serial_num))
 
+    if result_lt09["error"] != "N/A":
+        response = json.dumps({"serial": "N/A", "error": f'{result_lt09["error"]}'})
+        if result_lt09["error"] == "":
+            sap_error_windows()
+    else:
+        material_number = result_lt09["material_number"]
+        response = SAP_LS24_EXT.Main(material_number)
+    return response
+
+
+def transfer_ext_confirmed(inbound):
+    """
+        Function takes: Storage Type, Storage Bin, Serial number(s) and Employee Tag
+        With this information the function Transfers the serial(s) to the corresponding Storage Bin
+        And also saves this information to a database
+    """
+    storage_type = "EXT"
+    storage_bin = inbound["storage_bin"]
+    serials = (inbound["serial_num"]).split(",")
+    emp_num = inbound["user_id"]
+
+    bin_exist = SAP_LS11.Main(storage_type, storage_bin)
+    if json.loads(bin_exist)["error"] != "N/A":
+        response = json.dumps({"serial": "N/A", "error": f"Storage Bin does not exist at Storage Type {storage_type}"})
+        # if json.loads(bin_exist)["error"] == "":
+        #     response = json.dumps({"serial": "N/A", "error": "No Storage Bin like this in Storage Type FG"})
+
+    else:
+        response = SAP_LT09_Transfer.Main(serials, storage_type, storage_bin)
+        if json.loads(response)["error"] != "N/A":
+            response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
+            # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "
+            # json.loads(response)["result"] carga la respuesta en formato json(Esta seccion convierte ' en "
+            # json.loads(re.sub... Carga cada arreglo dentro de la respuesta a un json
+            # for x in json.loads cada respuesta cargada del arreglo es iterada
+        for x in json.loads(re.sub(r"'", "\"", json.loads(response)["result"])):
+            DB.insert_complete_transfer(emp_num=emp_num, no_serie=x["serial_num"], result=x["result"], area="FG")
+            pass
+
+    return response
