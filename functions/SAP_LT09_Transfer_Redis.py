@@ -2,7 +2,7 @@
 
 # -Sub Main--------------------------------------------------------------
 
-def Main(serial_num_list, storage_type, storage_bin):
+def Main(serial_num_list, storage_type, storage_bin, station_hash):
     """
     Function takes a list of storage units and transfers them to the storage type nad bin selected
     """
@@ -10,6 +10,7 @@ def Main(serial_num_list, storage_type, storage_bin):
     import re
     import win32com.client
     import pythoncom
+    import functions.DB.Functions
     try:
         pythoncom.CoInitialize()
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
@@ -49,7 +50,16 @@ def Main(serial_num_list, storage_type, storage_bin):
                 result = session.findById("wnd[0]/sbar/pane[0]").Text
                 # Getting only the transfer order and not the text
                 response_list.append({"serial_num": serial_num, "result": int(re.sub(r"\D", "", result, 0))})
+                try:
+                    if count == 0:
+                        functions.DB.Functions.DBR.set_hash(station_hash, serial_num)
+                    else:
+                        functions.DB.Functions.DBR.update_hash(station_hash, serial_num)
 
+                    # DB.Functions.DBR.get_hash(station_hash)
+                except Exception as e:
+                    print(e)
+                count += 1
             except:
                 result = session.findById("wnd[0]/sbar/pane[0]").Text
                 response_list.append({"serial_num": serial_num, "result": result})
@@ -76,7 +86,7 @@ def Main(serial_num_list, storage_type, storage_bin):
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 
-        return (json.dumps(response))
+        return json.dumps(response)
 
     finally:
         session = None

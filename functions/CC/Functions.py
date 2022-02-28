@@ -9,11 +9,8 @@ Functions for Cycle count, currently used to count raw material and finish goods
 
 import json
 import re
-import datetime
-import requests
-from db.Functions import *
+from functions.DB.Functions import *
 
-from functions.FG import SAP_LS24
 from functions.CC import SAP_LX03
 
 from functions import SAP_Alive
@@ -94,6 +91,9 @@ def cycle_count_transfer(inbound):
     elif storage_type == "MP":
         st = storage_type
         sb = "CICLICORAW"
+    elif storage_type == "EXT":
+        st = storage_type
+        sb = "CICLICOEXT"
     #############################################################################################################################################
     #############################################################################################################################################
     #############################################################################################################################################

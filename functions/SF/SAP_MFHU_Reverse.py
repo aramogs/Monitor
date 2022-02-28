@@ -41,8 +41,6 @@ def Main(serial_num):
         session.findById("wnd[0]/usr/ctxtVHURMEAE-EXIDV_I").text = serial_num
         session.findById("wnd[0]/usr/ctxtVHURMEAE-WERKS").text = "5210"
         session.findById("wnd[0]/usr/txtVHURMEAE-VERID").text = "1"
-        # session.findById("wnd[0]/usr/txtVHURMEAE-VERID").setFocus()
-        # session.findById("wnd[0]/usr/txtVHURMEAE-VERID").caretPosition = 1
         session.findById("wnd[0]").sendVKey(0)
 
         try:
@@ -56,7 +54,8 @@ def Main(serial_num):
                 raise Exception()
         except:
             pass
-        session.findById("wnd[0]/tbar[0]/btn[11]").press()
+        session.findById("wnd[0]/usr/subHULIST:SAPLVHURMSUB:1000/subHULIST_TC:SAPLVHURMSUB:1100/tblSAPLVHURMSUBTC_HULIST").getAbsoluteRow(0).selected = -1
+        session.findById("wnd[0]/tbar[1]/btn[18]").press()
         try:
             error = session.findById("wnd[0]/sbar").Text
             if error != "Handling unit backflush completed":
@@ -80,6 +79,7 @@ def Main(serial_num):
             pass
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
+
 
         if "not" in messages[0]:
             #messages.pop(0)
@@ -115,5 +115,5 @@ def Main(serial_num):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("171688435")
+    Main("178008565")
 # -End-------------------------------------------------------------------

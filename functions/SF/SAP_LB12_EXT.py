@@ -5,10 +5,11 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main():
+def Main(serial):
     import json
     import sys
     import win32com.client
+    import re
     try:
 
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
@@ -39,21 +40,35 @@ def Main():
         session.findById("wnd[0]/tbar[1]/btn[5]").press()
         session.findById("wnd[0]/usr/ctxtLTAP-LETYP").text = "001"
         session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
-        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "102"
+        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "EXT"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
+<<<<<<< HEAD
         session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "EXT"
         # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").setFocus()
         # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").caretPosition = 5
+=======
+        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "TEMPB"
+        session.findById("wnd[0]/usr/ctxtLTAP-NLENR").text = f'0{serial}'
+>>>>>>> ext-sap-printer
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]").sendVKey(0)
-        session.findById("wnd[0]/tbar[0]/btn[11]").press()
-
         result = session.findById("wnd[0]/sbar/pane[0]").Text
-        session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
-        session.findById("wnd[0]").sendVKey(0)
+        if result != "":
 
-        response = {"result": f'{result}', "error": "N/A"}
+            response = {"serial_num": serial, "result": "N/A", "error": result}
+            session.findById("wnd[0]/tbar[0]/btn[11]").press()
+            session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
+            session.findById("wnd[0]").sendVKey(0)
+        else:
+            session.findById("wnd[0]/tbar[0]/btn[11]").press()
+            result = session.findById("wnd[0]/sbar/pane[0]").Text
 
+            session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
+            session.findById("wnd[0]").sendVKey(0)
+            response = {"serial_num": serial, "result": result, "error": "N/A"}
+
+        # response = {"result": f'{result}', "error": "N/A"}
+        print(response)
         return json.dumps(response)
 
     except Exception as e:
@@ -64,7 +79,7 @@ def Main():
             session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
         except:
             error = session.findById("wnd[0]/sbar/pane[0]").Text
-        response = {"result": "N/A", "error": error}
+        response = {"serial_num": "N/A", "result": "N/A", "error": error}
 
         # session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"

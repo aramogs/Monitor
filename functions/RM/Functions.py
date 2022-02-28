@@ -12,18 +12,20 @@ import re
 
 import requests
 
-from db.Functions import *
+from functions.DB.Functions import *
 from functions import SAP_Alive
 from functions import SAP_Login
 from functions import SAP_ErrorWindows
 from functions import SAP_LS11
 from functions import SAP_LT09_Transfer
+from functions import SAP_LT09_Transfer_Redis
 from functions.RM import SAP_LT01
 from functions.RM import SAP_MM03
 from functions.RM import SAP_LT09
 from functions.RM import SAP_SE16_MAKT
 from functions.RM import SAP_LS24
 from functions.RM import SAP_LS33
+from functions.RM import SAP_LT09_Query
 
 current_directory = os.path.abspath(os.getcwd())
 
@@ -126,6 +128,7 @@ def transfer_mp_confirmed(inbound):
     serials = (inbound["serial_num"]).split(",")
     emp_num = inbound["user_id"]
     storage_type = inbound["storage_type"]
+    station_hash = inbound["station"]
 
     for serial in serials:
         _storage_type = storage_unit_location(serial)
@@ -137,7 +140,7 @@ def transfer_mp_confirmed(inbound):
     if json.loads(bin_exist)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f"Storage Bin does not exist at Storage Type {storage_type}"})
     else:
-        response = SAP_LT09_Transfer.Main(serials, storage_type, storage_bin)
+        response = SAP_LT09_Transfer_Redis.Main(serials, storage_type, storage_bin, station_hash)
         if json.loads(response)["error"] != "N/A":
             response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
             # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "
@@ -248,6 +251,33 @@ def raw_mp_confirmed_v(inbound):
     for x in json.loads(re.sub(r"'", "\"", json.loads(response)["result"])):
         DB.insert_raw_movement(raw_id=raw_id, storage_type=storage_type, emp_num=emp_num, no_serie=x["serial_num"], result=x["result"])
         pass
+    return response
+
+
+def location_mp_material(inbound):
+    """
+        Functions takes a Raw material part number and finds the bin(s) location
+    """
+    material_number = inbound["material"]
+    storage_type = inbound["storage_type"]
+    response = SAP_LS24.Main(material_number, storage_type)
+    return response
+
+
+def location_mp_serial(inbound):
+    """
+        Functions takes a Raw serial number and finds the bin(s) location
+    """
+    serial_num = inbound["serial_num"]
+    result_lt09 = json.loads(SAP_LT09_Query.Main(serial_num))
+    storage_type = inbound["storage_type"]
+    if result_lt09["error"] != "N/A":
+        response = json.dumps({"serial": "N/A", "error": f'{result_lt09["error"]}'})
+        if result_lt09["error"] == "":
+            sap_error_windows()
+    else:
+        material_number = result_lt09["material_number"]
+        response = SAP_LS24.Main(material_number, storage_type)
     return response
 
 

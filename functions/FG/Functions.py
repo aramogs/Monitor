@@ -11,18 +11,17 @@ import json
 import re
 import datetime
 import requests
-from db.Functions import *
+from functions.DB.Functions import *
 
 from functions.FG import SAP_LS24
 from functions.FG import SAP_LT09_Query
 from functions import SAP_LS11
 from functions import SAP_LT09_Transfer
+from functions import SAP_LT09_Transfer_Redis
 from functions import SAP_LT09_Single_Transfer
 from functions import SAP_Alive
 from functions import SAP_Login
 from functions import SAP_ErrorWindows
-from functions.FG import SAP_LT09_Verify
-from functions.FG import SAP_HU03
 from functions.FG import SAP_LT09_Pack
 from functions.FG import SAP_POP3
 from functions.FG import SAP_HU02
@@ -81,6 +80,7 @@ def transfer_fg_confirmed(inbound):
     storage_bin = inbound["storage_bin"]
     serials = (inbound["serial_num"]).split(",")
     emp_num = inbound["user_id"]
+    station_hash = inbound["station"]
 
     bin_exist = SAP_LS11.Main(storage_type, storage_bin)
     if json.loads(bin_exist)["error"] != "N/A":
@@ -89,7 +89,7 @@ def transfer_fg_confirmed(inbound):
         #     response = json.dumps({"serial": "N/A", "error": "No Storage Bin like this in Storage Type FG"})
 
     else:
-        response = SAP_LT09_Transfer.Main(serials, storage_type, storage_bin)
+        response = SAP_LT09_Transfer_Redis.Main(serials, storage_type, storage_bin, station_hash)
         if json.loads(response)["error"] != "N/A":
             response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
             # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "

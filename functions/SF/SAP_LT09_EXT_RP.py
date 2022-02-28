@@ -2,7 +2,7 @@
 
 # -Sub Main--------------------------------------------------------------
 
-def Main(serial_num_list, storage_type, storage_bin):
+def Main(serial_num, to_Sbin):
     """
     Function takes a list of storage units and transfers them to the storage type nad bin selected
     """
@@ -31,31 +31,25 @@ def Main(serial_num_list, storage_type, storage_bin):
             SapGuiAuto = None
             return
 
-
-
-        response_list = []
-        count = 0
-        for serial_num in serial_num_list:
-
-            session.findById("wnd[0]/tbar[0]/okcd").text = "/nLT09"
+        session.findById("wnd[0]/tbar[0]/okcd").text = "/nLT09"
+        session.findById("wnd[0]").sendVKey(0)
+        try:
+            session.findById("wnd[0]/usr/txtLEIN-LENUM").text = f'{serial_num}'
+            session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").text = "998"
             session.findById("wnd[0]").sendVKey(0)
-            try:
-                session.findById("wnd[0]/usr/txtLEIN-LENUM").text = f'{serial_num}'
-                session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").text = "998"
-                session.findById("wnd[0]").sendVKey(0)
-                session.findById("wnd[0]/usr/ctxt*LTAP-NLTYP").text = storage_type
-                session.findById("wnd[0]/usr/txt*LTAP-NLPLA").text = storage_bin
-                session.findById("wnd[0]/tbar[0]/btn[11]").press()
-                result = session.findById("wnd[0]/sbar/pane[0]").Text
-                # Getting only the transfer order and not the text
-                response_list.append({"serial_num": serial_num, "result": int(re.sub(r"\D", "", result, 0))})
+            session.findById("wnd[0]/usr/ctxt*LTAP-NLTYP").text = "102"
+            session.findById("wnd[0]/usr/txt*LTAP-NLPLA").text = to_Sbin
+            session.findById("wnd[0]/tbar[0]/btn[11]").press()
+            result = session.findById("wnd[0]/sbar/pane[0]").Text
+            # Getting only the transfer order and not the text
+            response = {"serial": serial_num, "result": int(re.sub(r"\D", "", result, 0)), "error": "N/A"}
 
-            except:
-                result = session.findById("wnd[0]/sbar/pane[0]").Text
-                response_list.append({"serial_num": serial_num, "result": result})
+        except:
+            result = session.findById("wnd[0]/sbar/pane[0]").Text
+            response = {"serial": serial_num, "result": "N/A", "error": result}
 
-                session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
-                session.findById("wnd[0]").sendVKey(0)
+            session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
+            session.findById("wnd[0]").sendVKey(0)
 
 
         session.findById("wnd[0]/tbar[0]/btn[15]").press()
@@ -63,7 +57,7 @@ def Main(serial_num_list, storage_type, storage_bin):
             session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
         except:
             pass
-        response = {"result": f'{response_list}', "error": "N/A"}
+
 
         return json.dumps(response)
 
@@ -87,6 +81,6 @@ def Main(serial_num_list, storage_type, storage_bin):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("0171349693", "MP1", "P0501")
+    Main("0171349693")
 
 # -End-------------------------------------------------------------------

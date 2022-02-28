@@ -42,16 +42,12 @@ def Main(sap_num, quant):
         session.findById("wnd[0]/usr/txtRL03T-ANFME").text = quant
         session.findById("wnd[0]/usr/ctxtLTAP-WERKS").text = "5210"
         session.findById("wnd[0]/usr/ctxtLTAP-LGORT").text = "0012"
-        # session.findById("wnd[0]/usr/ctxtLTAP-LGORT").setFocus()
-        # session.findById("wnd[0]/usr/ctxtLTAP-LGORT").caretPosition = 4
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/tbar[1]/btn[5]").press()
         session.findById("wnd[0]/usr/ctxtLTAP-LETYP").text = "IP"
         session.findById("wnd[0]/usr/ctxtLTAP-VLTYP").text = "102"
         session.findById("wnd[0]/usr/ctxtLTAP-VLBER").text = "001"
         session.findById("wnd[0]/usr/txtLTAP-VLPLA").text = "103"
-        # session.findById("wnd[0]/usr/txtLTAP-VLPLA").setFocus()
-        # session.findById("wnd[0]/usr/txtLTAP-VLPLA").caretPosition = 3
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/tbar[0]/btn[11]").press()
@@ -61,8 +57,6 @@ def Main(sap_num, quant):
         session.findById("wnd[0]/usr/txtRL03T-ANFME").text = quant
         session.findById("wnd[0]/usr/ctxtLTAP-WERKS").text = "5210"
         session.findById("wnd[0]/usr/ctxtLTAP-LGORT").text = "0012"
-        # session.findById("wnd[0]/usr/ctxtLTAP-LGORT").setFocus()
-        # session.findById("wnd[0]/usr/ctxtLTAP-LGORT").caretPosition = 4
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/tbar[1]/btn[5]").press()
         session.findById("wnd[0]/usr/ctxtLTAP-LETYP").text = "IP"
@@ -70,8 +64,6 @@ def Main(sap_num, quant):
         session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "VUL"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
         session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "V02"
-        # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").setFocus()
-        # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").caretPosition = 5
         session.findById("wnd[0]").sendVKey(0)
         serial_num = session.findById("wnd[0]/usr/ctxtLTAP-NLENR").Text
         session.findById("wnd[0]").sendVKey(0)
@@ -100,7 +92,7 @@ def Main(sap_num, quant):
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 
-        return (json.dumps(response))
+        return json.dumps(response)
 
     finally:
         session = None

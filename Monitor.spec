@@ -4,7 +4,6 @@ block_cipher = None
 
 folders = [
 ('.\\img', '.\\img'),
-('.\\db', '.\\db'),
 ('.\\functions', '.\\functions'),
 ('.\\logs', '.\\logs')
 ]
