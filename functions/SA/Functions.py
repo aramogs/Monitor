@@ -8,14 +8,13 @@ Currently used for Vulcanized Hoses, transfers between 102/103 <=> VUL/???
 """
 
 import json
-import os
 import requests
 from functions import SAP_ErrorWindows
 from functions import SAP_Alive
 from functions import SAP_Login
 from functions.SA import SAP_LT09
 from functions.SA import SAP_LT01
-from db.Functions import *
+from functions.DB.Functions import *
 
 current_directory = os.path.abspath(os.getcwd())
 

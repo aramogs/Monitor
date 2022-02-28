@@ -4,7 +4,7 @@ import json
 import win32con
 import win32gui
 
-error_window = ["SAP GUI for Windows 730", "SAP GUI for Windows 740", "SAP GUI for Windows 760", "MessageBox", "Print",
+error_window = ["SAP GUI for Windows 730", "SAP GUI for Windows 740", "SAP GUI for Windows 760", "MessageBox", "Print","error.log"
                 "SAP Logon for Windows has stop working"]
 titles = []
 
@@ -26,25 +26,30 @@ def foreach_window(hwnd, lParam):
 
 def error_windows():
     enum_windows(enum_window_process(foreach_window), 0)
-    for w in titles:
-        for z in error_window:
-            if z == w:
-                # print(f'"Error Window Found {z}"')
-                window = (win32gui.FindWindow(None, f'{z}'))
-                win32gui.PostMessage(window, win32con.WM_CLOSE, 0, 0)
-                # print(f'"Error Window Closed {z}"')
-
-                response = {"Error Window Found and closed": z}
-                return (json.dumps(response))
-
-
-def monitor_visible():
-    global titles
-    titles = []
-    enum_windows(enum_window_process(foreach_window), 0)
     for title in titles:
-        if title != "":
-            print(title)
-        # if 'Monitor' in title:
-        #     print(title)
-        #     return True
+        for error_title in error_window:
+            if error_title == title:
+                print(f'"Error Window Found {error_title}"')
+                window = (win32gui.FindWindow(None, f'{error_title}'))
+                win32gui.PostMessage(window, win32con.WM_CLOSE, 0, 0)
+                print(f'"Error Window Closed {error_title}"')
+
+                response = {"Error Window Found and closed": error_title}
+                return json.dumps(response)
+
+
+# def monitor_visible():
+#     global titles
+#     titles = []
+#     enum_windows(enum_window_process(foreach_window), 0)
+#     for title in titles:
+#         if title != "":
+#             print(title)
+#         # if 'Monitor' in title:
+#         #     print(title)
+#         #     return True
+# -Main------------------------------------------------------------------
+if __name__ == '__main__':
+  error_windows()
+
+# -End-------------------------------------------------------------------

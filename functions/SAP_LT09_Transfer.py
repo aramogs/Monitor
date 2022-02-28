@@ -34,7 +34,9 @@ def Main(serial_num_list, storage_type, storage_bin):
 
 
         response_list = []
+        count = 0
         for serial_num in serial_num_list:
+
             session.findById("wnd[0]/tbar[0]/okcd").text = "/nLT09"
             session.findById("wnd[0]").sendVKey(0)
             try:

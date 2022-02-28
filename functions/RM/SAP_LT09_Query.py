@@ -2,13 +2,17 @@
 
 # -Includes--------------------------------------------------------------
 
+
+
+
 # -Sub Main--------------------------------------------------------------
 
 
 def Main(serial_num):
     """
-    Function gets serial number and performs a transfer order
+    Function used to get the Material Number corresponding the Serial Number
     """
+
     import json
     import win32com.client
     import pythoncom
@@ -56,23 +60,23 @@ def Main(serial_num):
         # session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").setFocus()
         # session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").caretPosition = 3
 
+
         session.findById("wnd[0]").sendVKey(0)
+
+
 
         # session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").setFocus()
         # session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").caretPosition = 6
-        material_number = session.findById(
-            "wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").Text
+        material_number = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").Text
         quant = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtRL03T-ANFME[1,0]").Text
-        material_description = session.findById(
-            "wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtLTAP-MAKTX[12,0]").Text
+        material_description = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtLTAP-MAKTX[12,0]").Text
 
         session.findById("wnd[0]/tbar[0]/btn[12]").press()
         session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
         session.findById("wnd[0]/tbar[0]/btn[12]").press()
         # Se crea respuesta y se carga en un Json con dumps
 
-        response = {"material_number": material_number, "material_description": material_description, "quant": quant,
-                    "error": "N/A"}
+        response = {"material_number": material_number,"error": "N/A"}
         return (json.dumps(response))
     except:
 
@@ -80,7 +84,7 @@ def Main(serial_num):
             session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
 
         error = session.findById("wnd[0]/sbar/pane[0]").Text
-        response = {"material_number": "N/A", "material_description": "N/A", "quant": "0", "error": error}
+        response = {"material_number": "N/A", "error": error}
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 
@@ -95,5 +99,7 @@ def Main(serial_num):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main()
+    Main(123456789)
 # -End-------------------------------------------------------------------
+
+

@@ -10,7 +10,7 @@ from functions.PR import SAP_MFP11_ALT
 from functions.PR import SAP_MFHU
 from functions.PR import SAP_LT09
 from functions import SAP_ErrorWindows
-from db.Functions import *
+from functions.DB.Functions import *
 
 
 def create_pr_hu(inbound):

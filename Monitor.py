@@ -7,13 +7,14 @@ import time
 import window
 import logging
 
-from functions.FG.Functions import *
-from functions.RM.Functions import *
-from functions.SA.Functions import *
-from functions.SF.Functions import *
-from functions.RW.Functions import *
-from functions.PR.Functions import *
-from functions.CC.Functions import *
+from functions.FG.Functions import *  # Finished Goods
+from functions.RM.Functions import *  # Raw Material
+from functions.SA.Functions import *  # Sub Assembly
+from functions.SF.Functions import *  # Semi Finished
+from functions.RW.Functions import *  # Re Work
+from functions.PR.Functions import *  # Production
+from functions.CC.Functions import *  # Control Cycle
+from functions.SH.Functions import *  # Shipments
 
 
 def quit_window():
@@ -29,23 +30,25 @@ def close_secondary():
     master.deiconify()
     masterTop.withdraw()
 
+try:
+    master: Tk = Tk()
+    masterTop = Toplevel()
+    mainWindow = window.MainApplication(master)
+    secondaryWindow = window.SecondaryWindow(master, masterTop)
+    masterTop.withdraw()
 
-master: Tk = Tk()
-masterTop = Toplevel()
-mainWindow = window.MainApplication(master)
-secondaryWindow = window.SecondaryWindow(master, masterTop)
-masterTop.withdraw()
+    mainWindow._list = Listbox(mainWindow._frame)
+    mainWindow._list.configure(bg=mainWindow._background_color, foreground="white")
+    mainWindow._list.grid(row=7, column=0, padx=5, pady=5, sticky=E + W + N + S)
+    master.protocol("WM_DELETE_WINDOW", quit_window)
+    master.bind("<Unmap>", show_master_top)
 
-mainWindow._list = Listbox(mainWindow._frame)
-mainWindow._list.configure(bg=mainWindow._background_color, foreground="white")
-mainWindow._list.grid(row=7, column=0, padx=5, pady=5, sticky=E + W + N + S)
-master.protocol("WM_DELETE_WINDOW", quit_window)
-master.bind("<Unmap>", show_master_top)
-
-img = PhotoImage(file=r"./img/icon.png").subsample(5, 5)
-btn = Button(masterTop, text='Monitor:', image=img, borderwidth=0, highlightthickness=0, command=close_secondary)
-btn.grid(row=0, column=0, padx=0, pady=15)
-btn.config(bg='#152532', fg='white')
+    img = PhotoImage(file=r"./img/icon.png").subsample(5, 5)
+    btn = Button(masterTop, text='Monitor:', image=img, borderwidth=0, highlightthickness=0, command=close_secondary)
+    btn.grid(row=0, column=0, padx=0, pady=15)
+    btn.config(bg='#152532', fg='white')
+except Exception as e:
+    print(e)
 
 #####################
 # Global variables
@@ -54,6 +57,10 @@ label_text = Label(masterTop, bg="#152532")
 label_text.configure(fg="#FCBD1E")
 label_text.grid(row=0, column=1, padx=5, pady=.5, sticky=W)
 current_process = ""
+pika_body = ""
+#####################
+# Global variables
+#####################
 
 
 def process_inbound(body):
@@ -62,22 +69,42 @@ def process_inbound(body):
     global current_process
     current_process = process
 
+    ##############Raw Material##################
     if process == "partial_transfer":
         response = partial_transfer(inbound)
     elif process == "partial_transfer_confirmed":
         response = partial_transfer_confirmed(inbound)
     elif process == "transfer_mp_confirmed":
         response = transfer_mp_confirmed(inbound)
+    elif process == "raw_delivery_verify":
+        response = raw_delivery_verify(inbound)
+    elif process == "raw_fifo_verify":
+        response = raw_fifo_verify(inbound)
+    elif process == "raw_mp_confirmed":
+        response = raw_mp_confirmed(inbound)
+    elif process == "raw_mp_confirmed_v":
+        response = raw_mp_confirmed_v(inbound)
+    elif process == "location_mp_material":
+        response = location_mp_material(inbound)
+    elif process == "location_mp_serial":
+        response = location_mp_serial(inbound)
+    ##############Finished Goods##################
     elif process == "transfer_fg":
         response = transfer_fg(inbound)
     elif process == "transfer_fg_confirmed":
         response = transfer_fg_confirmed(inbound)
+    elif process == "master_fg_gm_verify":
+        response = master_fg_gm_verify(inbound)
+    elif process == "master_fg_gm_create":
+        response = master_fg_gm_create(inbound)
+    ##############Sub Assembly##################
     elif process == "transfer_sa":
         response = transfer_sa(inbound)
     elif process == "transfer_sa_return":
         response = transfer_sa_return(inbound)
     elif process == "reprint_sa":
         response = reprint_sa(inbound)
+    ##############Semi Finished##################
     elif process == "handling_sf":
         response = handling_sf(inbound)
     elif process == "transfer_sf":
@@ -88,14 +115,12 @@ def process_inbound(body):
         response = transfer_sfr_return(inbound)
     elif process == "reprint_sf":
         response = reprint_sf(inbound)
-    elif process == "master_fg_gm_verify":
-        response = master_fg_gm_verify(inbound)
-    elif process == "master_fg_gm_create":
-        response = master_fg_gm_create(inbound)
+    ##############Re Work##################
     elif process == "transfer_rework_in":
         response = transfer_rework_in(inbound)
     elif process == "transfer_rework_out":
         response = transfer_rework_out(inbound)
+    ##############Production##################
     elif process == "create_pr_hu":
         response = create_pr_hu(inbound)
     elif process == "confirm_pr_hu":
@@ -110,23 +135,15 @@ def process_inbound(body):
         response = create_pr_hu_del(inbound)
     elif process == "create_pr_hu_wm":
         response = create_pr_hu_wm(inbound)
-
-    elif process == "cycle_count_status":
-        response = cycle_count_status(inbound)
-    elif process == "cycle_count_transfer":
-        response = cycle_count_transfer(inbound)
-    elif process == "raw_delivery_verify":
-        response = raw_delivery_verify(inbound)
-    elif process == "raw_fifo_verify":
-        response = raw_fifo_verify(inbound)
-    elif process == "raw_mp_confirmed":
-        response = raw_mp_confirmed(inbound)
-    elif process == "raw_mp_confirmed_v":
-        response = raw_mp_confirmed_v(inbound)
     elif process == "create_alt_pr_hu_del":
         response = create_alt_pr_hu_del(inbound)
     elif process == "create_alt_pr_hu_wm":
         response = create_alt_pr_hu_wm(inbound)
+    ##############Control Cycle##################
+    elif process == "cycle_count_status":
+        response = cycle_count_status(inbound)
+    elif process == "cycle_count_transfer":
+        response = cycle_count_transfer(inbound)
     ##############Extrusion##################
     elif process == "handling_ext":
         response = handling_ext(inbound)
@@ -140,6 +157,10 @@ def process_inbound(body):
         response = transfer_ext(inbound)
     elif process == "transfer_EXT_confirmed":
         response = transfer_ext_confirmed(inbound)
+    ##############Shipments##################
+    elif process == "shipment_delivery":
+        response = shipment_delivery(inbound)
+    ##############_NO_PROCESS_##################
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
     return response
@@ -157,11 +178,9 @@ def insert_text(request):
         if len(station) > 5:
             station = "WEB"
 
-        mainWindow._list.insert(END,
-                                f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}')
+        mainWindow._list.insert(END,f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}')
         mainWindow._list.see(END)
-        label_text[
-            "text"] = f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}'
+        label_text["text"] = f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}'
         masterTop.lift()
     except KeyError:
         mainWindow._list.insert(END, f' Req    [Err] VERIFY JSON')
@@ -179,7 +198,7 @@ def insert_response(response):
         "process2": ["handling_sf", "transfer_sa", "transfer_sa_return", "transfer_sfr", "transfer_sfr_return", "reprint_sa", "reprint_sf", "transfer_sf", "transfer_rework_in",
                      "transfer_rework_out", "create_pr_hu", "confirm_pr_hu", "no_confirm_pr_hu", "create_alternate_pr_hu", "create_pr_hu_del", "create_pr_hu_wm"],
         "process3": ["transfer_fg", "transfer_fg_confirmed", "transfer_mp_confirmed", "master_fg_gm_verify", "confirm_ext_hu", "transfer_ext_rp", "cycle_count_status",
-                     "raw_delivery_verify"]
+                     "raw_delivery_verify", "shipment_delivery"]
     }
     match = False
     for li, processes in lists.items():
@@ -249,25 +268,20 @@ def sap_login():
         pass
 
 
-def sap_error_windows():
-    error = json.loads(SAP_ErrorWindows.error_windows())
-    print(error)
-    sap_login()
-
-
 def receiver():
     def on_request(ch, method, props, body):
-
+        global pika_body
+        pika_body = body
         print("Request:    [x] %s" % body.decode(encoding="utf8"))
         SAP_ErrorWindows.error_windows()
 
         try:
             sap_login()
-        except RecursionError as e:
+        except Exception as err:
             now = datetime.datetime.now()
             error_time = now.strftime("%Y-%m-%d_%H-%M")
             logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_time), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            logging.error(f'START - {e}', exc_info=True)  # Con esto se logea
+            logging.error(f'START - ########################################################################################\nJSON: {pika_body.decode(encoding="utf8")}\nERROR: {err}', exc_info=True)  # Con esto se logea
             logging.error(f'END - ########################################################################################')
             os.system(f'taskkill /im "Monitor.exe"')
 
@@ -279,53 +293,51 @@ def receiver():
         ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
-    connection = pika.BlockingConnection(params)
-    # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    channel = connection.channel()
-    channel.queue_declare(queue='rpc_queue', durable=True)
-    channel.basic_qos(prefetch_count=1)
-    channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    print(" [x] Awaiting RPC requests")
-    channel.start_consuming()
+    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
+    # connection = pika.BlockingConnection(params)
+    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    # channel = connection.channel()
+    # channel.queue_declare(queue='rpc_queue', durable=True)
+    # channel.basic_qos(prefetch_count=1)
+    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+    # print(" [x] Awaiting RPC requests")
+    # channel.start_consuming()
 
-    # try:
-    #     params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
-    #     connection = pika.BlockingConnection(params)
-    #     # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    #     channel = connection.channel()
-    #     channel.queue_declare(queue='rpc_queue', durable=True)
-    #     channel.queue_declare(queue='rpc_queue_low', durable=True)
-    #
-    #     channel.basic_qos(prefetch_count=1)
-    #     channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    #     channel.basic_consume(queue='rpc_queue_low', on_message_callback=on_request)
-    #
-    #     print(" [x] Awaiting RPC requests")
-    #
-    #     mainWindow._list.insert(END, f' Res     [Success]:  Pika Connection Established')
-    #     mainWindow._list.see(END)
-    #     label_text["text"] = f' Res     [success]:   Pika Connection Established'
-    #
-    #     channel.start_consuming()
-    # except Exception as e:
-    #     print("Exception:   [x] %s" % str(e))
-    #
-    #     now = datetime.datetime.now()
-    #     error_time = now.strftime("%Y-%m-%d_%H-%M")
-    #
-    #     logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_time), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    #
-    #     logging.error(f'START - {e}', exc_info=True)  # Con esto se logea
-    #     logging.error(f'END - ########################################################################################')
-    #     # print(logging.error(e, exc_info=True))
-    #
-    #     mainWindow._list.insert(END, f' Res     [Error]:  Pika Connection Down')
-    #     mainWindow._list.see(END)
-    #     label_text["text"] = f' Res     [Error]:   Pika Connection Down'
-    #
-    #     time.sleep(10)
-    #     receiver()
+    try:
+        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
+        connection = pika.BlockingConnection(params)
+        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        channel = connection.channel()
+        channel.queue_declare(queue='rpc_queue', durable=True)
+        channel.queue_declare(queue='rpc_queue_low', durable=True)
+
+        channel.basic_qos(prefetch_count=1)
+        channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+        channel.basic_consume(queue='rpc_queue_low', on_message_callback=on_request)
+
+        print(" [x] Awaiting RPC requests")
+
+        mainWindow._list.insert(END, f' Res     [Success]:  Pika Connection Established')
+        mainWindow._list.see(END)
+        label_text["text"] = f' Res     [success]:   Pika Connection Established'
+
+        channel.start_consuming()
+    except Exception as e:
+        print("Exception:   [x] %s" % str(e))
+
+        now = datetime.datetime.now()
+        error_time = now.strftime("%Y-%m-%d_%H-%M")
+
+        logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_time), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logging.error(f'START - ########################################################################################\nJSON: {pika_body.decode(encoding="utf8")}\nERROR: {e}', exc_info=True)  # Con esto se logea
+        logging.error(f'END - ########################################################################################')
+
+        mainWindow._list.insert(END, f' Res     [Error]:  {e}')
+        mainWindow._list.see(END)
+        label_text["text"] = f' Res     [Error]:   {e}'
+
+        time.sleep(2)
+        receiver()
 
 
 receive_thread = Thread(target=receiver)

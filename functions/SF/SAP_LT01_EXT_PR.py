@@ -92,7 +92,7 @@ def Main(sap_num, quant, from_Sbin, to_Sbin):
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 
-        return (json.dumps(response))
+        return json.dumps(response)
 
     finally:
         session = None
