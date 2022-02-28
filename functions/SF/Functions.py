@@ -227,16 +227,6 @@ def confirm_ext_hu(inbound):
         serial = material['serial']
         plan_id = material['plan_id']
         user_id = inbound['user_id']
-<<<<<<< HEAD
-
-        response = json.loads(SAP_MFBF.Main(numero_parte, cantidad, serial, plan_id))
-        response_list.append(response)
-        if response['result'] != 'N/A':
-            transfer = json.loads(SAP_LB12_EXT.Main())
-            DB.update_ex_backflush(response['result'], response['serial_num'], user_id)
-        else:
-            DB.update_ex_backflush_error(response['error'], response['serial_num'], user_id)
-=======
 
         response = json.loads(SAP_MFHU.Main(serial))
 
@@ -254,7 +244,6 @@ def confirm_ext_hu(inbound):
                 pass
         else:
             response_list.append(response)
->>>>>>> ext-sap-printer
 
     return json.dumps({"result": response_list, "error": error})
 
@@ -306,19 +295,6 @@ def handling_ext(inbound):
     for i in range(numero_etiquetas):
         response = json.loads(SAP_MFP11.Main(material, cantidad))
 
-<<<<<<< HEAD
-        serial = material["serial"]
-        plan_id = material["plan_id"]
-        numero_parte = material["numero_parte"]
-        cantidad = material["cantidad"]
-        from_Sbin = "GREEN"
-        to_Sbin = "EXT"
-
-        response = json.loads(SAP_LS24.Main(numero_parte, from_Sbin))
-        if response["error"] != "N/A":
-
-            return json.dumps( {"serial": "", "result": [{"serial": serial, "transfer_order": "N/A", "error": f'{response["error"]}'}], "error": "N/A"})
-=======
         serial_num = response["serial_num"]
         error = response["error"]
         result = response["result"]
@@ -379,7 +355,6 @@ def storage_unit_ext_pr(inbound):
         if int(response["result"]) < int(cantidad):
             err = round(((int(cantidad) - int(response["result"])) / int(response["result"])) * 100, 2)
             return json.dumps({"serial": "N/A", "transfer_order": "N/A", "error": f'Requested amount exceeded by {err}% of available material'})
->>>>>>> ext-sap-printer
         else:
             response = json.loads(SAP_LT01_EXT_PR.Main(numero_parte, cantidad, from_Sbin, to_Sbin))
             serial_num = response["serial"]
@@ -412,18 +387,12 @@ def storage_unit_ext_pr(inbound):
             else:
                 response = {"serial": "N/A", "result": "N/A", "error": error}
 
-<<<<<<< HEAD
-        transfer_order = response["result"]
-        error = response["error"]
-        response_list.append({"serial": serial, "transfer_order": transfer_order, "error": error})
-=======
     transfer_order = response["result"]
     error = response["error"]
     response = {"serial": serial_num, "transfer_order": transfer_order, "error": error}
     print("RESPONSE", response)
     return json.dumps(response)
 
->>>>>>> ext-sap-printer
 
 def transfer_ext(inbound):
     """

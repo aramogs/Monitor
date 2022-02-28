@@ -81,7 +81,7 @@ def Main(delivery_number, total_stock):
         # session.findById("wnd[0]").sendVKey(0)
 
         if int(total_stock) != int(real_stock):
-            response = {"result": "N/A", "error": f'Expected quantity: {total_stock}, Real quantity: {real_stock}'}
+            response = {"result": "N/A", "error": f'Shipment Quantity: {total_stock}, Delivery Quantity: {real_stock}'}
             return json.dumps(response)
         response = {"result": info_list, "error": "N/A"}
         return json.dumps(response)

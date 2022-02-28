@@ -42,14 +42,8 @@ def Main(serial):
         session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
         session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "EXT"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
-<<<<<<< HEAD
-        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "EXT"
-        # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").setFocus()
-        # session.findById("wnd[0]/usr/ctxtLTAP-LDEST").caretPosition = 5
-=======
         session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "TEMPB"
         session.findById("wnd[0]/usr/ctxtLTAP-NLENR").text = f'0{serial}'
->>>>>>> ext-sap-printer
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]").sendVKey(0)
         result = session.findById("wnd[0]/sbar/pane[0]").Text
