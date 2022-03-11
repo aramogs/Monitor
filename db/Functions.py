@@ -3,7 +3,7 @@ import mysql.connector
 
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(".env")
 
 b10_config = {
     'user': f'{os.getenv("DB_USER")}',

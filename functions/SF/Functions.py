@@ -29,6 +29,7 @@ from functions import SAP_LT09_Transfer_Redis
 from functions.SF import SAP_LT09_Query
 from functions.SF import SAP_LS24_EXT
 
+
 def sap_login():
     if json.loads(SAP_Alive.Main())["sap_status"] == "error":
         print("Error - SAP Connection Down")
@@ -251,6 +252,7 @@ def confirm_ext_hu(inbound):
 def transfer_ext_rp(inbound):
     """
     Function takes necessary information to perform a transfer order
+    :param inbound: Json string containing all the information
     """
     material_list = inbound['data']
     emp_num = inbound['user_id']

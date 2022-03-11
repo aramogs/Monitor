@@ -22,29 +22,30 @@ def quit_window():
 
 
 def show_master_top(event):
-    masterTop.deiconify()
+    master_top.deiconify()
     master.withdraw()
 
 
 def close_secondary():
     master.deiconify()
-    masterTop.withdraw()
+    master_top.withdraw()
+
 
 try:
     master: Tk = Tk()
-    masterTop = Toplevel()
+    master_top = Toplevel()
     mainWindow = window.MainApplication(master)
-    secondaryWindow = window.SecondaryWindow(master, masterTop)
-    masterTop.withdraw()
+    secondaryWindow = window.SecondaryWindow(master, master_top)
+    master_top.withdraw()
 
-    mainWindow._list = Listbox(mainWindow._frame)
-    mainWindow._list.configure(bg=mainWindow._background_color, foreground="white")
-    mainWindow._list.grid(row=7, column=0, padx=5, pady=5, sticky=E + W + N + S)
+    mainWindow.list = Listbox(mainWindow.frame)
+    mainWindow.list.configure(bg=mainWindow.background_color, foreground="white", highlightbackground=mainWindow.background_color)
+    mainWindow.list.grid(row=7, column=0, padx=5, pady=5, sticky=E + W + N + S)
     master.protocol("WM_DELETE_WINDOW", quit_window)
     master.bind("<Unmap>", show_master_top)
 
     img = PhotoImage(file=r"./img/icon.png").subsample(5, 5)
-    btn = Button(masterTop, text='Monitor:', image=img, borderwidth=0, highlightthickness=0, command=close_secondary)
+    btn = Button(master_top, text='Monitor:', image=img, borderwidth=0, highlightthickness=0, command=close_secondary)
     btn.grid(row=0, column=0, padx=0, pady=15)
     btn.config(bg='#152532', fg='white')
 except Exception as e:
@@ -53,7 +54,7 @@ except Exception as e:
 #####################
 # Global variables
 #####################
-label_text = Label(masterTop, bg="#152532")
+label_text = Label(master_top, bg="#152532")
 label_text.configure(fg="#FCBD1E")
 label_text.grid(row=0, column=1, padx=5, pady=.5, sticky=W)
 current_process = ""
@@ -178,13 +179,13 @@ def insert_text(request):
         if len(station) > 5:
             station = "WEB"
 
-        mainWindow._list.insert(END,f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}')
-        mainWindow._list.see(END)
+        mainWindow.list.insert(END, f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}')
+        mainWindow.list.see(END)
         label_text["text"] = f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}'
-        masterTop.lift()
+        master_top.lift()
     except KeyError:
-        mainWindow._list.insert(END, f' Req    [Err] VERIFY JSON')
-        mainWindow._list.see(END)
+        mainWindow.list.insert(END, f' Req    [Err] VERIFY JSON')
+        mainWindow.list.see(END)
         label_text["text"] = f' Req    [Err] VERIFY JSON'
 
 
@@ -213,15 +214,15 @@ def insert_response(response):
                     error = inbound["error"]
 
                     if error == "N/A":
-                        mainWindow._list.insert(END, f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}')
-                        mainWindow._list.see(END)
+                        mainWindow.list.insert(END, f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}')
+                        mainWindow.list.see(END)
                         label_text["text"] = f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}'
-                        masterTop.lift()
+                        master_top.lift()
                     else:
-                        mainWindow._list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
-                        mainWindow._list.see(END)
+                        mainWindow.list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
+                        mainWindow.list.see(END)
                         label_text["text"] = f' Res     [Error]:   S/N: {serial} Err: {error}'
-                        masterTop.lift()
+                        master_top.lift()
 
                 if li == "process2":
                     result = inbound["result"]
@@ -229,33 +230,33 @@ def insert_response(response):
                     error = inbound["error"]
 
                     if error == "N/A":
-                        mainWindow._list.insert(END, f' Res     [Success]: S/N: {serial} Result: {result}')
-                        mainWindow._list.see(END)
+                        mainWindow.list.insert(END, f' Res     [Success]: S/N: {serial} Result: {result}')
+                        mainWindow.list.see(END)
                         label_text["text"] = f' Res     [Success]: S/N: {serial} Result: {result}'
-                        masterTop.lift()
+                        master_top.lift()
                     else:
-                        mainWindow._list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
-                        mainWindow._list.see(END)
+                        mainWindow.list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
+                        mainWindow.list.see(END)
                         label_text["text"] = f' Res     [Error]:   S/N: {serial} Err: {error}'
-                        masterTop.lift()
+                        master_top.lift()
 
                 if li == "process3":
                     error = inbound["error"]
                     if error == "N/A":
-                        mainWindow._list.insert(END, f' Res     [Success]:  Proceso terminado')
-                        mainWindow._list.see(END)
+                        mainWindow.list.insert(END, f' Res     [Success]:  Proceso terminado')
+                        mainWindow.list.see(END)
                         label_text["text"] = f' Res     [Success]:   Proceso terminado'
-                        masterTop.lift()
+                        master_top.lift()
                     else:
-                        mainWindow._list.insert(END, f' Res     [Error]:  {inbound["error"]}')
-                        mainWindow._list.see(END)
+                        mainWindow.list.insert(END, f' Res     [Error]:  {inbound["error"]}')
+                        mainWindow.list.see(END)
                         label_text["text"] = f' Res     [Success]:   {inbound["error"]}'
-                        masterTop.lift()
+                        master_top.lift()
     if not match:
-        mainWindow._list.insert(END, f' Res     [Error]:  {inbound["error"]}')
-        mainWindow._list.see(END)
+        mainWindow.list.insert(END, f' Res     [Error]:  {inbound["error"]}')
+        mainWindow.list.see(END)
         label_text["text"] = f' Res     [Error]:   {inbound["error"]}'
-        masterTop.lift()
+        master_top.lift()
 
 
 def sap_login():
@@ -278,9 +279,9 @@ def receiver():
         try:
             sap_login()
         except Exception as err:
-            now = datetime.datetime.now()
-            error_time = now.strftime("%Y-%m-%d_%H-%M")
-            logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_time), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            now_ = datetime.datetime.now()
+            error_t = now_.strftime("%Y-%m-%d_%H-%M")
+            logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_t), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
             logging.error(f'START - ########################################################################################\nJSON: {pika_body.decode(encoding="utf8")}\nERROR: {err}', exc_info=True)  # Con esto se logea
             logging.error(f'END - ########################################################################################')
             os.system(f'taskkill /im "Monitor.exe"')
@@ -317,8 +318,8 @@ def receiver():
 
         print(" [x] Awaiting RPC requests")
 
-        mainWindow._list.insert(END, f' Res     [Success]:  Pika Connection Established')
-        mainWindow._list.see(END)
+        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established')
+        mainWindow.list.see(END)
         label_text["text"] = f' Res     [success]:   Pika Connection Established'
 
         channel.start_consuming()
@@ -332,8 +333,8 @@ def receiver():
         logging.error(f'START - ########################################################################################\nJSON: {pika_body.decode(encoding="utf8")}\nERROR: {e}', exc_info=True)  # Con esto se logea
         logging.error(f'END - ########################################################################################')
 
-        mainWindow._list.insert(END, f' Res     [Error]:  {e}')
-        mainWindow._list.see(END)
+        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
+        mainWindow.list.see(END)
         label_text["text"] = f' Res     [Error]:   {e}'
 
         time.sleep(2)

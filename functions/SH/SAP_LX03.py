@@ -61,10 +61,10 @@ def Main(delivery_number, total_stock):
             while True:
                 y = 7
                 for x in range(original_position):
-                    real_stock += int(session.findById(f'wnd[0]/usr/lbl[32,{y}]').Text.strip().replace(",000", "").replace(",", ""))
+                    real_stock += int(session.findById(f'wnd[0]/usr/lbl[32,{y}]').Text.strip().replace(",000", "").replace(".000", "").replace(",", ""))
                     q = {
                         "storage_unit": session.findById(f'wnd[0]/usr/lbl[5,{y}]').Text,
-                        "stock":  session.findById(f'wnd[0]/usr/lbl[32,{y}]').Text.strip().replace(",000", "").replace(",", "")
+                        "stock":  session.findById(f'wnd[0]/usr/lbl[32,{y}]').Text.strip().replace(",000", "").replace(".000", "").replace(",", "")
                     }
 
                     y += 1
@@ -97,6 +97,6 @@ def Main(delivery_number, total_stock):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    print(Main("80690142", "288"))
+    print(Main("80692028", "1800"))
 
 # -End-------------------------------------------------------------------

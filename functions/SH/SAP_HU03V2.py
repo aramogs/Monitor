@@ -1,5 +1,5 @@
 # -Sub Main--------------------------------------------------------------
-def Main(masters):
+def Main():
     try:
         # print("MASTERS:", masters)
         import sys
@@ -8,7 +8,6 @@ def Main(masters):
         import time
         import math
         import traceback
-
 
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
 
@@ -31,16 +30,18 @@ def Main(masters):
             SapGuiAuto = None
             return
 
-        session.findById("wnd[0]/tbar[0]/okcd").text = "/nHU03"
-        session.findById("wnd[0]").sendVKey(0)
+        # session.findById("wnd[0]/tbar[0]/okcd").text = "/nHU03"
+        # session.findById("wnd[0]").sendVKey(0)
         ##########################
-        n = 0
-        for master in masters:
-            session.findById(f'wnd[0]/usr/tblRHU_DISPLAY_HANDLING_UNITSTC_HU_ANZ/ctxtVEKP-EXIDV[0,{n}]').Text = master["storage_unit"]
-            n += 1
-        session.findById("wnd[0]/tbar[1]/btn[8]").press()
-        if len(masters) == 1:
-            session.findById("wnd[0]/mbar/menu[2]/menu[0]/menu[4]").select()
+        # n = 0
+
+        # for master in masters:
+        #     print(master)
+        #     session.findById(f'wnd[0]/usr/tblRHU_DISPLAY_HANDLING_UNITSTC_HU_ANZ/ctxtVEKP-EXIDV[0,{n}]').Text = master["storage_unit"]
+        #     n += 1
+        # session.findById("wnd[0]/tbar[1]/btn[8]").press()
+        # if len(masters) == 1:
+        #     session.findById("wnd[0]/mbar/menu[2]/menu[0]/menu[4]").select()
         ########################sapscript find by name
 
         original_position = 0
@@ -53,21 +54,23 @@ def Main(masters):
         except:
             pass
 
-        iterations = math.ceil(max_scroll/original_position)
+        iterations = math.ceil(max_scroll / original_position)
         # print(f'MAX: {max_scroll}')
         # print(f'Original {original_position}')
         # print(f'Iterations {iterations}')
         text_iterations = {}
         text_iterations2 = {}
+        text_iterations3 = {}
         iterations_list = []
 
         for x in range(original_position):
             text_iterations["iteration{0}".format(x)] = f'session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6INH/ssubTAB:SAPLV51G:6040/tblSAPLV51GTC_HU_005/txtHUMV4-HISTU[0,{x}]").Text.strip()'
             text_iterations2["iteration{0}".format(x)] = f'session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6INH/ssubTAB:SAPLV51G:6040/tblSAPLV51GTC_HU_005/txtHUMV4-IDENT[1,{x}]").Text.strip()'
+            text_iterations3["iteration{0}".format(x)] = f'session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6INH/ssubTAB:SAPLV51G:6040/tblSAPLV51GTC_HU_005/txtHUMV4-QUANTITY[3,{x}]").Text.strip()'
         for i in range(iterations):
-            for (key, value), (key2, value2) in zip(text_iterations.items(), text_iterations2.items()):
+            for (key, value), (key2, value2), (key3, value3) in zip(text_iterations.items(), text_iterations2.items(), text_iterations3.items()):
                 try:
-                    iterations_list.append({f'{int(eval(value))}': f'{eval(value2)}'})
+                    iterations_list.append({f'{int(eval(value))}': [f'{eval(value2)}', f'{eval(value3)}']})
                 except Exception as error:
                     pass
             try:
@@ -77,28 +80,31 @@ def Main(masters):
         levels = []
         serials = []
         info_list = []
+        real_quantity = 0
         x = 0
         y = 0
         for index in range(len(iterations_list)):
-            for level, serial_num in iterations_list[index].items():
+            for level, serial_quantity in iterations_list[index].items():
                 level = int(level)
-                if level == 0 or level == 1 and len(serial_num) == 9:
+                if level == 0 or level == 1 and len(serial_quantity[0]) == 9:
                     if level == 0:
                         if y == 1:
                             y = 0
                             info_list.append({"master": f"{serial_master}", "serials": serials})
                             serials = []
-                        serial_master = serial_num
+                        serial_master = serial_quantity[0]
                         y += 1
 
                     else:
-                        serials.append(serial_num)
+                        serials.append(serial_quantity[0])
+
+                if level == 2:
+                    real_quantity += int(serial_quantity[1].strip().replace(",000", "").replace(".000", "").replace(",", ""))
                 x += 1
         # In case there is only one master then add the information to the response
         if len(info_list) == 0:
-            info_list.append({"master": f"{serial_master}", "serials": serials})
-        response = json.dumps({"result": f"{info_list}", "error": "N/A"})
-
+            info_list.append({"master": f"{serial_master}", "serials": serials, "real_quantity": f"{real_quantity}"})
+        response = json.dumps({"result": f"{info_list}", "error": "N/A", "real_quantity": f"{real_quantity}"})
         return response
 
     except Exception:
@@ -114,6 +120,7 @@ def Main(masters):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main([{'storage_unit': '0178010857', 'stock': '   72'}])
+    # print(Main([{'storage_unit': '0178010857', 'stock': '72'},{'storage_unit': '0177482588', 'stock': '72'}]))
+    print(Main())
 
 # -End-------------------------------------------------------------------

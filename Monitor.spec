@@ -2,16 +2,17 @@
 
 block_cipher = None
 
-folders = [
+added_files = [
 ('.\\img', '.\\img'),
 ('.\\functions', '.\\functions'),
-('.\\logs', '.\\logs')
+('.\\logs', '.\\logs'),
+('.env.commit', '.')
 ]
 
 a = Analysis(['Monitor.py'],
              pathex=['%USERPROFILE%\\PycharmProjects\\Monitor'],
              binaries=[],
-             datas=folders,
+             datas=added_files,
              hiddenimports=['pywintypes'],
              hookspath=[],
              runtime_hooks=[],
