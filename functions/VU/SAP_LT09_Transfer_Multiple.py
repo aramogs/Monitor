@@ -2,17 +2,15 @@
 
 # -Sub Main--------------------------------------------------------------
 
-def Main(con, serial_num_list, storage_type, storage_bin, station):
+def Main(con, serial_num_list, storage_type, storage_bin, station_hash):
     """
     Function takes a list of storage units and transfers them to the storage type nad bin selected
     """
-
     import json
     import re
     import win32com.client
     import pythoncom
-    from functions.DB.Functions import DBR
-
+    import functions.DB.Functions
     try:
         pythoncom.CoInitialize()
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
@@ -34,17 +32,16 @@ def Main(con, serial_num_list, storage_type, storage_bin, station):
             SapGuiAuto = None
             return
 
+
+
         response_list = []
+        count = 0
         for serial_num in serial_num_list:
+
             session.findById("wnd[0]/tbar[0]/okcd").text = "/nLT09"
             session.findById("wnd[0]").sendVKey(0)
             try:
-
-                if len(serial_num) < 10:
-                    serial = f'0{serial_num}'
-                else:
-                    serial = serial_num
-                session.findById("wnd[0]/usr/txtLEIN-LENUM").text = serial
+                session.findById("wnd[0]/usr/txtLEIN-LENUM").text = f'{serial_num}'
                 session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").text = "998"
                 session.findById("wnd[0]").sendVKey(0)
                 session.findById("wnd[0]/usr/ctxt*LTAP-NLTYP").text = storage_type
@@ -53,17 +50,23 @@ def Main(con, serial_num_list, storage_type, storage_bin, station):
                 result = session.findById("wnd[0]/sbar/pane[0]").Text
                 # Getting only the transfer order and not the text
                 response_list.append({"serial_num": serial_num, "result": int(re.sub(r"\D", "", result, 0))})
-                if not DBR.get_hash(f'{storage_bin.lower()}-{station}'):
-                    DBR.set_hash(f'{storage_bin.lower()}-{station}', serial_num)
-                else:
-                    DBR.update_hash(f'{storage_bin.lower()}-{station}', serial_num)
+                try:
+                    if count == 0:
+                        functions.DB.Functions.DBR.set_hash(re.sub(":", "-", station_hash), serial_num)
+                    else:
+                        functions.DB.Functions.DBR.update_hash(re.sub(":", "-", station_hash), serial_num)
 
+                    # DB.Functions.DBR.get_hash(station_hash)
+                except Exception as e:
+                    print(e)
+                count += 1
             except:
                 result = session.findById("wnd[0]/sbar/pane[0]").Text
                 response_list.append({"serial_num": serial_num, "result": result})
 
                 session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
                 session.findById("wnd[0]").sendVKey(0)
+
 
         session.findById("wnd[0]/tbar[0]/btn[15]").press()
         try:
@@ -83,7 +86,7 @@ def Main(con, serial_num_list, storage_type, storage_bin, station):
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 
-        return (json.dumps(response))
+        return json.dumps(response)
 
     finally:
         session = None
@@ -94,6 +97,6 @@ def Main(con, serial_num_list, storage_type, storage_bin, station):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main([171349693], "MP1", "P0501")
+    Main("0171349693", "MP1", "P0501")
 
 # -End-------------------------------------------------------------------

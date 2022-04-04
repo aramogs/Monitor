@@ -38,6 +38,7 @@ def Main(sap_num, storage_type, storage_bin):
         session.findById("wnd[0]/usr/ctxtRL01S-LGNUM").text = "521"
         session.findById("wnd[0]/usr/ctxtRL01S-MATNR").text = sap_num
         session.findById("wnd[0]/usr/ctxtRL01S-WERKS").text = "5210"
+        session.findById("wnd[0]/usr/txtRL01S-LGORT").text = ""
         session.findById("wnd[0]/usr/ctxtRL01S-BESTQ").text = "*"
         session.findById("wnd[0]/usr/ctxtRL01S-SOBKZ").text = "*"
         session.findById("wnd[0]/usr/ctxtRL01S-LGTYP").text = storage_type

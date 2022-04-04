@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(storage_type, storage_bin):
+def Main(con, storage_type, storage_bin):
     import win32com.client
     import pythoncom
     import json
@@ -14,7 +14,7 @@ def Main(storage_type, storage_bin):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")
@@ -76,7 +76,7 @@ def Main(storage_type, storage_bin):
         session.findById("wnd[0]").sendVKey(0)
 
         response = {"result": info_list, "error": "N/A"}
-        print(response)
+        # print(response)
         return json.dumps(response)
     except Exception as e:
         print(e)

@@ -36,6 +36,7 @@ def Main():
             return
 
         session = connection.Children(0)
+
         if not type(session) == win32com.client.CDispatch:
             connection = None
             application = None
@@ -48,12 +49,12 @@ def Main():
             SapGuiAuto = None
             return
 
-        response = {"sap_status": "ok"}
-        return (json.dumps(response))
+        response = {"sap_status": "ok", "connections": len(application.Children)}
+        return json.dumps(response)
 
     except:
-        response = {"sap_status": "error"}
-        return (json.dumps(response))
+        response = {"sap_status": "error", "connections": 0}
+        return json.dumps(response)
 
     finally:
         session = None
@@ -64,6 +65,6 @@ def Main():
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main()
+    print(Main())
 
 # -End-------------------------------------------------------------------

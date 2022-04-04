@@ -38,6 +38,7 @@ def Main(sap_num, storage_bin):
         session.findById("wnd[0]/usr/ctxtRL01S-LGNUM").text = "521"
         session.findById("wnd[0]/usr/ctxtRL01S-MATNR").text = sap_num
         session.findById("wnd[0]/usr/ctxtRL01S-WERKS").text = "5210"
+        session.findById("wnd[0]/usr/txtRL01S-LGORT").text = ""
         session.findById("wnd[0]/usr/ctxtRL01S-BESTQ").text = "*"
         session.findById("wnd[0]/usr/ctxtRL01S-SOBKZ").text = "*"
         session.findById("wnd[0]/usr/ctxtRL01S-LGTYP").text = "102"
@@ -75,7 +76,7 @@ def Main(sap_num, storage_bin):
 
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
-        return (json.dumps(response))
+        return json.dumps(response)
 
     finally:
         session = None

@@ -1,11 +1,14 @@
+import inspect
 import signal
+
 from threading import Thread
 from tkinter import *
 
 import pika
 import time
 import window
-import logging
+import queue
+
 
 from functions.FG.Functions import *  # Finished Goods
 from functions.RM.Functions import *  # Raw Material
@@ -15,6 +18,7 @@ from functions.RW.Functions import *  # Re Work
 from functions.PR.Functions import *  # Production
 from functions.CC.Functions import *  # Control Cycle
 from functions.SH.Functions import *  # Shipments
+from functions.VU.Functions import *  # Vulcanized
 
 
 def quit_window():
@@ -31,44 +35,14 @@ def close_secondary():
     master_top.withdraw()
 
 
-try:
-    master: Tk = Tk()
-    master_top = Toplevel()
-    mainWindow = window.MainApplication(master)
-    secondaryWindow = window.SecondaryWindow(master, master_top)
-    master_top.withdraw()
-
-    mainWindow.list = Listbox(mainWindow.frame)
-    mainWindow.list.configure(bg=mainWindow.background_color, foreground="white", highlightbackground=mainWindow.background_color)
-    mainWindow.list.grid(row=7, column=0, padx=5, pady=5, sticky=E + W + N + S)
-    master.protocol("WM_DELETE_WINDOW", quit_window)
-    master.bind("<Unmap>", show_master_top)
-
-    img = PhotoImage(file=r"./img/icon.png").subsample(5, 5)
-    btn = Button(master_top, text='Monitor:', image=img, borderwidth=0, highlightthickness=0, command=close_secondary)
-    btn.grid(row=0, column=0, padx=0, pady=15)
-    btn.config(bg='#152532', fg='white')
-except Exception as e:
-    print(e)
-
-#####################
-# Global variables
-#####################
-label_text = Label(master_top, bg="#152532")
-label_text.configure(fg="#FCBD1E")
-label_text.grid(row=0, column=1, padx=5, pady=.5, sticky=W)
-current_process = ""
-pika_body = ""
-#####################
-# Global variables
-#####################
-
-
-def process_inbound(body):
+def process_inbound_queue(con, body):
     inbound = json.loads(body.decode(encoding="utf8"))
+    storage_location = DB.select_storage_location(inbound["station"])
+    if len(storage_location) == 0:
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+    inbound["storage_location"] = storage_location[0][0]
+    inbound["con"] = con
     process = inbound["process"]
-    global current_process
-    current_process = process
 
     ##############Raw Material##################
     if process == "partial_transfer":
@@ -161,6 +135,36 @@ def process_inbound(body):
     ##############Shipments##################
     elif process == "shipment_delivery":
         response = shipment_delivery(inbound)
+    # ##############Vulcanized##################
+    # elif process == "transfer_vul":
+    #     response = transfer_vul(inbound)
+    # elif process == "transfer_vul_confirmed":
+    #     response = transfer_vul_confirmed(inbound)
+    ##############_NO_PROCESS_##################
+    else:
+        response = json.dumps({"error": f'invalid_process: {process}'})
+    return response
+
+
+def process_inbound_vul(con, body):
+    inbound = json.loads(body.decode(encoding="utf8"))
+    storage_location = DB.select_storage_location(inbound["station"])
+    if len(storage_location) == 0:
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+    inbound["storage_location"] = storage_location[0][0]
+    inbound["con"] = con
+    process = inbound["process"]
+
+    ##############Control Cycle##################
+    # if process == "cycle_count_status":
+    #     response = cycle_count_status(inbound)
+    # elif process == "cycle_count_transfer":
+    #     response = cycle_count_transfer(inbound)
+    ##############Vulcanized##################
+    if process == "transfer_vul":
+        response = transfer_vul(inbound)
+    elif process == "transfer_vul_confirmed":
+        response = transfer_vul_confirmed(inbound)
     ##############_NO_PROCESS_##################
     else:
         response = json.dumps({"error": f'invalid_process: {process}'})
@@ -171,17 +175,14 @@ def insert_text(request):
     inbound = json.loads(request)
     try:
         station = inbound["station"]
-        serial_num = inbound["serial_num"]
-        material = inbound["material"]
-        quantity = inbound["cantidad"]
         process = inbound["process"]
         global label_text
         if len(station) > 5:
             station = "WEB"
 
-        mainWindow.list.insert(END, f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}')
+        mainWindow.list.insert(END, f' Req    [{process.capitalize()}]    JSON:  {request}')
         mainWindow.list.see(END)
-        label_text["text"] = f' Req    [{process.capitalize()}] St: {station}  S/N: {serial_num}  SAP: {material}  Q: {quantity}'
+        label_text["text"] = f' Req    [{process.capitalize()}]    JSON:  {request}'
         master_top.lift()
     except KeyError:
         mainWindow.list.insert(END, f' Req    [Err] VERIFY JSON')
@@ -189,110 +190,179 @@ def insert_text(request):
         label_text["text"] = f' Req    [Err] VERIFY JSON'
 
 
-def insert_response(response):
+def insert_response_(response):
     inbound = json.loads(response)
     global label_text
-    global current_process
 
-    lists = {
-        "process1": ["partial_transfer", "partial_transfer_confirmed"],
-        "process2": ["handling_sf", "transfer_sa", "transfer_sa_return", "transfer_sfr", "transfer_sfr_return", "reprint_sa", "reprint_sf", "transfer_sf", "transfer_rework_in",
-                     "transfer_rework_out", "create_pr_hu", "confirm_pr_hu", "no_confirm_pr_hu", "create_alternate_pr_hu", "create_pr_hu_del", "create_pr_hu_wm"],
-        "process3": ["transfer_fg", "transfer_fg_confirmed", "transfer_mp_confirmed", "master_fg_gm_verify", "confirm_ext_hu", "transfer_ext_rp", "cycle_count_status",
-                     "raw_delivery_verify", "shipment_delivery"]
-    }
-    match = False
-    for li, processes in lists.items():
-        for process in processes:
-            if process == current_process:
-                match = True
-
-                if li == "process1":
-                    serial = inbound["serial"]
-                    material = inbound["material"]
-                    quantity = inbound["cantidad"]
-                    error = inbound["error"]
-
-                    if error == "N/A":
-                        mainWindow.list.insert(END, f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}')
-                        mainWindow.list.see(END)
-                        label_text["text"] = f' Res     [Success]: S/N: {serial} SAP: {material} Q: {quantity}'
-                        master_top.lift()
-                    else:
-                        mainWindow.list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
-                        mainWindow.list.see(END)
-                        label_text["text"] = f' Res     [Error]:   S/N: {serial} Err: {error}'
-                        master_top.lift()
-
-                if li == "process2":
-                    result = inbound["result"]
-                    serial = inbound["serial"]
-                    error = inbound["error"]
-
-                    if error == "N/A":
-                        mainWindow.list.insert(END, f' Res     [Success]: S/N: {serial} Result: {result}')
-                        mainWindow.list.see(END)
-                        label_text["text"] = f' Res     [Success]: S/N: {serial} Result: {result}'
-                        master_top.lift()
-                    else:
-                        mainWindow.list.insert(END, f' Res     [Error]:   S/N: {serial} Err: {error}')
-                        mainWindow.list.see(END)
-                        label_text["text"] = f' Res     [Error]:   S/N: {serial} Err: {error}'
-                        master_top.lift()
-
-                if li == "process3":
-                    error = inbound["error"]
-                    if error == "N/A":
-                        mainWindow.list.insert(END, f' Res     [Success]:  Proceso terminado')
-                        mainWindow.list.see(END)
-                        label_text["text"] = f' Res     [Success]:   Proceso terminado'
-                        master_top.lift()
-                    else:
-                        mainWindow.list.insert(END, f' Res     [Error]:  {inbound["error"]}')
-                        mainWindow.list.see(END)
-                        label_text["text"] = f' Res     [Success]:   {inbound["error"]}'
-                        master_top.lift()
-    if not match:
+    if inbound["error"] == "N/A":
+        mainWindow.list.insert(END, f' Res     [Success]       JSON:   {inbound}')
+        mainWindow.list.see(END)
+        label_text["text"] = f' Res     [Success]      JSON:   {inbound}'
+        master_top.lift()
+    else:
         mainWindow.list.insert(END, f' Res     [Error]:  {inbound["error"]}')
         mainWindow.list.see(END)
-        label_text["text"] = f' Res     [Error]:   {inbound["error"]}'
+        label_text["text"] = f' Res     [Success]:   {inbound["error"]}'
         master_top.lift()
 
 
 def sap_login():
-    if json.loads(SAP_Alive.Main())["sap_status"] == "error":
-        print("Error - SAP Connection Down")
-        if json.loads(SAP_Login.Main())["sap_status"] != "ok":
-            sap_login()
-    else:
-        # print("Success - SAP Connection Up")
-        pass
+    return SAP_Login.Main()
 
 
-def receiver():
+def error_logger(err):
+    global pika_body
+    now_ = datetime.datetime.now()
+    error_t = now_.strftime("%Y-%m-%d_%H-%M")
+    logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_t), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.error(
+        f'START - ########################################################################################\nJSON:     {pika_body}\nERROR: {err}',
+        exc_info=True)  # Con esto se logea
+    logging.error(f'END - ########################################################################################')
+    # os.system(f'taskkill /im "Monitor.exe"')
+
+
+def sap_connections(current_queue):
+    qsize = sap_login_queue.qsize()
+    sap_login_queue.get()
+    result_sap_alive = json.loads(SAP_Alive.Main())
+    if result_sap_alive["sap_status"] == "error" or result_sap_alive["connections"] <= sap_login_queue.unfinished_tasks:
+        print(f"[{current_queue}] Error SAP Connection Down")
+        sap_login()
+        if json.loads(SAP_Alive.Main())["connections"] < qsize:
+            sap_connections(current_queue)
+    sap_login_queue.task_done()
+
+
+# def receiver_gen():
+#     current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).upper()
+#
+#     def on_request(ch, method, props, body):
+#         global pika_body
+#         pika_body = body
+#         print(f"Request:    [{current_queue}] %s" % body.decode(encoding="utf8"))
+#         SAP_ErrorWindows.error_windows()
+#         try:
+#             threads_queue.put(props.reply_to)
+#             sap_login_queue.put(props.reply_to)
+#             sap_connections(current_queue)
+#         except Exception as err:
+#             error_logger(err)
+#             os.system(f'taskkill /im "Monitor.exe"')
+#
+#         insert_text(body.decode(encoding="utf8"))
+#
+#         #######################################################
+#
+#         con = threads_queue.unfinished_tasks - threads_queue.qsize()
+#         threads_queue.get()
+#
+#         print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "!! CON", con)
+#         response = process_inbound(body, con)
+#         threads_queue.task_done()
+#         #######################################################
+#         try:
+#             insert_response_(response)
+#         except:
+#             insert_response(response)
+#
+#         # print("Response:   [x] %s" % str(response))
+#         ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
+#         ch.basic_ack(delivery_tag=method.delivery_tag)
+#
+#     # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
+#     # connection = pika.BlockingConnection(params)
+#     # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+#     # channel = connection.channel()
+#     # channel.queue_declare(queue='rpc_queue', durable=True)
+#     # channel.basic_qos(prefetch_count=1)
+#     # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+#     # print(f" [{current_queue}] Awaiting RPC requests")
+#     # channel.start_consuming()
+#
+#     try:
+#         params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
+#         connection = pika.BlockingConnection(params)
+#         # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+#         channel = connection.channel()
+#         channel.queue_declare(queue='rpc_queue', durable=True)
+#         channel.queue_declare(queue='rpc_queue_low', durable=True)
+#         channel.basic_qos(prefetch_count=1)
+#         channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+#         channel.basic_consume(queue='rpc_queue_low', on_message_callback=on_request)
+#
+#         print(f" [{current_queue}] Awaiting RPC requests")
+#
+#         mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established General')
+#         mainWindow.list.see(END)
+#         label_text["text"] = f' Res     [success]:   Pika Connection Established General'
+#
+#         channel.start_consuming()
+#     except Exception as e:
+#         print(f"Exception:   [{current_queue}] %s" % str(e))
+#         error_logger(e)
+#
+#         mainWindow.list.insert(END, f' Res     [Error]:  {e}')
+#         mainWindow.list.see(END)
+#         label_text["text"] = f' Res     [Error]:   {e}'
+#         time.sleep(2)
+#         receiver_gen()
+
+def receiver_queue():
+    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
+
     def on_request(ch, method, props, body):
         global pika_body
         pika_body = body
-        print("Request:    [x] %s" % body.decode(encoding="utf8"))
+        print(f"Request:    [{current_queue}] %s" % json.dumps(json.loads(body.decode(encoding="utf8"))))
         SAP_ErrorWindows.error_windows()
 
         try:
-            sap_login()
+            threads_queue.put(props.reply_to)
+            sap_login_queue.put(props.reply_to)
+            sap_connections(current_queue)
         except Exception as err:
-            now_ = datetime.datetime.now()
-            error_t = now_.strftime("%Y-%m-%d_%H-%M")
-            logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_t), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            logging.error(f'START - ########################################################################################\nJSON: {pika_body.decode(encoding="utf8")}\nERROR: {err}', exc_info=True)  # Con esto se logea
-            logging.error(f'END - ########################################################################################')
+            error_logger(err)
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
             os.system(f'taskkill /im "Monitor.exe"')
 
         insert_text(body.decode(encoding="utf8"))
-        response = process_inbound(body)
-        insert_response(response)
 
-        print("Response:   [x] %s" % str(response))
-        ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        #######################################################
+        con = threads_queue.unfinished_tasks - threads_queue.qsize()
+
+        result_sap_alive = json.loads(SAP_Alive.Main())
+        while True:
+            if con in middle_list:
+                if con == result_sap_alive["connections"] - 1:
+                    con = 0
+                else:
+                    con += 1
+            else:
+                middle_list.append(con)
+                break
+        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
+        threads_queue.get()
+        try:
+
+            response = eval(f"process_inbound_{current_queue}")(con, body)
+            middle_list.remove(con)
+            threads_queue.task_done()
+            insert_response_(response)
+            print(f"Response:   [{current_queue}] %s" % str(response))
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as err:
+            error_logger(err)
+            middle_list.remove(con)
+            threads_queue.task_done()
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+
+        #######################################################
 
     # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
     # connection = pika.BlockingConnection(params)
@@ -301,7 +371,7 @@ def receiver():
     # channel.queue_declare(queue='rpc_queue', durable=True)
     # channel.basic_qos(prefetch_count=1)
     # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    # print(" [x] Awaiting RPC requests")
+    # print(f" [{current_queue}] Awaiting RPC requests")
     # channel.start_consuming()
 
     try:
@@ -309,38 +379,160 @@ def receiver():
         connection = pika.BlockingConnection(params)
         # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         channel = connection.channel()
-        channel.queue_declare(queue='rpc_queue', durable=True)
-        channel.queue_declare(queue='rpc_queue_low', durable=True)
-
+        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
+        channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
         channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-        channel.basic_consume(queue='rpc_queue_low', on_message_callback=on_request)
+        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
+        channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
 
-        print(" [x] Awaiting RPC requests")
+        print(f"[{current_queue}] Awaiting RPC requests")
 
-        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established')
+        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
         mainWindow.list.see(END)
-        label_text["text"] = f' Res     [success]:   Pika Connection Established'
+        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
 
         channel.start_consuming()
     except Exception as e:
-        print("Exception:   [x] %s" % str(e))
-
-        now = datetime.datetime.now()
-        error_time = now.strftime("%Y-%m-%d_%H-%M")
-
-        logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_time), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        logging.error(f'START - ########################################################################################\nJSON: {pika_body.decode(encoding="utf8")}\nERROR: {e}', exc_info=True)  # Con esto se logea
-        logging.error(f'END - ########################################################################################')
-
+        print(f"Exception:   [{current_queue}] %s" % str(e))
+        error_logger(e)
         mainWindow.list.insert(END, f' Res     [Error]:  {e}')
         mainWindow.list.see(END)
         label_text["text"] = f' Res     [Error]:   {e}'
-
         time.sleep(2)
-        receiver()
+        eval(f"receiver_{current_queue}")
 
 
-receive_thread = Thread(target=receiver)
-receive_thread.start()
-master.mainloop()
+def receiver_vul():
+    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
+
+    def on_request(ch, method, props, body):
+        global pika_body
+        pika_body = body
+        print(f"Request:    [{current_queue}] %s" % json.dumps(json.loads(body.decode(encoding="utf8"))))
+        SAP_ErrorWindows.error_windows()
+
+        try:
+            threads_queue.put(props.reply_to)
+            sap_login_queue.put(props.reply_to)
+            sap_connections(current_queue)
+        except Exception as err:
+            error_logger(err)
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            os.system(f'taskkill /im "Monitor.exe"')
+
+        insert_text(body.decode(encoding="utf8"))
+
+        #######################################################
+        con = threads_queue.unfinished_tasks - threads_queue.qsize()
+
+        result_sap_alive = json.loads(SAP_Alive.Main())
+        while True:
+            if con in middle_list:
+                if con == result_sap_alive["connections"] - 1:
+                    con = 0
+                else:
+                    con += 1
+            else:
+                middle_list.append(con)
+                break
+        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
+        threads_queue.get()
+        try:
+
+            response = eval(f"process_inbound_{current_queue}")(con, body)
+            middle_list.remove(con)
+            threads_queue.task_done()
+            insert_response_(response)
+            print(f"Response:   [{current_queue}] %s" % str(response))
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as err:
+            error_logger(err)
+            middle_list.remove(con)
+            threads_queue.task_done()
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+
+        #######################################################
+
+
+    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
+    # connection = pika.BlockingConnection(params)
+    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    # channel = connection.channel()
+    # channel.queue_declare(queue='rpc_queue', durable=True)
+    # channel.basic_qos(prefetch_count=1)
+    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+    # print(f" [{current_queue}] Awaiting RPC requests")
+    # channel.start_consuming()
+
+    try:
+        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
+        connection = pika.BlockingConnection(params)
+        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        channel = connection.channel()
+        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
+        channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
+        channel.basic_qos(prefetch_count=1)
+        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
+        channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
+
+        print(f"[{current_queue}] Awaiting RPC requests")
+
+        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
+        mainWindow.list.see(END)
+        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
+
+        channel.start_consuming()
+    except Exception as e:
+        print(f"Exception:   [{current_queue}] %s" % str(e))
+        error_logger(e)
+        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
+        mainWindow.list.see(END)
+        label_text["text"] = f' Res     [Error]:   {e}'
+        time.sleep(2)
+        eval(f"receiver_{current_queue}")
+
+
+if __name__ == '__main__':
+
+    master: Tk = Tk()
+    master_top = Toplevel()
+    mainWindow = window.MainApplication(master)
+    secondaryWindow = window.SecondaryWindow(master, master_top)
+    master_top.withdraw()
+
+    mainWindow.list = Listbox(mainWindow.frame)
+    mainWindow.list.configure(bg=mainWindow.background_color, foreground="white", highlightbackground=mainWindow.background_color)
+    mainWindow.list.grid(row=7, column=0, padx=5, pady=5, sticky=E + W + N + S)
+    master.protocol("WM_DELETE_WINDOW", quit_window)
+    master.bind("<Unmap>", show_master_top)
+
+    img = PhotoImage(file=r"./img/icon.png").subsample(5, 5)
+    btn = Button(master_top, text='Monitor:', image=img, borderwidth=0, highlightthickness=0, command=close_secondary)
+    btn.grid(row=0, column=0, padx=0, pady=15)
+    btn.config(bg='#152532', fg='white')
+
+    #####################
+    # Global variables
+    #####################
+    label_text = Label(master_top, bg="#152532")
+    label_text.configure(fg="#FCBD1E")
+    label_text.grid(row=0, column=1, padx=5, pady=.5, sticky=W)
+    current_process = ""
+    pika_body = ""
+    middle_list = []
+    #####################
+    # Global variables
+    #####################
+
+    threads_queue = queue.Queue()
+    sap_login_queue = queue.Queue()
+
+    receive_thread = Thread(target=receiver_queue)
+    receive_thread_vul = Thread(target=receiver_vul)
+
+    receive_thread.start()
+    receive_thread_vul.start()
+    master.mainloop()

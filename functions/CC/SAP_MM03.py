@@ -47,7 +47,7 @@ def Main(material_list):
             session.findById("wnd[0]/tbar[0]/btn[3]").press()
 
             response = {"material_description": material_description}
-            print(response)
+            # print(response)
         return json.dumps(response)
 
     except:
@@ -55,7 +55,7 @@ def Main(material_list):
         session.findById("wnd[0]/tbar[0]/btn[15]").press()
         error = session.findById("wnd[0]/sbar/pane[0]").Text
         response = {"result": "N/A", "error": error}
-        print(response)
+        # print(response)
         return json.dumps(response)
 
     finally:

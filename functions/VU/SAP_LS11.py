@@ -2,7 +2,7 @@
 
 # -Sub Main--------------------------------------------------------------
 
-def Main(con, storage_type, storage_bin):
+def Main(connection_number, storage_type, storage_bin):
     """
     Function checks if storage bin is part of storage type
     """
@@ -14,7 +14,7 @@ def Main(con, storage_type, storage_bin):
         pythoncom.CoInitialize()
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
         application = SapGuiAuto.GetScriptingEngine
-        connection = application.Children(con)
+        connection = application.Children(connection_number)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

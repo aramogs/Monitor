@@ -253,7 +253,7 @@ class DB:
                     return columns, values[0], table[0]
                 except Exception as e:
                     logger(e)
-                    print(e)
+                    # print(e)
 
     @staticmethod
     def client_part_number(no_sap):
@@ -576,12 +576,30 @@ class DB:
             logger(e)
             pass
 
+    @staticmethod
+    def select_storage_location(estacion):
+        """
+        Function to get printer from station id
+        """
+        try:
+            db = mysql.connector.connect(**b10_config)
+            query = f'SELECT storage_location FROM station_conf WHERE no_estacion = "{estacion}"'
+            cursor = db.cursor(buffered=True)
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            return cursor.fetchall()
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            logger(e)
+            pass
+
 
 class DBR:
     @staticmethod
     def set_hash(redis_hash, serial_num):
         try:
-            redis_config.set(redis_hash, f'{serial_num}', 86400)
+            redis_config.set(redis_hash, f'{serial_num}', 180)
         except Exception as e:
             print("DB-Error:   [x] %s" % str(e))
             logger(e)
@@ -599,7 +617,7 @@ class DBR:
     @staticmethod
     def get_hash(redis_hash):
         try:
-            print(redis_config.get(redis_hash))
+            return redis_config.get(redis_hash)
         except Exception as e:
             print("DB-Error:   [x] %s" % str(e))
             logger(e)

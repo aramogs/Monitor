@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(part_num):
+def Main(con, storage_location, part_num):
     """
     Function used to check the available quantity of material
     In this case is used to check all the storage units corresponding the the Part Number and the FIFO dates
@@ -18,7 +18,7 @@ def Main(part_num):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")
@@ -40,9 +40,10 @@ def Main(part_num):
         session.findById("wnd[0]/usr/ctxtRL01S-LGNUM").text = "521"
         session.findById("wnd[0]/usr/ctxtRL01S-MATNR").text = part_num
         session.findById("wnd[0]/usr/ctxtRL01S-WERKS").text = "5210"
+        session.findById("wnd[0]/usr/txtRL01S-LGORT").text = storage_location
         session.findById("wnd[0]/usr/ctxtRL01S-BESTQ").text = "*"
         session.findById("wnd[0]/usr/ctxtRL01S-SOBKZ").text = "*"
-        session.findById("wnd[0]/usr/ctxtRL01S-LGTYP").text = "EXT"
+        session.findById("wnd[0]/usr/ctxtRL01S-LGTYP").text = "VUL"
         session.findById("wnd[0]/usr/ctxtRL01S-LISTV").text = "/DEL"
         session.findById("wnd[0]").sendVKey(0)
 

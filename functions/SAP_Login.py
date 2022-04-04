@@ -20,7 +20,7 @@ def Main():
         pythoncom.CoInitialize()
         path = r"C:\Program Files (x86)\SAP\FrontEnd\SAPgui\saplogon.exe"
         subprocess.Popen(path,stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
-        time.sleep(10)
+        time.sleep(5)
 
         # Necesario par correr win32com.client en Threading
         # pythoncom.CoInitialize()

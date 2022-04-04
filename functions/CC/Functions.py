@@ -49,13 +49,15 @@ def cycle_count_status(inbound):
     """
     storage_type = inbound["storage_type"]
     storage_bin = inbound["storage_bin"]
+    con = inbound["con"]
+    storage_location = inbound["storage_location"]
 
-    bin_exist = SAP_LS11.Main(storage_type, storage_bin)
+    bin_exist = SAP_LS11.Main(con, storage_type, storage_bin)
     if json.loads(bin_exist)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f"Storage Bin does not exist at Storage Type {storage_type}"})
 
     else:
-        result_lx03 = json.loads(SAP_LX03.Main(storage_type, storage_bin))
+        result_lx03 = json.loads(SAP_LX03.Main(con, storage_type, storage_bin))
 
         if result_lx03["error"] != "N/A":
             response = json.dumps({"storage_units": "N/A", "error": f'{result_lx03["error"]}'})
@@ -69,11 +71,15 @@ def cycle_count_status(inbound):
 def cycle_count_transfer(inbound):
     storage_type = inbound["storage_type"]
     storage_bin = inbound["storage_bin"]
+    station = re.sub(":", "-", inbound["station"])
     st = ""
     sb = ""
     emp_num = inbound["user_id"]
     not_found_response = ""
     unlisted_response = ""
+    con = inbound["con"]
+    storage_location = inbound["storage_location"]
+
     #############################################################################################################################################
     #############################################################################################################################################
     #############################################################################################################################################
@@ -94,14 +100,16 @@ def cycle_count_transfer(inbound):
     elif storage_type == "EXT":
         st = storage_type
         sb = "CICLICOEXT"
+    elif storage_type == "VUL":
+        st = storage_type
+        sb = "CICLICOVUL"
     #############################################################################################################################################
     #############################################################################################################################################
     #############################################################################################################################################
 
     if len(inbound["not_found_storage_units"]) > 0:
-
         not_found_storage_units = inbound["not_found_storage_units"].split(",")
-        response = SAP_LT09_Transfer.Main(not_found_storage_units, st, sb)
+        response = SAP_LT09_Transfer.Main(con, not_found_storage_units, st, sb, station)
         not_found_response = json.loads(response)["result"].strip("][")
 
         for x in json.loads(re.sub(r"'", "\"", json.loads(response)["result"])):
@@ -109,22 +117,20 @@ def cycle_count_transfer(inbound):
                 DB.insert_cycle_transfer(storage_type=storage_type, storage_bin=storage_bin, storage_unit=x["serial_num"], emp_num=emp_num, status="NOSCAN", sap_result=x["result"])
                 pass
             else:
-                DB.insert_cycle_transfer(storage_type=storage_type, storage_bin=storage_bin, storage_unit=x["serial_num"], emp_num=emp_num, status="NOSCAN-ERROR",sap_result=x["result"])
+                DB.insert_cycle_transfer(storage_type=storage_type, storage_bin=storage_bin, storage_unit=x["serial_num"], emp_num=emp_num, status="NOSCAN-ERROR", sap_result=x["result"])
                 pass
 
     if len(inbound["unlisted_storage_units"]) > 0:
         unlisted_storage_units = inbound["unlisted_storage_units"].split(",")
-        response = SAP_LT09_Transfer.Main(unlisted_storage_units, storage_type, storage_bin)
+        response = SAP_LT09_Transfer.Main(con, unlisted_storage_units, storage_type, storage_bin, station)
         unlisted_response = json.loads(response)["result"].strip("][")
 
         for x in json.loads(re.sub(r"'", "\"", json.loads(response)["result"])):
             if type(x['result']) == int:
-                DB.insert_cycle_transfer(storage_type=storage_type, storage_bin=storage_bin, storage_unit=x["serial_num"], emp_num=emp_num, status="WRONGBIN",
-                                         sap_result=x["result"])
+                DB.insert_cycle_transfer(storage_type=storage_type, storage_bin=storage_bin, storage_unit=x["serial_num"], emp_num=emp_num, status="WRONGBIN", sap_result=x["result"])
                 pass
             else:
-                DB.insert_cycle_transfer(storage_type=storage_type, storage_bin=storage_bin, storage_unit=x["serial_num"], emp_num=emp_num, status="WRONGBIN-ERROR",
-                                         sap_result=x["result"])
+                DB.insert_cycle_transfer(storage_type=storage_type, storage_bin=storage_bin, storage_unit=x["serial_num"], emp_num=emp_num, status="WRONGBIN-ERROR", sap_result=x["result"])
                 pass
 
     response = json.dumps({"result": f'{not_found_response + "," + unlisted_response}', "error": "N/A"})
