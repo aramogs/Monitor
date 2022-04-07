@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(con, storage_type, storage_bin):
+def Main(con, storage_location, storage_type, storage_bin):
     import win32com.client
     import pythoncom
     import json
@@ -59,11 +59,12 @@ def Main(con, storage_type, storage_bin):
             while True:
                 y = 7
                 for x in range(original_position):
-                    q = {
-                        "storage_unit": session.findById(f'wnd[0]/usr/lbl[5,{y}]').Text
-                    }
-                    y += 1
-                    info_list.append(q)
+                    if storage_location == session.findById("wnd[0]/usr/lbl[65,7]").Text:
+                        q = {
+                            "storage_unit": session.findById(f'wnd[0]/usr/lbl[5,{y}]').Text
+                        }
+                        y += 1
+                        info_list.append(q)
                 if maxScroll != 0:
                     session.findById("wnd[0]/usr").verticalScrollbar.position += original_position
                 else:

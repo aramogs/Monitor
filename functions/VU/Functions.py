@@ -434,7 +434,7 @@ def transfer_vul_confirmed(inbound):
     if json.loads(bin_exist)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f"Storage Bin does not exist at Storage Type {storage_type}"})
         # if json.loads(bin_exist)["error"] == "":
-        #     response = json.dumps({"serial": "N/A", "error": "No Storage Bin like this in Storage Type FG"})
+        #     response = json.dumps({f'"serial": "N/A", "error": "No Storage Bin like this in Storage Type {storage_type}"'})
 
     else:
         response = SAP_LT09_Transfer_Multiple.Main(con, serials, storage_type, storage_bin, station_hash)
@@ -445,7 +445,7 @@ def transfer_vul_confirmed(inbound):
             # json.loads(re.sub... Carga cada arreglo dentro de la respuesta a un json
             # for x in json.loads cada respuesta cargada del arreglo es iterada
         for x in json.loads(re.sub(r"'", "\"", json.loads(response)["result"])):
-            # DB.insert_complete_transfer(emp_num=emp_num, no_serie=x["serial_num"], result=x["result"], area="VUL")
+            DB.insert_complete_transfer(emp_num=emp_num, no_serie=x["serial_num"], result=x["result"], area="VUL")
             pass
 
     return response

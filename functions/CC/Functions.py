@@ -57,7 +57,7 @@ def cycle_count_status(inbound):
         response = json.dumps({"serial": "N/A", "error": f"Storage Bin does not exist at Storage Type {storage_type}"})
 
     else:
-        result_lx03 = json.loads(SAP_LX03.Main(con, storage_type, storage_bin))
+        result_lx03 = json.loads(SAP_LX03.Main(con, storage_location, storage_type, storage_bin))
 
         if result_lx03["error"] != "N/A":
             response = json.dumps({"storage_units": "N/A", "error": f'{result_lx03["error"]}'})
@@ -103,6 +103,8 @@ def cycle_count_transfer(inbound):
     elif storage_type == "VUL":
         st = storage_type
         sb = "CICLICOVUL"
+    else:
+        return json.dumps({"serial": "N/A", "error": f"Storage Type not configured for Cycle Control {storage_type}"})
     #############################################################################################################################################
     #############################################################################################################################################
     #############################################################################################################################################
