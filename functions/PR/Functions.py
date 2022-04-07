@@ -23,9 +23,11 @@ def create_pr_hu(inbound):
     cantidad = inbound["cantidad"]
     employee = inbound["employee"]
     station = inbound["station"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_MFP11.Main(material[1:], cantidad))
-    SAP_Z_UC.Main("dummy")
+    response = json.loads(SAP_MFP11.Main(con, material[1:], cantidad))
+    SAP_Z_UC.Main(con, "dummy")
     serial_num = response["serial_num"]
     error = response["error"]
     result = response["result"]
@@ -65,8 +67,10 @@ def confirm_pr_hu(inbound):
            Function takes a Handling Unit number and creates a back flush
     """
     serial_num = inbound["serial_num"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_MFHU.Main(serial_num))
+    response = json.loads(SAP_MFHU.Main(con, serial_num))
 
     result = response["result"]
     error = response["error"]
@@ -81,8 +85,10 @@ def confirm_pr_hu_transfer(inbound):
         If there are no errors the function returns a transfer order number
     """
     serial_num = inbound["serial_num"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_MFHU.Main(serial_num))
+    response = json.loads(SAP_MFHU.Main(con, serial_num))
 
     result = response["result"]
     error = response["error"]
@@ -90,7 +96,7 @@ def confirm_pr_hu_transfer(inbound):
         # response = {"serial": serial_num, "result": "OK", "error": "N/A"}
         # print("OK", response)
         # return json.dumps(response)
-        response = json.loads(SAP_LT09.Main(serial_num))
+        response = json.loads(SAP_LT09.Main(con, serial_num))
 
         result = response["result"]
         error = response["error"]
@@ -111,6 +117,8 @@ def no_confirm_pr_hu(inbound):
             Function simulates to do a Back flush but does nothing
     """
     serial_num = inbound["serial_num"]
+    # con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
     response = {"serial": serial_num, "result": "OK", "error": ["N/A"]}
     return json.dumps(response)
@@ -126,9 +134,11 @@ def create_alternate_pr_hu(inbound):
     cantidad = inbound["cantidad"]
     employee = inbound["employee"]
     station = inbound["station"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_MFP11_ALT.Main(material[1:], cantidad))
-    SAP_Z_UC.Main("dummy")
+    response = json.loads(SAP_MFP11_ALT.Main(con, material[1:], cantidad))
+    SAP_Z_UC.Main(con, "dummy")
     serial_num = response["serial_num"]
     error = response["error"]
     result = response["result"]
@@ -172,17 +182,19 @@ def create_pr_hu_del(inbound):
     material = inbound["material"]
     cantidad = inbound["cantidad"]
     station = inbound["station"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
     printe = DB.select_printer(station)
     printer = printe[0][0]
 
-    response = json.loads(SAP_MFP11.Main(material[1:], cantidad))
+    response = json.loads(SAP_MFP11.Main(con, material[1:], cantidad))
 
     serial_num = response["serial_num"]
     error = response["error"]
     result = response["result"]
 
-    result_z = json.loads(SAP_Z_UC_DEL.Main(printer))
+    result_z = json.loads(SAP_Z_UC_DEL.Main(con, printer))
 
     if result_z["error"] != "N/A":
         response = {"serial": "N/A", "result": "N/A", "error": result_z["error"]}
@@ -195,7 +207,6 @@ def create_pr_hu_del(inbound):
     return json.dumps(response)
 
 
-
 def create_alt_pr_hu_del(inbound):
     """
       Function takes Material Number, Quantity and creates a Handling unit
@@ -205,17 +216,19 @@ def create_alt_pr_hu_del(inbound):
     material = inbound["material"]
     cantidad = inbound["cantidad"]
     station = inbound["station"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
     printe = DB.select_printer(station)
     printer = printe[0][0]
 
-    response = json.loads(SAP_MFP11_ALT.Main(material[1:], cantidad))
+    response = json.loads(SAP_MFP11_ALT.Main(con, material[1:], cantidad))
 
     serial_num = response["serial_num"]
     error = response["error"]
     result = response["result"]
 
-    result_z = json.loads(SAP_Z_UC_DEL.Main(printer))
+    result_z = json.loads(SAP_Z_UC_DEL.Main(con, printer))
 
     if result_z["error"] != "N/A":
         response = {"serial": "N/A", "result": "N/A", "error": result_z["error"]}
@@ -237,17 +250,19 @@ def create_pr_hu_wm(inbound):
     material = inbound["material"]
     cantidad = inbound["cantidad"]
     station = inbound["station"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
     printe = DB.select_alt_printer(station)
     printer = printe[0][0]
 
-    response = json.loads(SAP_MFP11.Main(material[1:], cantidad))
+    response = json.loads(SAP_MFP11.Main(con, material[1:], cantidad))
 
     serial_num = response["serial_num"]
     error = response["error"]
     result = response["result"]
-    SAP_Z_UC.Main("dummy")
-    result_z_wm = json.loads(SAP_Z_UC_WM.Main(printer, serial_num))
+    SAP_Z_UC.Main(con, "dummy")
+    result_z_wm = json.loads(SAP_Z_UC_WM.Main(con, printer, serial_num))
 
     if result_z_wm["error"] != "N/A":
         response = {"serial": "N/A", "result": "N/A", "error": result_z_wm["error"]}
@@ -260,7 +275,6 @@ def create_pr_hu_wm(inbound):
     return json.dumps(response)
 
 
-
 def create_alt_pr_hu_wm(inbound):
     """
           Function takes Material Number, Quantity and creates a Handling unit
@@ -270,17 +284,19 @@ def create_alt_pr_hu_wm(inbound):
     material = inbound["material"]
     cantidad = inbound["cantidad"]
     station = inbound["station"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
     printe = DB.select_alt_printer(station)
     printer = printe[0][0]
 
-    response = json.loads(SAP_MFP11_ALT.Main(material[1:], cantidad))
+    response = json.loads(SAP_MFP11_ALT.Main(con, material[1:], cantidad))
 
     serial_num = response["serial_num"]
     error = response["error"]
     result = response["result"]
-    SAP_Z_UC.Main("dummy")
-    result_z_wm = json.loads(SAP_Z_UC_WM.Main(printer, serial_num))
+    SAP_Z_UC.Main(con, "dummy")
+    result_z_wm = json.loads(SAP_Z_UC_WM.Main(con, printer, serial_num))
 
     if result_z_wm["error"] != "N/A":
         response = {"serial": "N/A", "result": "N/A", "error": result_z_wm["error"]}

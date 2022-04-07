@@ -8,7 +8,7 @@
 # serial_num = sys.argv[3]
 
 
-def Main(material, quantity, serial_num):
+def Main(con, material, quantity, serial_num):
     """
     Function takes material number, quantity and serial number
     Then gets the serial number and withdraws the quantity from the serial number
@@ -24,7 +24,7 @@ def Main(material, quantity, serial_num):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

@@ -2,13 +2,9 @@
 
 # -Includes--------------------------------------------------------------
 
-
-
-
 # -Sub Main--------------------------------------------------------------
 
-
-def Main(serial_num):
+def Main(con, serial_num):
     """
     Function used to get the Material Number corresponding the Serial Number
     """
@@ -28,7 +24,7 @@ def Main(serial_num):
             SapGuiAuto = None
             return
 
-        connection = application.Children(0)
+        connection = application.Children(con)
         if not type(connection) == win32com.client.CDispatch:
             application = None
             SapGuiAuto = None

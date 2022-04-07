@@ -2,10 +2,8 @@
 
 # -Includes--------------------------------------------------------------
 
-
-
 # -Sub Main--------------------------------------------------------------
-def Main(printer, serial_num):
+def Main(con, printer, serial_num):
     import json
     import sys
     import win32com.client
@@ -17,7 +15,7 @@ def Main(printer, serial_num):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

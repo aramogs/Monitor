@@ -5,7 +5,7 @@
 
 
 #-Sub Main--------------------------------------------------------------
-def Main(serial_num):
+def Main(con, serial_num):
   """
   The function takes a serial number to perform a transfer order
   The transfer is from Vul/??? to 102/103
@@ -20,7 +20,7 @@ def Main(serial_num):
 
     application = SapGuiAuto.GetScriptingEngine
 
-    connection = application.Children(0)
+    connection = application.Children(con)
 
     if connection.DisabledByServer == True:
       print("Scripting is disabled by server")

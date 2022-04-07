@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(sap_num, quant):
+def Main(con, sap_num, quant):
     """
     Function takes a material number and quantity to perform transfer order
     The transfer order is from 102/103 to VUL/V02
@@ -17,7 +17,7 @@ def Main(sap_num, quant):
         pythoncom.CoInitialize()
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
         application = SapGuiAuto.GetScriptingEngine
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

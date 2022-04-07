@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(part_num, storage_type):
+def Main(con, part_num, storage_type):
     """
     Function used to check the available quantity of material
     In this case is used to check all the storage units corresponding the the Part Number and the FIFO dates
@@ -18,7 +18,7 @@ def Main(part_num, storage_type):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

@@ -5,7 +5,7 @@
 # -Sub Main--------------------------------------------------------------
 
 
-def Main(serial_num):
+def Main(con, serial_num):
     """
     Function gets serial number and performs a transfer order
     """
@@ -24,7 +24,7 @@ def Main(serial_num):
             SapGuiAuto = None
             return
 
-        connection = application.Children(0)
+        connection = application.Children(con)
         if not type(connection) == win32com.client.CDispatch:
             application = None
             SapGuiAuto = None

@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(printer):
+def Main(con, printer):
     import sys
     import win32com.client
     import pythoncom
@@ -15,7 +15,7 @@ def Main(printer):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

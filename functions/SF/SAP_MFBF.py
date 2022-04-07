@@ -2,10 +2,8 @@
 
 # -Includes--------------------------------------------------------------
 
-
-
 # -Sub Main--------------------------------------------------------------
-def Main(material, cantidad, serial, plan_id):
+def Main(con, material, cantidad, serial, plan_id):
     import sys
     import win32com.client
     import pythoncom
@@ -17,7 +15,7 @@ def Main(material, cantidad, serial, plan_id):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

@@ -57,8 +57,10 @@ def handling_sf(inbound):
 
     subline = inbound["subline"]
     station = inbound["station"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_MFP11.Main(material[1:], cantidad))
+    response = json.loads(SAP_MFP11.Main(con, material[1:], cantidad))
 
     serial_num = response["serial_num"]
     error = response["error"]
@@ -102,7 +104,10 @@ def transfer_sfr_return(inbound):
     cantidad = inbound["cantidad"]
     subline = inbound["subline"]
     station = inbound["station"]
-    response = json.loads(SAP_LT01.Main(material[1:], cantidad))
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
+
+    response = json.loads(SAP_LT01.Main(con, material[1:], cantidad))
 
     serial_num = response["serial"]
     transfer_order = response["result"]
@@ -141,14 +146,16 @@ def transfer_sf(inbound):
     If there are no errors the function returns a transfer order number
     """
     serial_num = inbound["serial_num"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_MFHU.Main(serial_num))
+    response = json.loads(SAP_MFHU.Main(con, serial_num))
 
     result = response["result"]
     error = response["error"]
 
     if error == "N/A":
-        response2 = json.loads(SAP_LB12.Main(serial_num))
+        response2 = json.loads(SAP_LB12.Main(con, serial_num))
         result = response2["result"]
 
     response = {"serial": serial_num, "result": f'"{result}"', "error": error}
@@ -161,10 +168,13 @@ def transfer_sfr(inbound):
     If everything goes right the function returns a transfer order
     """
     serial_num = inbound["serial_num"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
+
     # TODO si no es storage type VUL no hacer transferencia
     if len(str(serial_num)) < 10:
         serial_num = "0"+str(serial_num)
-    response = json.loads(SAP_LT09.Main(serial_num))
+    response = json.loads(SAP_LT09.Main(con, serial_num))
 
     result = response["result"]
     error = response["error"]
@@ -185,6 +195,8 @@ def reprint_sf(inbound):
     subline = inbound["subline"]
     station = inbound["station"]
     serial_num = inbound["serial_num"]
+    # con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
     # material = "P5000010050A0"
     # cantidad = "600"
@@ -220,20 +232,23 @@ def reprint_sf(inbound):
 
 def confirm_ext_hu(inbound):
     material_list = inbound['data']
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
+
     response_list = []
     for material in material_list:
 
-        numero_parte = material['numero_parte']
-        cantidad = material['cantidad']
+        # numero_parte = material['numero_parte']
+        # cantidad = material['cantidad']
         serial = material['serial']
-        plan_id = material['plan_id']
+        # plan_id = material['plan_id']
         user_id = inbound['user_id']
 
-        response = json.loads(SAP_MFHU.Main(serial))
+        response = json.loads(SAP_MFHU.Main(con, serial))
 
         error = response["error"]
         if error == 'N/A':
-            transfer = json.loads(SAP_LB12_EXT.Main(serial))
+            transfer = json.loads(SAP_LB12_EXT.Main(con, serial))
             error = transfer["error"]
             if error == 'N/A':
                 DB.acred_print_ext(serial, transfer['result'], user_id)
@@ -241,12 +256,12 @@ def confirm_ext_hu(inbound):
             else:
                 DB.acred_print_error_ext(serial, transfer['error'], user_id)
                 response_list.append(transfer)
-                SAP_MFHU_Reverse.Main(serial)
+                SAP_MFHU_Reverse.Main(con, serial)
                 pass
         else:
             response_list.append(response)
 
-    return json.dumps({"result": response_list, "error": error})
+        return json.dumps({"result": response_list, "error": error})
 
 
 def transfer_ext_rp(inbound):
@@ -256,20 +271,23 @@ def transfer_ext_rp(inbound):
     """
     material_list = inbound['data']
     emp_num = inbound['user_id']
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
     response_list = []
+
     for material in material_list:
 
         serial = material["serial"]
-        plan_id = material["plan_id"]
-        numero_parte = material["numero_parte"]
-        cantidad = material["cantidad"]
-        from_Sbin = "EXT"
-        to_Sbin = "GREEN"
+        # plan_id = material["plan_id"]
+        # numero_parte = material["numero_parte"]
+        # cantidad = material["cantidad"]
+        # from_sbin = "EXT"
+        to_sbin = "GREEN"
 
         if len(str(serial)) < 10:
             serial = "0" + str(serial)
 
-        response = SAP_LT09_EXT_RP.Main(serial, to_Sbin)
+        response = SAP_LT09_EXT_RP.Main(con, serial, to_sbin)
         if json.loads(response)["error"] == "N/A":
             DB.trannsfer_print_ext(serial, json.loads(response)['result'], emp_num)
         response_list.append(json.loads(response))
@@ -285,17 +303,19 @@ def handling_ext(inbound):
     If there are no errors the function prints a label
     """
     material = inbound["material"]
-    cantidad = inbound["cantidad"]
+    quantity = inbound["cantidad"]
     station = inbound["station"]
     operator_name = inbound["operator_name"]
-    numero_etiquetas = inbound["numero_etiquetas"]
+    label_quantity = inbound["numero_etiquetas"]
     operator_id = inbound["operator_id"]
     plan_id = inbound["plan_id"]
-    impresoType = inbound["impresoType"]
+    print_type = inbound["impresoType"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
     response_list = []
-    for i in range(numero_etiquetas):
-        response = json.loads(SAP_MFP11.Main(material, cantidad))
+    for i in range(label_quantity):
+        response = json.loads(SAP_MFP11.Main(con, material, quantity))
 
         serial_num = response["serial_num"]
         error = response["error"]
@@ -317,7 +337,7 @@ def handling_ext(inbound):
 
                 data.update({"printer": f'{printer}'})
                 data.update({"serial": f'{serial_num}'})
-                data.update({"quant": f'{cantidad}'})
+                data.update({"quant": f'{quantity}'})
                 data.update({"line": f'{station}'})
                 data.update({"emp_num": f'{operator_name}'})
 
@@ -325,13 +345,13 @@ def handling_ext(inbound):
             print(r)
             if r.status_code == 200:
                 DB.update_plan_ext(plan_id)
-                DB.update_print_ext(serial_num, plan_id, material, operator_id, cantidad, impresoType)
+                DB.update_print_ext(serial_num, plan_id, material, operator_id, quantity, print_type)
 
             if error == "":
                 sap_error_windows()
 
-    response = {"result": f'"{response_list}"', "error": error}
-    return json.dumps(response)
+        response = {"result": f'"{response_list}"', "error": error}
+        return json.dumps(response)
 
 
 def storage_unit_ext_pr(inbound):
@@ -345,12 +365,14 @@ def storage_unit_ext_pr(inbound):
     station = inbound["station"]
     operator_name = inbound["operator_name"]
     operator_id = inbound["operator_id"]
-    impresoType = inbound["impresoType"]
-    from_Sbin = "GREEN"
-    to_Sbin = "TEMPR"
+    printed_type = inbound["impresoType"]
+    from_sbin = "GREEN"
+    to_sbin = "TEMPR"
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
     # printer = f'\\\\tftdelsrv003\{inbound["impresora"]}'
 
-    response = json.loads(SAP_LS24.Main(numero_parte, from_Sbin))
+    response = json.loads(SAP_LS24.Main(con, numero_parte, from_sbin))
     if response["error"] != "N/A":
         return json.dumps({"serial": "N/A", "result": "N/A", "error": f'{response["error"]}'})
     else:
@@ -358,7 +380,7 @@ def storage_unit_ext_pr(inbound):
             err = round(((int(cantidad) - int(response["result"])) / int(response["result"])) * 100, 2)
             return json.dumps({"serial": "N/A", "transfer_order": "N/A", "error": f'Requested amount exceeded by {err}% of available material'})
         else:
-            response = json.loads(SAP_LT01_EXT_PR.Main(numero_parte, cantidad, from_Sbin, to_Sbin))
+            response = json.loads(SAP_LT01_EXT_PR.Main(con, numero_parte, cantidad, from_sbin, to_sbin))
             serial_num = response["serial"]
             result_ext_pr = response["result"]
             error = response["error"]
@@ -384,8 +406,8 @@ def storage_unit_ext_pr(inbound):
                 if r.status_code == 200:
                     if serial_obsoleto != "undefined":
                         DB.update_plan_ext(plan_id)
-                        DB.update_print_ext_return(serial_obsoleto,result_ext_pr)
-                    DB.update_print_ext(serial_num, plan_id, numero_parte, operator_id, cantidad, impresoType)
+                        DB.update_print_ext_return(serial_obsoleto, result_ext_pr)
+                    DB.update_print_ext(serial_num, plan_id, numero_parte, operator_id, cantidad, printed_type)
             else:
                 response = {"serial": "N/A", "result": "N/A", "error": error}
 
@@ -402,7 +424,10 @@ def transfer_ext(inbound):
         the corresponding material number
     """
     serial_num = inbound["serial_num"]
-    result_lt09 = json.loads(SAP_LT09_Query.Main(serial_num))
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
+
+    result_lt09 = json.loads(SAP_LT09_Query.Main(con, serial_num))
 
     if result_lt09["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f'{result_lt09["error"]}'})
@@ -410,7 +435,7 @@ def transfer_ext(inbound):
             sap_error_windows()
     else:
         material_number = result_lt09["material_number"]
-        response = SAP_LS24_EXT.Main(material_number)
+        response = SAP_LS24_EXT.Main(con, material_number)
     return response
 
 
@@ -425,15 +450,17 @@ def transfer_ext_confirmed(inbound):
     serials = (inbound["serial_num"]).split(",")
     emp_num = inbound["user_id"]
     station_hash = inbound["station"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
-    bin_exist = SAP_LS11.Main(storage_type, storage_bin)
+    bin_exist = SAP_LS11.Main(con, storage_type, storage_bin)
     if json.loads(bin_exist)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f"Storage Bin does not exist at Storage Type {storage_type}"})
         # if json.loads(bin_exist)["error"] == "":
         #     response = json.dumps({"serial": "N/A", "error": "No Storage Bin like this in Storage Type FG"})
 
     else:
-        response = SAP_LT09_Transfer_Redis.Main(serials, storage_type, storage_bin, station_hash)
+        response = SAP_LT09_Transfer_Redis.Main(con, serials, storage_type, storage_bin, station_hash)
         if json.loads(response)["error"] != "N/A":
             response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
             # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "

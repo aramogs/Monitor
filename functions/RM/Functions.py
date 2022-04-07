@@ -36,10 +36,13 @@ def partial_transfer(inbound):
     After that it returns the requested information
     """
     try:
-        serial_num = inbound["serial_num"]
 
-        response = json.loads(SAP_LT09.Main(serial_num))
-        storage_type = storage_unit_location(serial_num)
+        serial_num = inbound["serial_num"]
+        con = inbound["con"]
+        # storage_location = inbound["storage_location"]
+
+        response = json.loads(SAP_LT09.Main(con, serial_num))
+        storage_type = storage_unit_location(con, serial_num)
         if storage_type != "MP":
             response = {"serial": "N/A", "material": "N/A", "material_description": "N/A", "material_w": "N/A", "cantidad": "N/A",
                         "error": "Partial Transfer only available for Storage Type MP"}
@@ -52,7 +55,7 @@ def partial_transfer(inbound):
         error = response["error"]
 
         if material_number != "N/A":
-            material_w = material_weigth(material_number)
+            material_w = material_weigth(con, material_number)
 
         else:
             material_w = "N/A"
@@ -67,19 +70,19 @@ def partial_transfer(inbound):
         return json.dumps(response)
 
 
-def material_weigth(_material):
+def material_weigth(con, _material):
     """
     Function takes material number, checks material weight and returns it
     """
-    response = json.loads(SAP_MM03.Main(_material))
+    response = json.loads(SAP_MM03.Main(con, _material))
     return response["net_weight"]
 
 
-def storage_unit_location(_storage_unit):
+def storage_unit_location(con, _storage_unit):
     """
     Function takes storage unit, checks storage type and returns it
     """
-    response = json.loads(SAP_LS33.Main(_storage_unit))
+    response = json.loads(SAP_LS33.Main(con, _storage_unit))
     return response["storage_type"]
 
 
@@ -96,8 +99,10 @@ def partial_transfer_confirmed(inbound):
     cantidad = inbound["cantidad"]
     cantidad_restante = inbound["cantidad_restante"]
     user_id = inbound["user_id"]
+    con = inbound["con"]
+#     # storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_LT01.Main(material, cantidad, serial_num))
+    response = json.loads(SAP_LT01.Main(con, material, cantidad, serial_num))
     result = response["result"]
     error = response["error"]
 
@@ -129,18 +134,20 @@ def transfer_mp_confirmed(inbound):
     emp_num = inbound["user_id"]
     storage_type = inbound["storage_type"]
     station_hash = inbound["station"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
     for serial in serials:
-        _storage_type = storage_unit_location(serial)
+        _storage_type = storage_unit_location(con, serial)
         if storage_type != _storage_type:
             response = {"serial": "N/A", "error": f"Storage Unit does not exist at Storage Type {storage_type}"}
             return json.dumps(response)
 
-    bin_exist = SAP_LS11.Main(storage_type, storage_bin)
+    bin_exist = SAP_LS11.Main(con, storage_type, storage_bin)
     if json.loads(bin_exist)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f"Storage Bin does not exist at Storage Type {storage_type}"})
     else:
-        response = SAP_LT09_Transfer_Redis.Main(serials, storage_type, storage_bin, station_hash)
+        response = SAP_LT09_Transfer_Redis.Main(con, serials, storage_type, storage_bin, station_hash)
         if json.loads(response)["error"] != "N/A":
             response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
             # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "
@@ -159,13 +166,15 @@ def raw_delivery_verify(inbound):
     user_id = inbound["user_id"]
     shift = inbound["turno"]
     sap_numbers = inbound["numeros_sap"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
     array_of_arrays = []
     sap_nums = []
 
     for sap_num in sap_numbers:
         sap_nums.append(str(sap_num[0]))
 
-    se16_response = json.loads(SAP_SE16_MAKT.Main(sap_nums))
+    se16_response = json.loads(SAP_SE16_MAKT.Main(con, sap_nums))
     if se16_response["error"] != "N/A":
         response = {"serial": "N/A", "error": se16_response["error"]}
     else:
@@ -189,11 +198,13 @@ def raw_delivery_verify(inbound):
 
 
 def raw_fifo_verify(inbound):
-    print(inbound)
 
     material = inbound["material"]
     storage_type = inbound["storage_type"]
-    response = json.loads(SAP_LS24.Main(material, storage_type))
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
+
+    response = json.loads(SAP_LS24.Main(con, material, storage_type))
     return json.dumps(response)
 
 
@@ -206,10 +217,12 @@ def raw_mp_confirmed(inbound):
     emp_num = inbound["user_id"]
     raw_id = inbound["raw_id"]
     storage_type_db = inbound["storage_type"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
     storage_type = "102"
     storage_bin = "104"
 
-    response = SAP_LT09_Transfer.Main(serials, storage_type, storage_bin)
+    response = SAP_LT09_Transfer.Main(con, serials, storage_type, storage_bin)
     if json.loads(response)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
         # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "
@@ -232,6 +245,8 @@ def raw_mp_confirmed_v(inbound):
     emp_num = inbound["user_id"]
     raw_id = inbound["raw_id"]
     shift = inbound["shift"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
     storage_type = "MP"
 
     if shift == "T1":
@@ -241,7 +256,7 @@ def raw_mp_confirmed_v(inbound):
     elif shift == "T3":
         storage_bin = "ITVINDEL3"
 
-    response = SAP_LT09_Transfer.Main(serials, storage_type, storage_bin)
+    response = SAP_LT09_Transfer.Main(con, serials, storage_type, storage_bin)
     if json.loads(response)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
         # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "
@@ -260,7 +275,10 @@ def location_mp_material(inbound):
     """
     material_number = inbound["material"]
     storage_type = inbound["storage_type"]
-    response = SAP_LS24.Main(material_number, storage_type)
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
+
+    response = SAP_LS24.Main(con, material_number, storage_type)
     return response
 
 
@@ -269,7 +287,10 @@ def location_mp_serial(inbound):
         Functions takes a Raw serial number and finds the bin(s) location
     """
     serial_num = inbound["serial_num"]
-    result_lt09 = json.loads(SAP_LT09_Query.Main(serial_num))
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
+
+    result_lt09 = json.loads(SAP_LT09_Query.Main(con, serial_num))
     storage_type = inbound["storage_type"]
     if result_lt09["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f'{result_lt09["error"]}'})
@@ -277,7 +298,7 @@ def location_mp_serial(inbound):
             sap_error_windows()
     else:
         material_number = result_lt09["material_number"]
-        response = SAP_LS24.Main(material_number, storage_type)
+        response = SAP_LS24.Main(con, material_number, storage_type)
     return response
 
 

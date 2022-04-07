@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(container, part_number, client_part_number, serials):
+def Main(con, container, part_number, client_part_number, serials):
     import json
     import sys
     import win32com.client
@@ -15,7 +15,7 @@ def Main(container, part_number, client_part_number, serials):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

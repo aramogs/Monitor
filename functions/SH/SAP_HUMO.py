@@ -1,5 +1,5 @@
 # -Sub Main--------------------------------------------------------------
-def Main(masters):
+def Main(con, masters):
     try:
         import sys
         import win32com.client
@@ -8,7 +8,7 @@ def Main(masters):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

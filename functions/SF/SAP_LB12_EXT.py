@@ -1,11 +1,8 @@
 # -Begin-----------------------------------------------------------------
 
 # -Includes--------------------------------------------------------------
-
-
-
 # -Sub Main--------------------------------------------------------------
-def Main(serial):
+def Main(con, serial):
     import json
     import sys
     import win32com.client
@@ -16,7 +13,7 @@ def Main(serial):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

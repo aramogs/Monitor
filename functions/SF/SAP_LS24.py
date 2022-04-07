@@ -3,7 +3,7 @@
 # -Includes--------------------------------------------------------------
 # -Sub Main--------------------------------------------------------------
 
-def Main(sap_num, storage_bin):
+def Main(con, sap_num, storage_bin):
     import sys
     import win32com.client
     import json
@@ -15,7 +15,7 @@ def Main(sap_num, storage_bin):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

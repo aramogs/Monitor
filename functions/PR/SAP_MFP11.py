@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(material, cantidad):
+def Main(con, material, cantidad):
     """
     Function takes material number and quantity and creates a Handling Unit number
     If everything goes right it returns the serial number
@@ -19,7 +19,7 @@ def Main(material, cantidad):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

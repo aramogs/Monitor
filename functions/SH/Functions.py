@@ -94,6 +94,8 @@ def shipment_delivery(inbound):
     delivery = inbound["delivery"]
     stock = inbound["cantidad"]
     embarque = inbound["embarque"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
     list_of_lists = []
 
     result_search_delivery = DB.select_shipment_delivery(delivery)
@@ -102,14 +104,14 @@ def shipment_delivery(inbound):
         response = json.dumps({"result": "N/A", "error": "Delivery already captured"})
         return response
     else:
-        response_sap_vl03n = json.loads(SAP_VL03N.Main(delivery))
+        response_sap_vl03n = json.loads(SAP_VL03N.Main(con, delivery))
         result_sap_vl03n = response_sap_vl03n["result"]
         error_sap_vl03n = response_sap_vl03n["error"]
         if error_sap_vl03n != "N/A":
             response = json.dumps({"result": "N/A", "error": f'{error_sap_vl03n}'})
             return response
         else:
-            response_sap_hu03 = json.loads(SAP_HU03V2.Main())
+            response_sap_hu03 = json.loads(SAP_HU03V2.Main(con,))
             result_sap_hu03 = response_sap_hu03["result"]
             error_sap_hu03 = response_sap_hu03["error"]
             quantity_sap_hu03 = response_sap_hu03["real_quantity"]

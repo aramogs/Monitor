@@ -2,10 +2,8 @@
 
 # -Includes--------------------------------------------------------------
 
-
-
 # -Sub Main--------------------------------------------------------------
-def Main(material_number):
+def Main(con, material_number):
     import sys
     import json
     import win32com.client
@@ -16,7 +14,7 @@ def Main(material_number):
         pythoncom.CoInitialize()
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
         application = SapGuiAuto.GetScriptingEngine
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

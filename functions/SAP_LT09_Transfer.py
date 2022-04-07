@@ -2,7 +2,7 @@
 
 # -Sub Main--------------------------------------------------------------
 
-def Main(serial_num_list, storage_type, storage_bin):
+def Main(con, serial_num_list, storage_type, storage_bin):
     """
     Function takes a list of storage units and transfers them to the storage type nad bin selected
     """
@@ -14,7 +14,7 @@ def Main(serial_num_list, storage_type, storage_bin):
         pythoncom.CoInitialize()
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
         application = SapGuiAuto.GetScriptingEngine
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

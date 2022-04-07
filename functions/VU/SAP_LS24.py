@@ -89,14 +89,12 @@ def Main(con, storage_location, part_num):
                     if maxScroll != 0:
                         session.findById("wnd[0]/usr").verticalScrollbar.position += original_position
                     else:
-                        raise Exception ("Nothing to do here")
+                        raise Exception("Nothing to do here")
 
             except Exception as error:
                 pass
-
-
-            session.findById("wnd[0]/tbar[0]/btn[15]").press()
-            session.findById("wnd[0]/tbar[0]/btn[15]").press()
+            # session.findById("wnd[0]/tbar[0]/btn[15]").press()
+            # session.findById("wnd[0]/tbar[0]/btn[15]").press()
             response = {"result": info_list, "error": "N/A"}
             return json.dumps(response)
 
@@ -119,6 +117,6 @@ def Main(con, storage_location, part_num):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("7000025767A0")
+    Main("0", "0012", "7000025767A0")
 
 # -End-------------------------------------------------------------------

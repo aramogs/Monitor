@@ -1,5 +1,5 @@
 # -Sub Main--------------------------------------------------------------
-def Main(masters):
+def Main(con, masters):
     try:
         # print("MASTERS:", masters)
         import sys
@@ -11,7 +11,7 @@ def Main(masters):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

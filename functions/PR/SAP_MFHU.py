@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(serial_num):
+def Main(con, serial_num):
     """
     Function takes a serial number and performs a backflush
     If everything is right the function returns no errors
@@ -19,7 +19,7 @@ def Main(serial_num):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

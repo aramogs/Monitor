@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(serial_num):
+def Main(con, serial_num):
     """
     Function process material document
     Transfering the serial number from storage type 901 to storage type VUL/V01
@@ -19,7 +19,7 @@ def Main(serial_num):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

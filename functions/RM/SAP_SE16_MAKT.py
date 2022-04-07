@@ -3,7 +3,7 @@
 # -Includes--------------------------------------------------------------
 
 # -Sub Main--------------------------------------------------------------
-def Main(material_list):
+def Main(con, material_list):
     import pyperclip
     import json
     import win32com.client
@@ -13,7 +13,7 @@ def Main(material_list):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             print("Scripting is disabled by server")

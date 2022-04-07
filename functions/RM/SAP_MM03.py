@@ -5,9 +5,7 @@
 
 # -Sub Main--------------------------------------------------------------
 
-
-
-def Main(material):
+def Main(con, material):
     """
     Function gets material number and returns the net weight
     """
@@ -22,7 +20,7 @@ def Main(material):
 
         application = SapGuiAuto.GetScriptingEngine
 
-        connection = application.Children(0)
+        connection = application.Children(con)
 
         if connection.DisabledByServer == True:
             # print("Scripting is disabled by server")

@@ -9,7 +9,7 @@ Functions for finished goods products, currently used to transfer material betwe
 
 import json
 import re
-import datetime
+# import datetime
 import requests
 from functions.DB.Functions import *
 
@@ -27,7 +27,6 @@ from functions.FG import SAP_POP3
 from functions.FG import SAP_HU02
 from functions.FG import SAP_MM03
 from functions.FG import SAP_HUMO
-
 
 
 def sap_login():
@@ -58,7 +57,9 @@ def transfer_fg(inbound):
         the corresponding material number
     """
     serial_num = inbound["serial_num"]
-    result_lt09 = json.loads(SAP_LT09_Query.Main(serial_num))
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
+    result_lt09 = json.loads(SAP_LT09_Query.Main(con, serial_num))
 
     if result_lt09["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f'{result_lt09["error"]}'})
@@ -66,7 +67,7 @@ def transfer_fg(inbound):
             sap_error_windows()
     else:
         material_number = result_lt09["material_number"]
-        response = SAP_LS24.Main(material_number)
+        response = SAP_LS24.Main(con, material_number)
     return response
 
 
@@ -81,15 +82,17 @@ def transfer_fg_confirmed(inbound):
     serials = (inbound["serial_num"]).split(",")
     emp_num = inbound["user_id"]
     station_hash = inbound["station"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
-    bin_exist = SAP_LS11.Main(storage_type, storage_bin)
+    bin_exist = SAP_LS11.Main(con, storage_type, storage_bin)
     if json.loads(bin_exist)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f"Storage Bin does not exist at Storage Type {storage_type}"})
         # if json.loads(bin_exist)["error"] == "":
         #     response = json.dumps({"serial": "N/A", "error": "No Storage Bin like this in Storage Type FG"})
 
     else:
-        response = SAP_LT09_Transfer_Redis.Main(serials, storage_type, storage_bin, station_hash)
+        response = SAP_LT09_Transfer_Redis.Main(con, serials, storage_type, storage_bin, station_hash)
         if json.loads(response)["error"] != "N/A":
             response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
             # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "
@@ -109,8 +112,10 @@ def master_fg_gm_verify(inbound):
         With this information the function verify every serial number to see if it is created and available
     """
     serials = (inbound["serial_num"]).split(",")
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
-    response = SAP_HUMO.Main(serials)
+    response = SAP_HUMO.Main(con, serials)
     try:
         part_number = json.loads((re.sub(r"'", "\"", json.loads(response)["result"])))
         for x in part_number:
@@ -127,7 +132,6 @@ def master_fg_gm_verify(inbound):
         return response
 
 
-
 def master_fg_gm_create(inbound):
     """
         Function takes: Serial number(s)
@@ -141,13 +145,15 @@ def master_fg_gm_create(inbound):
     serials = (inbound["serial_num"]).split(",")
     # Transferring every handling unit to Storage type: 923 and Storage bin: pack.bin
     # This transfer is in order to make them eligible for packing
-    response = json.loads(SAP_LT09_Pack.Main(serials))
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
+    response = json.loads(SAP_LT09_Pack.Main(con, serials))
     # Getting the source storage type and source storage bin for every serial number
     bin_list = response["bin_list"]
     # If there were errors doing the transfer return the error
     if response["error"] != "N/A":
         if len(bin_list) != 0:
-            return_origen(bin_list)
+            return_origen(con, bin_list)
         error = re.sub(r"'", "\"", response["error"])
         return json.dumps({"serial": "N/A", "error": f'{error}'})
 
@@ -156,25 +162,25 @@ def master_fg_gm_create(inbound):
     client_part_number = DB.client_part_number(f'P{part_number}')
     # print(client_part_number[0])
     # Using the part number to get the container of the master label
-    pop3_result = json.loads(SAP_POP3.Main(response["part_number"]))
+    pop3_result = json.loads(SAP_POP3.Main(con, response["part_number"]))
     if pop3_result["error"] != "N/A":
-        return_origen(bin_list)
+        return_origen(con, bin_list)
         return json.dumps({"serial": "N/A", "error": f'{response}'})
     else:
         # Using the container number and the serial numbers HU02 creates the master handling unit
         # After creating the master handling unit it packs the serial numbers into itself
         # The response should be the master serial number
-        packing_result = json.loads(SAP_HU02.Main(pop3_result["result"], part_number, client_part_number[0], serials))
+        packing_result = json.loads(SAP_HU02.Main(con, pop3_result["result"], part_number, client_part_number[0], serials))
         # If error is different than "N/A" return the error
         # Check SAP_HU02 for more information about errors
         if packing_result["error"] != "N/A":
-            return_origen(bin_list)
+            return_origen(con, bin_list)
             return json.dumps({"serial": "N/A", "error": f'{packing_result["error"]}'})
         else:
             # From the response and inbound take the following information
 
             single_container = packing_result["single_container"]
-            mmo3_result = json.loads(SAP_MM03.Main(single_container))
+            mmo3_result = json.loads(SAP_MM03.Main(con, single_container))
             container_type = mmo3_result["container_type"]
 
             emp_num = inbound["user_id"]
@@ -184,7 +190,7 @@ def master_fg_gm_create(inbound):
             # After the master HU is created the material remains in the same storage_type 923, storage_bin pack.bin
             # This process moves the material to a new location assigned by Logistics
             # Taking the master handling unit, storage type and storage bin
-            response = json.loads(SAP_LT09_Transfer.Main([packing_result["result"]], os.getenv("SAP_DEST_STYPE"), os.getenv("SAP_DEST_SBIN")))
+            response = json.loads(SAP_LT09_Transfer.Main(con, [packing_result["result"]], os.getenv("SAP_DEST_STYPE"), os.getenv("SAP_DEST_SBIN")))
             # Getting the result from the transfer order
             lt09_result = json.loads((re.sub(r"'", "\"", response["result"])))
             # Iterating the number of handling units to save the corresponding information in the data base
@@ -221,7 +227,7 @@ def master_fg_gm_create(inbound):
     return json.dumps(response)
 
 
-def return_origen(bin_list):
+def return_origen(con, bin_list):
     """
          Function takes: List of serial numbers with storage type and storage bin
          With this information the function transfers the material to the corresponding storage type and bin
@@ -232,4 +238,4 @@ def return_origen(bin_list):
         serial_num = origen["serial_num"]
         storage_type = origen["storage_type"]
         storage_bin = origen["storage_bin"]
-        response = SAP_LT09_Single_Transfer.Main(serial_num, storage_type, storage_bin)
+        response = SAP_LT09_Single_Transfer.Main(con, serial_num, storage_type, storage_bin)

@@ -56,10 +56,7 @@ def Main(connection_number, serial_num):
         # session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").setFocus()
         # session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").caretPosition = 3
 
-
         session.findById("wnd[0]").sendVKey(0)
-
-
 
         # session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").setFocus()
         # session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").caretPosition = 6
@@ -67,12 +64,12 @@ def Main(connection_number, serial_num):
         quant = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtRL03T-ANFME[1,0]").Text
         material_description = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtLTAP-MAKTX[12,0]").Text
 
-        session.findById("wnd[0]/tbar[0]/btn[12]").press()
-        session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-        session.findById("wnd[0]/tbar[0]/btn[12]").press()
+        # session.findById("wnd[0]/tbar[0]/btn[12]").press()
+        # session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
+        # session.findById("wnd[0]/tbar[0]/btn[12]").press()
         # Se crea respuesta y se carga en un Json con dumps
 
-        response = {"material_number": material_number,"error": "N/A"}
+        response = {"material_number": material_number, "error": "N/A"}
         return json.dumps(response)
     except:
 

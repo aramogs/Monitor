@@ -16,7 +16,7 @@ from functions.SA import SAP_LT09
 from functions.SA import SAP_LT01
 from functions.DB.Functions import *
 
-current_directory = os.path.abspath(os.getcwd())
+# current_directory = os.path.abspath(os.getcwd())
 
 
 def transfer_sa(inbound):
@@ -25,7 +25,10 @@ def transfer_sa(inbound):
     If everything goes right the function returns a transfer order
     """
     serial_num = inbound["serial_num"]
-    response = json.loads(SAP_LT09.Main(serial_num))
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
+
+    response = json.loads(SAP_LT09.Main(con, serial_num))
 
     result = response["result"]
     error = response["error"]
@@ -45,8 +48,10 @@ def transfer_sa_return(inbound):
     cantidad = inbound["cantidad"]
     subline = inbound["subline"]
     station = inbound["station"]
+    con = inbound["con"]
+    # storage_location = inbound["storage_location"]
     # TODO definir storage bin a donde se enviara el material
-    response = json.loads(SAP_LT01.Main(material[1:], cantidad))
+    response = json.loads(SAP_LT01.Main(con, material[1:], cantidad))
 
     serial_num = response["serial"]
     transfer_order = response["result"]
@@ -78,6 +83,7 @@ def transfer_sa_return(inbound):
     response = {"serial": serial_num, "result": f'"{transfer_order}"', "error": error}
     return json.dumps(response)
 
+
 def reprint_sa(inbound):
     """
     Functions reprints a corresponding label
@@ -87,6 +93,8 @@ def reprint_sa(inbound):
     subline = inbound["subline"]
     station = inbound["station"]
     serial_num = inbound["serial_num"]
+    # con = inbound["con"]
+    # storage_location = inbound["storage_location"]
 
     # material = "P5000010050A0"
     # cantidad = "600"
