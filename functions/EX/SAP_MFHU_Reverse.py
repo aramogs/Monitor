@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(con, storage_location, product_version, serial_num):
+def Main(con, product_version, serial_num):
     """
     Function takes a serial number and performs a backflush
     If everything is right the function returns no errors
@@ -40,10 +40,7 @@ def Main(con, storage_location, product_version, serial_num):
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/usr/ctxtVHURMEAE-EXIDV_I").text = serial_num
         session.findById("wnd[0]/usr/ctxtVHURMEAE-WERKS").text = "5210"
-        session.findById("wnd[0]/usr/ctxtVHURMEAE-ALORT").text = storage_location
         session.findById("wnd[0]/usr/txtVHURMEAE-VERID").text = product_version
-        # session.findById("wnd[0]/usr/txtVHURMEAE-VERID").setFocus()
-        # session.findById("wnd[0]/usr/txtVHURMEAE-VERID").caretPosition = 1
         session.findById("wnd[0]").sendVKey(0)
 
         try:
@@ -57,7 +54,8 @@ def Main(con, storage_location, product_version, serial_num):
                 raise Exception()
         except:
             pass
-        session.findById("wnd[0]/tbar[0]/btn[11]").press()
+        session.findById("wnd[0]/usr/subHULIST:SAPLVHURMSUB:1000/subHULIST_TC:SAPLVHURMSUB:1100/tblSAPLVHURMSUBTC_HULIST").getAbsoluteRow(0).selected = -1
+        session.findById("wnd[0]/tbar[1]/btn[18]").press()
         try:
             error = session.findById("wnd[0]/sbar").Text
             if error != "Handling unit backflush completed":
@@ -79,13 +77,14 @@ def Main(con, storage_location, product_version, serial_num):
                 messages.append(message)
         except:
             pass
-        # session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
-        # session.findById("wnd[0]").sendVKey(0)
+        session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
+        session.findById("wnd[0]").sendVKey(0)
+
 
         if "not" in messages[0]:
             #messages.pop(0)
             error = messages
-            # print(messages)
+            print(messages)
         else:
             error = "N/A"
 
@@ -116,5 +115,5 @@ def Main(con, storage_location, product_version, serial_num):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("171688435")
+    Main("178008565")
 # -End-------------------------------------------------------------------

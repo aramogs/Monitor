@@ -32,6 +32,8 @@ def Main(con, serial_num_list, storage_type, storage_bin, station_hash):
             SapGuiAuto = None
             return
 
+
+
         response_list = []
         count = 0
         for serial_num in serial_num_list:
@@ -50,9 +52,9 @@ def Main(con, serial_num_list, storage_type, storage_bin, station_hash):
                 response_list.append({"serial_num": serial_num, "result": int(re.sub(r"\D", "", result, 0))})
                 try:
                     if count == 0:
-                        functions.DB.Functions.DBR.set_hash(re.sub(":", "-", station_hash), serial_num)
+                        functions.DB.Functions.DBR.set_hash(station_hash, serial_num)
                     else:
-                        functions.DB.Functions.DBR.update_hash(re.sub(":", "-", station_hash), serial_num)
+                        functions.DB.Functions.DBR.update_hash(station_hash, serial_num)
 
                     # DB.Functions.DBR.get_hash(station_hash)
                 except Exception as e:

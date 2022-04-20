@@ -59,12 +59,18 @@ def Main(con, storage_location, storage_type, storage_bin):
             while True:
                 y = 7
                 for x in range(original_position):
-                    if storage_location == session.findById("wnd[0]/usr/lbl[65,7]").Text:
-                        q = {
-                            "storage_unit": session.findById(f'wnd[0]/usr/lbl[5,{y}]').Text
-                        }
-                        y += 1
-                        info_list.append(q)
+                    # TODO Cambiar cuando esten dadas de alta todas las pistolas incluyendo ext vul fg mp
+                    # if storage_location == session.findById("wnd[0]/usr/lbl[65,7]").Text:
+                    #     q = {
+                    #         "storage_unit": session.findById(f'wnd[0]/usr/lbl[5,{y}]').Text
+                    #     }
+                    #     y += 1
+                    #     info_list.append(q)
+                    q = {
+                        "storage_unit": session.findById(f'wnd[0]/usr/lbl[5,{y}]').Text
+                    }
+                    y += 1
+                    info_list.append(q)
                 if maxScroll != 0:
                     session.findById("wnd[0]/usr").verticalScrollbar.position += original_position
                 else:

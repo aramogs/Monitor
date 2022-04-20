@@ -16,6 +16,7 @@ from functions.RW.Functions import *  # Re Work
 from functions.SA.Functions import *  # Sub Assembly
 from functions.SF.Functions import *  # Semi Finished
 from functions.SH.Functions import *  # Shipments
+from functions.EX.Functions import *  # Extrusion
 from functions.VU.Functions import *  # Vulcanized
 
 
@@ -38,13 +39,9 @@ def close_secondary():
 
 def insert_text(request):
     inbound = json.loads(request)
+    global label_text
     try:
-        # station = inbound["station"]
         process = inbound["process"]
-        global label_text
-        # if len(station) > 5:
-        #     station = "WEB"
-
         mainWindow.list.insert(END, f' Req    [{process.capitalize()}]    JSON:  {request}')
         mainWindow.list.see(END)
         label_text["text"] = f' Req    [{process.capitalize()}]    JSON:  {request}'
@@ -185,32 +182,9 @@ def process_inbound_queue(con, body):
         response = create_alt_pr_hu_del(inbound)
     elif process == "create_alt_pr_hu_wm":
         response = create_alt_pr_hu_wm(inbound)
-    ##############Control Cycle##################
-    # elif process == "cycle_count_status":
-    #     response = cycle_count_status(inbound)
-    # elif process == "cycle_count_transfer":
-    #     response = cycle_count_transfer(inbound)
-    ##############Extrusion##################
-    # elif process == "handling_ext":
-    #     response = handling_ext(inbound)
-    # elif process == "confirm_ext_hu":
-    #     response = confirm_ext_hu(inbound)
-    # elif process == "transfer_ext_rp":
-    #     response = transfer_ext_rp(inbound)
-    # elif process == "storage_unit_ext_pr":
-    #     response = storage_unit_ext_pr(inbound)
-    # elif process == "transfer_ext":
-    #     response = transfer_ext(inbound)
-    # elif process == "transfer_EXT_confirmed":
-    #     response = transfer_ext_confirmed(inbound)
     ##############Shipments##################
     elif process == "shipment_delivery":
         response = shipment_delivery(inbound)
-    # ##############Vulcanized##################
-    # elif process == "transfer_vul":
-    #     response = transfer_vul(inbound)
-    # elif process == "transfer_vul_confirmed":
-    #     response = transfer_vul_confirmed(inbound)
     ##############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
@@ -222,6 +196,7 @@ def process_inbound_cycle(con, body):
     inbound = json.loads(body.decode(encoding="utf8"))
     storage_location = DB.select_storage_location(inbound["station"])
     if len(storage_location) == 0:
+        inbound["storage_location"] = ""
         # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
         pass
     else:
@@ -257,6 +232,9 @@ def process_inbound_vul(con, body):
         response = transfer_vul(inbound)
     elif process == "transfer_vul_confirmed":
         response = transfer_vul_confirmed(inbound)
+    elif process == "audit_ext":
+        response = audit_ext(inbound)
+
     ##############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
@@ -268,7 +246,7 @@ def process_inbound_ext(con, body):
     inbound = json.loads(body.decode(encoding="utf8"))
     storage_location = DB.select_storage_location(inbound["station"])
     if len(storage_location) == 0:
-        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
         pass
     else:
         inbound["storage_location"] = storage_location[0][0]
@@ -276,9 +254,7 @@ def process_inbound_ext(con, body):
     process = inbound["process"]
 
     ##############Extrusion##################
-    if process == "handling_ext":
-        response = handling_ext(inbound)
-    elif process == "confirm_ext_hu":
+    if process == "confirm_ext_hu":
         response = confirm_ext_hu(inbound)
     elif process == "transfer_ext_rp":
         response = transfer_ext_rp(inbound)
@@ -288,6 +264,29 @@ def process_inbound_ext(con, body):
         response = transfer_ext(inbound)
     elif process == "transfer_EXT_confirmed":
         response = transfer_ext_confirmed(inbound)
+    elif process == "verify_rubber":
+        response = verify_rubber(inbound)
+    ##############_NO_PROCESS_##################
+    else:
+        current_queue = inspect.stack()[0][3]
+        response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
+    return response
+
+
+def process_inbound_ext_labels(con, body):
+    inbound = json.loads(body.decode(encoding="utf8"))
+    storage_location = DB.select_storage_location(inbound["station"])
+    if len(storage_location) == 0:
+        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        pass
+    else:
+        inbound["storage_location"] = storage_location[0][0]
+    inbound["con"] = con
+    process = inbound["process"]
+
+    ##############Extrusion Labels##################
+    if process == "handling_ext":
+        response = handling_ext(inbound)
     ##############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
@@ -307,7 +306,7 @@ def receiver_queue():
     def on_request(ch, method, props, body):
         global pika_body
         pika_body = body
-        print(f"Request:    [{current_queue}] %s" % json.dumps(json.loads(body.decode(encoding="utf8"))))
+        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
         SAP_ErrorWindows.error_windows()
 
         try:
@@ -375,10 +374,10 @@ def receiver_queue():
         # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         channel = connection.channel()
         channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
-        channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
+        # channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
         channel.basic_qos(prefetch_count=1)
         channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
-        channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
+        # channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
 
         print(f"[{current_queue}] Awaiting RPC requests")
 
@@ -403,7 +402,7 @@ def receiver_cycle():
     def on_request(ch, method, props, body):
         global pika_body
         pika_body = body
-        print(f"Request:    [{current_queue}] %s" % json.dumps(json.loads(body.decode(encoding="utf8"))))
+        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
         SAP_ErrorWindows.error_windows()
 
         try:
@@ -499,7 +498,7 @@ def receiver_vul():
     def on_request(ch, method, props, body):
         global pika_body
         pika_body = body
-        print(f"Request:    [{current_queue}] %s" % json.dumps(json.loads(body.decode(encoding="utf8"))))
+        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
         SAP_ErrorWindows.error_windows()
 
         try:
@@ -595,7 +594,103 @@ def receiver_ext():
     def on_request(ch, method, props, body):
         global pika_body
         pika_body = body
-        print(f"Request:    [{current_queue}] %s" % json.dumps(json.loads(body.decode(encoding="utf8"))))
+        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
+        SAP_ErrorWindows.error_windows()
+
+        try:
+            threads_queue.put(props.reply_to)
+            sap_login_queue.put(props.reply_to)
+            sap_connections(current_queue)
+        except Exception as err:
+            error_logger(err)
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            os.system(f'taskkill /im "Monitor.exe"')
+
+        insert_text(body.decode(encoding="utf8"))
+
+        #######################################################
+        con = threads_queue.unfinished_tasks - threads_queue.qsize()
+
+        result_sap_alive = json.loads(SAP_Alive.Main())
+        while True:
+            if con in middle_list:
+                if con == result_sap_alive["connections"] - 1:
+                    con = 0
+                else:
+                    con += 1
+            else:
+                middle_list.append(con)
+                break
+        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
+        threads_queue.get()
+        try:
+
+            response = eval(f"process_inbound_{current_queue}")(con, body)
+            middle_list.remove(con)
+            threads_queue.task_done()
+            sap_login_queue.task_done()
+            insert_response_(response)
+            print(f"Response:   [{current_queue}] %s" % str(response))
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as err:
+            error_logger(err)
+            middle_list.remove(con)
+            threads_queue.task_done()
+            sap_login_queue.task_done()
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+
+        #######################################################
+
+    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
+    # connection = pika.BlockingConnection(params)
+    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    # channel = connection.channel()
+    # channel.queue_declare(queue='rpc_queue', durable=True)
+    # channel.basic_qos(prefetch_count=1)
+    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+    # print(f" [{current_queue}] Awaiting RPC requests")
+    # channel.start_consuming()
+
+    try:
+        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
+        connection = pika.BlockingConnection(params)
+        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        channel = connection.channel()
+        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
+        # channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
+        channel.basic_qos(prefetch_count=1)
+        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
+        # channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
+
+        print(f"[{current_queue}] Awaiting RPC requests")
+
+        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
+        mainWindow.list.see(END)
+        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
+
+        channel.start_consuming()
+    except Exception as e:
+        print(f"Exception:   [{current_queue}] %s" % str(e))
+        error_logger(e)
+        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
+        mainWindow.list.see(END)
+        label_text["text"] = f' Res     [Error]:   {e}'
+        time.sleep(2)
+        eval(f"receiver_{current_queue}")
+
+
+def receiver_ext_labels():
+    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
+
+    def on_request(ch, method, props, body):
+        global pika_body
+        pika_body = body
+        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
         SAP_ErrorWindows.error_windows()
 
         try:
@@ -726,9 +821,11 @@ if __name__ == '__main__':
     receive_thread_cycle = Thread(target=receiver_cycle)
     receive_thread_vul = Thread(target=receiver_vul)
     receive_thread_ext = Thread(target=receiver_ext)
+    receive_thread_ext_labels = Thread(target=receiver_ext_labels)
 
     receive_thread.start()
     receive_thread_cycle.start()
     receive_thread_vul.start()
     receive_thread_ext.start()
+    receive_thread_ext_labels.start()
     master.mainloop()

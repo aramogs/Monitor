@@ -19,7 +19,7 @@ def Main():
     try:
         pythoncom.CoInitialize()
         path = r"C:\Program Files (x86)\SAP\FrontEnd\SAPgui\saplogon.exe"
-        subprocess.Popen(path,stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.Popen(path, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
         time.sleep(5)
 
         # Necesario par correr win32com.client en Threading
@@ -63,15 +63,16 @@ def Main():
         session.findById("wnd[1]/tbar[0]/btn[0]").press()
         time.sleep(5)
         response = {"sap_status": "ok"}
-        return (json.dumps(response))
+        return json.dumps(response)
     except:
         response = {"sap_status": "error"}
-        return (json.dumps(response))
+        return json.dumps(response)
     finally:
         session = None
         connection = None
         application = None
         SapGuiAuto = None
+
 
 #-Main------------------------------------------------------------------
 if __name__ == '__main__':

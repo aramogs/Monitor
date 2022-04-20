@@ -65,12 +65,13 @@ def Main(con, serial_num):
         quant = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtRL03T-ANFME[1,0]").Text
         material_description = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtLTAP-MAKTX[12,0]").Text
         uom = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-ALTME[2,0]").Text
+        storage_location = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-LGORT[6,0]").Text
 
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
         # Se crea respuesta y se carga en un Json con dumps
 
-        response = {"material_number": material_number, "material_description": material_description, "quantity": quant, "uom": uom, "error": "N/A"}
+        response = {"material_number": material_number, "material_description": material_description, "quantity": quant, "uom": uom, "storage_location": storage_location, "error": "N/A"}
         return json.dumps(response)
     except:
 
@@ -78,7 +79,7 @@ def Main(con, serial_num):
             session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
 
         error = session.findById("wnd[0]/sbar/pane[0]").Text
-        response = {"material_number": "N/A", "error": error}
+        response = {"material_number": "N/A", "material_description": "N/A", "quantity": "N/A", "uom": "N/A", "storage_location": "N/A", "error": error}
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 

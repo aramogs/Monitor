@@ -59,7 +59,6 @@ def Main(con, serial):
             response = {"serial_num": serial, "result": result, "error": "N/A"}
 
         # response = {"result": f'{result}', "error": "N/A"}
-        print(response)
         return json.dumps(response)
 
     except Exception as e:

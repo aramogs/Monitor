@@ -489,7 +489,7 @@ class DB:
             pass
 
     @staticmethod
-    def trannsfer_print_ext(serial_num, result_transfer, emp_transfer):
+    def transfer_print_ext(serial_num, result_transfer, emp_transfer):
         """
         Function to get printer from station id
         """
@@ -541,6 +541,26 @@ class DB:
                     print(e)
 
     @staticmethod
+    def update_ext_supply(material, material_description, extruder, quantity, operator_id, serial_num, sap_result):
+        """
+        Function to get printer from station id
+        """
+        try:
+            db = mysql.connector.connect(**extrusion_config)
+            query = f'INSERT INTO extrusion_supply (material, material_description, extruder, quantity, operator_id, serial_num, sap_result) ' \
+                    f'VALUES("{material}","{material_description}", {extruder}, "{quantity}", {operator_id}, {serial_num}, "{sap_result}")'
+            cursor = db.cursor(buffered=True)
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            # return cursor.fetchall()
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            logger(e)
+            pass
+
+
+    @staticmethod
     def insert_shipment_delivery(values_list):
         """
         Function to get printer from station id
@@ -584,6 +604,40 @@ class DB:
         try:
             db = mysql.connector.connect(**b10_config)
             query = f'SELECT storage_location FROM station_conf WHERE no_estacion = "{estacion}"'
+            cursor = db.cursor(buffered=True)
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            return cursor.fetchall()
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            logger(e)
+            pass
+
+    @staticmethod
+    def select_product_version(estacion):
+        """
+        Function to get printer from station id
+        """
+        try:
+            db = mysql.connector.connect(**b10_config)
+            query = f'SELECT product_version FROM station_conf WHERE no_estacion = "{estacion}"'
+            cursor = db.cursor(buffered=True)
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            return cursor.fetchall()
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            logger(e)
+            pass
+
+    @staticmethod
+    def insert_audit_ext(serial_num, user_id, sap_num, part_description, sap_result):
+        try:
+            db = mysql.connector.connect(**warehouse_config)
+            query = 'INSERT INTO audit_ext (serial_num, user_id, sap_num, part_description, sap_result) ' \
+                    f'VALUES({serial_num}, {user_id}, "{sap_num}", "{part_description}", "{sap_result}")'
             cursor = db.cursor(buffered=True)
             cursor.execute(query)
             db.commit()
