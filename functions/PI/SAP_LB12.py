@@ -4,19 +4,21 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(con, storage_location, sap_num, quantity, from_s_type, from_s_bin, to_s_type, to_s_bin):
+def Main(con, serial_num):
     """
-    Function takes a material number and quantity to perform transfer order
-    The transfer order is from 102/103 to VUL/V02
+    Function process material document
+    Transfering the serial number from storage type 901 to storage type VUL/V01
     """
-    import json
     import win32com.client
+    import json
     import pythoncom
     try:
-
         pythoncom.CoInitialize()
+
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
+
         application = SapGuiAuto.GetScriptingEngine
+
         connection = application.Children(con)
 
         if connection.DisabledByServer == True:
@@ -34,45 +36,45 @@ def Main(con, storage_location, sap_num, quantity, from_s_type, from_s_bin, to_s
             SapGuiAuto = None
             return
 
-        session.findById("wnd[0]/tbar[0]/okcd").text = "/nLT01"
+        session.findById("wnd[0]/tbar[0]/okcd").text = "/nLB12"
         session.findById("wnd[0]").sendVKey(0)
-        session.findById("wnd[0]/usr/ctxtLTAK-LGNUM").text = "521"
-        session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").text = "998"
-        session.findById("wnd[0]/usr/ctxtLTAP-MATNR").text = sap_num
-        session.findById("wnd[0]/usr/txtRL03T-ANFME").text = quantity
-        session.findById("wnd[0]/usr/ctxtLTAP-WERKS").text = "5210"
-        session.findById("wnd[0]/usr/ctxtLTAP-LGORT").text = storage_location
         session.findById("wnd[0]").sendVKey(0)
+        session.findById("wnd[0]/tbar[1]/btn[44]").press()
+        # session.findById("wnd[0]/usr/ctxtRL03T-LETY2").text = "001"
+        # session.findById("wnd[0]/usr/ctxtRL03T-LGTY2").text = "VUL"
+        # session.findById("wnd[0]/usr/ctxtRL03T-LGTY2").setFocus()
+        # session.findById("wnd[0]/usr/ctxtRL03T-LGTY2").caretPosition = 3
+        session.findById("wnd[0]").sendVKey(0)
+        session.findById("wnd[0]/tbar[1]/btn[5]").press()
+        session.findById("wnd[0]/usr/ctxtLTAP-LETYP").text = "001"
         session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
-        session.findById("wnd[0]/usr/ctxtLTAP-VLTYP").text = from_s_type
-        session.findById("wnd[0]/usr/ctxtLTAP-VLBER").text = "001"
-        session.findById("wnd[0]/usr/txtLTAP-VLPLA").text = from_s_bin
-        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = to_s_type
+        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "PIP"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
-        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = to_s_bin
+        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "TEMPB"
+        session.findById("wnd[0]/usr/ctxtLTAP-NLENR").text = f'0{serial_num}'
+        # session.findById("wnd[0]/usr/ctxtLTAP-NLENR").setFocus()
+        # session.findById("wnd[0]/usr/ctxtLTAP-NLENR").caretPosition = 10
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]").sendVKey(0)
-
+        session.findById("wnd[0]/tbar[0]/btn[11]").press()
         result = session.findById("wnd[0]/sbar/pane[0]").Text
 
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
-        try:
-            session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
-        except:
-            pass
-        response = {"serial": "N/A", "result": f'{result}', "error": "N/A"}
+
+        response = {"result": f'{result}', "error": "N/A"}
+
         return json.dumps(response)
 
     except:
         try:
-           error = session.findById("wnd[1]/usr/txtSPOP-TEXTLINE1").Text
-           session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
-           session.findById("wnd[0]/tbar[0]/btn[12]").press()
-           session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
+            error = session.findById("wnd[1]/usr/txtSPOP-TEXTLINE1").Text
+            session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
+            session.findById("wnd[0]/tbar[0]/btn[12]").press()
+            session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
         except:
             error = session.findById("wnd[0]/sbar/pane[0]").Text
-        response = {"serial": "N/A", "result": "N/A", "error": error}
+        response = {"result": "N/A", "error": error}
 
         # session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
@@ -89,6 +91,6 @@ def Main(con, storage_location, sap_num, quantity, from_s_type, from_s_bin, to_s
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    print(Main(0, "0012", "5V0005305195", "10000", "102", "RETRABAJO", "102", "103"))
+    Main(0, "174968934")
 
 # -End-------------------------------------------------------------------

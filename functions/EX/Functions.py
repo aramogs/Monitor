@@ -52,10 +52,11 @@ def confirm_ext_hu(inbound):
     storage_location = inbound["storage_location"]
     response_list = []
 
+
     product_version = DB.select_product_version(station)
 
     if product_version[0][0] is None:
-        return json.dumps({"result": "N/A", "error": f'Product Version cot configures for station: {station}'})
+        return json.dumps({"result": "N/A", "error": f'Product Version cot configured for station: {station}'})
 
     for material in material_list:
         serial = material['serial']

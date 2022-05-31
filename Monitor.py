@@ -18,6 +18,7 @@ from functions.SF.Functions import *  # Semi Finished
 from functions.SH.Functions import *  # Shipments
 from functions.EX.Functions import *  # Extrusion
 from functions.VU.Functions import *  # Vulcanized
+from functions.PI.Functions import *  # PA Pipes
 
 
 #####################
@@ -147,22 +148,22 @@ def process_inbound_queue(con, body):
         response = transfer_sa_return(inbound)
     elif process == "reprint_sa":
         response = reprint_sa(inbound)
-    ##############Semi Finished##################
-    elif process == "handling_sf":
-        response = handling_sf(inbound)
-    elif process == "transfer_sf":
-        response = transfer_sf(inbound)
-    elif process == "transfer_sfr":
-        response = transfer_sfr(inbound)
-    elif process == "transfer_sfr_return":
-        response = transfer_sfr_return(inbound)
-    elif process == "reprint_sf":
-        response = reprint_sf(inbound)
-    ##############Re Work##################
-    elif process == "transfer_rework_in":
-        response = transfer_rework_in(inbound)
-    elif process == "transfer_rework_out":
-        response = transfer_rework_out(inbound)
+    # ##############Semi Finished##################
+    # elif process == "handling_sf":
+    #     response = handling_sf(inbound)
+    # elif process == "transfer_sf":
+    #     response = transfer_sf(inbound)
+    # elif process == "transfer_sfr":
+    #     response = transfer_sfr(inbound)
+    # elif process == "transfer_sfr_return":
+    #     response = transfer_sfr_return(inbound)
+    # elif process == "reprint_sf":
+    #     response = reprint_sf(inbound)
+    # ##############Re Work##################
+    # elif process == "transfer_rework_in":
+    #     response = transfer_rework_in(inbound)
+    # elif process == "transfer_rework_out":
+    #     response = transfer_rework_out(inbound)
     ##############Production##################
     elif process == "create_pr_hu":
         response = create_pr_hu(inbound)
@@ -216,6 +217,30 @@ def process_inbound_cycle(con, body):
     return response
 
 
+def process_inbound_rw(con, body):
+    inbound = json.loads(body.decode(encoding="utf8"))
+    storage_location = DB.select_storage_location(inbound["station"])
+
+    if len(storage_location) == 0:
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        pass
+    else:
+        inbound["storage_location"] = storage_location[0][0]
+    inbound["con"] = con
+    process = inbound["process"]
+
+    ##############Re Work##################
+    if process == "transfer_rework_in":
+        response = transfer_rework_in(inbound)
+    elif process == "transfer_rework_out":
+        response = transfer_rework_out(inbound)
+    ##############_NO_PROCESS_##################
+    else:
+        current_queue = inspect.stack()[0][3]
+        response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
+    return response
+
+
 def process_inbound_vul(con, body):
     inbound = json.loads(body.decode(encoding="utf8"))
     storage_location = DB.select_storage_location(inbound["station"])
@@ -227,13 +252,65 @@ def process_inbound_vul(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Vulcanized##################
+    ##############Vulcanized Transfers##################
     if process == "transfer_vul":
         response = transfer_vul(inbound)
     elif process == "transfer_vul_confirmed":
         response = transfer_vul_confirmed(inbound)
     elif process == "audit_ext":
         response = audit_ext(inbound)
+    ##############Vulcanized##################
+    elif process == "handling_sf":
+        response = handling_sf(inbound)
+    elif process == "transfer_sf":
+        response = transfer_sf(inbound)
+    elif process == "transfer_sfr":
+        response = transfer_sfr(inbound)
+    elif process == "transfer_sfr_return":
+        response = transfer_sfr_return(inbound)
+    elif process == "reprint_sf":
+        response = reprint_sf(inbound)
+    elif process == "reprint_sfr":
+        response = reprint_sfr(inbound)
+
+    ##############_NO_PROCESS_##################
+    else:
+        current_queue = inspect.stack()[0][3]
+        response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
+    return response
+
+
+def process_inbound_pip(con, body):
+    inbound = json.loads(body.decode(encoding="utf8"))
+    storage_location = DB.select_storage_location(inbound["station"])
+    if len(storage_location) == 0:
+        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        pass
+    else:
+        inbound["storage_location"] = storage_location[0][0]
+    inbound["con"] = con
+    process = inbound["process"]
+
+    ##############PA Pipes Transfers##################
+    if process == "transfer_pip":
+        response = transfer_pip(inbound)
+    elif process == "transfer_pip_confirmed":
+        response = transfer_pip_confirmed(inbound)
+    elif process == "audit_pip":
+        response = audit_pip(inbound)
+    ##############PA Pipes##################
+    elif process == "handling_pip":
+        response = handling_pip(inbound)
+    elif process == "transfer_pip":
+        response = transfer_pip(inbound)
+    elif process == "transfer_pipr":
+        response = transfer_pipr(inbound)
+    elif process == "transfer_pipr_return":
+        response = transfer_pipr_return(inbound)
+    elif process == "reprint_pip":
+        response = reprint_pip(inbound)
+    elif process == "reprint_pipr":
+        response = reprint_pipr(inbound)
 
     ##############_NO_PROCESS_##################
     else:
@@ -588,6 +665,198 @@ def receiver_vul():
         eval(f"receiver_{current_queue}")
 
 
+def receiver_pip():
+    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
+
+    def on_request(ch, method, props, body):
+        global pika_body
+        pika_body = body
+        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
+        SAP_ErrorWindows.error_windows()
+
+        try:
+            threads_queue.put(props.reply_to)
+            sap_login_queue.put(props.reply_to)
+            sap_connections(current_queue)
+        except Exception as err:
+            error_logger(err)
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            os.system(f'taskkill /im "Monitor.exe"')
+
+        insert_text(body.decode(encoding="utf8"))
+
+        #######################################################
+        con = threads_queue.unfinished_tasks - threads_queue.qsize()
+
+        result_sap_alive = json.loads(SAP_Alive.Main())
+        while True:
+            if con in middle_list:
+                if con == result_sap_alive["connections"] - 1:
+                    con = 0
+                else:
+                    con += 1
+            else:
+                middle_list.append(con)
+                break
+        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
+        threads_queue.get()
+        try:
+
+            response = eval(f"process_inbound_{current_queue}")(con, body)
+            middle_list.remove(con)
+            threads_queue.task_done()
+            sap_login_queue.task_done()
+            insert_response_(response)
+            print(f"Response:   [{current_queue}] %s" % str(response))
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as err:
+            error_logger(err)
+            middle_list.remove(con)
+            threads_queue.task_done()
+            sap_login_queue.task_done()
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+
+        #######################################################
+
+    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
+    # connection = pika.BlockingConnection(params)
+    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    # channel = connection.channel()
+    # channel.queue_declare(queue='rpc_queue', durable=True)
+    # channel.basic_qos(prefetch_count=1)
+    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+    # print(f" [{current_queue}] Awaiting RPC requests")
+    # channel.start_consuming()
+
+    try:
+        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
+        connection = pika.BlockingConnection(params)
+        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        channel = connection.channel()
+        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
+        # channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
+        channel.basic_qos(prefetch_count=1)
+        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
+        # channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
+
+        print(f"[{current_queue}] Awaiting RPC requests")
+
+        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
+        mainWindow.list.see(END)
+        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
+
+        channel.start_consuming()
+    except Exception as e:
+        print(f"Exception:   [{current_queue}] %s" % str(e))
+        error_logger(e)
+        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
+        mainWindow.list.see(END)
+        label_text["text"] = f' Res     [Error]:   {e}'
+        time.sleep(2)
+        eval(f"receiver_{current_queue}")
+
+
+def receiver_rw():
+    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
+
+    def on_request(ch, method, props, body):
+        global pika_body
+        pika_body = body
+        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
+        SAP_ErrorWindows.error_windows()
+
+        try:
+            threads_queue.put(props.reply_to)
+            sap_login_queue.put(props.reply_to)
+            sap_connections(current_queue)
+        except Exception as err:
+            error_logger(err)
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            os.system(f'taskkill /im "Monitor.exe"')
+
+        insert_text(body.decode(encoding="utf8"))
+
+        #######################################################
+        con = threads_queue.unfinished_tasks - threads_queue.qsize()
+
+        result_sap_alive = json.loads(SAP_Alive.Main())
+        while True:
+            if con in middle_list:
+                if con == result_sap_alive["connections"] - 1:
+                    con = 0
+                else:
+                    con += 1
+            else:
+                middle_list.append(con)
+                break
+        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
+        threads_queue.get()
+        try:
+
+            response = eval(f"process_inbound_{current_queue}")(con, body)
+            middle_list.remove(con)
+            threads_queue.task_done()
+            sap_login_queue.task_done()
+            insert_response_(response)
+            print(f"Response:   [{current_queue}] %s" % str(response))
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as err:
+            error_logger(err)
+            middle_list.remove(con)
+            threads_queue.task_done()
+            sap_login_queue.task_done()
+            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+
+        #######################################################
+
+    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
+    # connection = pika.BlockingConnection(params)
+    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    # channel = connection.channel()
+    # channel.queue_declare(queue='rpc_queue', durable=True)
+    # channel.basic_qos(prefetch_count=1)
+    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+    # print(f" [{current_queue}] Awaiting RPC requests")
+    # channel.start_consuming()
+
+    try:
+        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
+        connection = pika.BlockingConnection(params)
+        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        channel = connection.channel()
+        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
+        # channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
+        channel.basic_qos(prefetch_count=1)
+        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
+        # channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
+
+        print(f"[{current_queue}] Awaiting RPC requests")
+
+        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
+        mainWindow.list.see(END)
+        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
+
+        channel.start_consuming()
+    except Exception as e:
+        print(f"Exception:   [{current_queue}] %s" % str(e))
+        error_logger(e)
+        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
+        mainWindow.list.see(END)
+        label_text["text"] = f' Res     [Error]:   {e}'
+        time.sleep(2)
+        eval(f"receiver_{current_queue}")
+
+
 def receiver_ext():
     current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
 
@@ -820,12 +1089,16 @@ if __name__ == '__main__':
     receive_thread = Thread(target=receiver_queue)
     receive_thread_cycle = Thread(target=receiver_cycle)
     receive_thread_vul = Thread(target=receiver_vul)
+    receive_thread_pip = Thread(target=receiver_pip)
+    receive_thread_rw = Thread(target=receiver_rw)
     receive_thread_ext = Thread(target=receiver_ext)
     receive_thread_ext_labels = Thread(target=receiver_ext_labels)
 
     receive_thread.start()
     receive_thread_cycle.start()
     receive_thread_vul.start()
+    receive_thread_pip.start()
+    receive_thread_rw.start()
     receive_thread_ext.start()
     receive_thread_ext_labels.start()
     master.mainloop()

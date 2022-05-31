@@ -13,17 +13,17 @@ from functions import SAP_Alive
 from functions import SAP_Login
 
 from functions.DB.Functions import *
-from functions.VU import SAP_LS11
-from functions.VU import SAP_LT09_Transfer_Multiple
-from functions.VU import SAP_LT09_Query
-from functions.VU import SAP_LS24
-from functions.VU import SAP_LT09_Audit
+from functions.PI import SAP_LS11
+from functions.PI import SAP_LT09_Transfer_Multiple
+from functions.PI import SAP_LT09_Query
+from functions.PI import SAP_LS24
+from functions.PI import SAP_LT09_Audit
 
-from functions.VU import SAP_MFP11
-from functions.VU import SAP_MFHU
-from functions.VU import SAP_LB12
-from functions.VU import SAP_LT09
-from functions.VU import SAP_LT01
+from functions.PI import SAP_MFP11
+from functions.PI import SAP_MFHU
+from functions.PI import SAP_LB12
+from functions.PI import SAP_LT09
+from functions.PI import SAP_LT01
 
 
 def sap_login():
@@ -42,31 +42,27 @@ def sap_error_windows():
     sap_login()
 
 
-def transfer_vul(inbound):
+def transfer_pip(inbound):
     """
         Functions takes a Finished Goods serial number and finds
         the corresponding material number
     """
     serial_num = inbound["serial_num"]
-    material = inbound["material"]
     con = inbound["con"]
     storage_location = inbound["storage_location"]
-    if material == "":
-        result_lt09 = json.loads(SAP_LT09_Query.Main(con, serial_num))
-        if result_lt09["error"] != "N/A":
-            response = json.dumps({"serial": "N/A", "error": f'{result_lt09["error"]}'})
-            if result_lt09["error"] == "":
-                sap_error_windows()
-        else:
-            material_number = result_lt09["material_number"]
-            response = SAP_LS24.Main(con, storage_location, material_number)
-        return response
+    result_lt09 = json.loads(SAP_LT09_Query.Main(con, serial_num))
+
+    if result_lt09["error"] != "N/A":
+        response = json.dumps({"serial": "N/A", "error": f'{result_lt09["error"]}'})
+        if result_lt09["error"] == "":
+            sap_error_windows()
     else:
-        response = SAP_LS24.Main(con, storage_location, material)
-        return response
+        material_number = result_lt09["material_number"]
+        response = SAP_LS24.Main(con, storage_location, material_number)
+    return response
 
 
-def transfer_vul_confirmed(inbound):
+def transfer_pip_confirmed(inbound):
     """
         Function takes: Storage Type, Storage Bin, Serial number(s) and Employee Tag
         With this information the function Transfers the serial(s) to the corresponding Storage Bin
@@ -101,7 +97,7 @@ def transfer_vul_confirmed(inbound):
     return response
 
 
-def audit_ext(inbound):
+def audit_pip(inbound):
     """
         Function takes: Storage Type, Storage Bin, Serial number(s) and Employee Tag
         With this information the function Transfers the serial(s) to the corresponding Storage Bin
@@ -122,7 +118,7 @@ def audit_ext(inbound):
     return json.dumps(audit_response)
 
 
-def handling_sf(inbound):
+def handling_pip(inbound):
     """
     Function takes Material Number, Quatity and creates a Handling unit
     Gets the serial number and returns it to the client
@@ -131,7 +127,7 @@ def handling_sf(inbound):
     material = inbound["material"]
     cantidad = inbound["cantidad"]
 
-    subline = inbound["subline"]
+    # subline = inbound["subline"]
     station = inbound["station"]
     con = inbound["con"]
     storage_location = inbound["storage_location"]
@@ -158,9 +154,9 @@ def handling_sf(inbound):
         data.update({"printer": f'{printer}'})
         data.update({"serial_num": f'{serial_num}'})
         data.update({"real_quant": f'{cantidad}'})
-        data.update({"line": f'{subline}'})
+        # data.update({"line": f'{subline}'})
 
-        r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC/Execute/', data=json.dumps(data))
+        r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/PAPIPE/Execute/', data=json.dumps(data))
         # print(r.text)
 
     if error == "":
@@ -170,7 +166,7 @@ def handling_sf(inbound):
     return json.dumps(response)
 
 
-def transfer_sf(inbound):
+def transfer_pip(inbound):
     """
     Function takes a Handling Unit number and creates a backflush
     If there are no errors the function returns a transfer order number
@@ -198,7 +194,7 @@ def transfer_sf(inbound):
     return json.dumps(response)
 
 
-def transfer_sfr(inbound):
+def transfer_pipr(inbound):
     """
     Function takes a serial number and performs a transfer of the material
     If everything goes right the function returns a transfer order
@@ -207,7 +203,6 @@ def transfer_sfr(inbound):
     con = inbound["con"]
     # storage_location = inbound["storage_location"]
 
-    # TODO si no es storage type VUL no hacer transferencia
     if len(str(serial_num)) < 10:
         serial_num = "0"+str(serial_num)
     response = json.loads(SAP_LT09.Main(con, serial_num))
@@ -222,7 +217,7 @@ def transfer_sfr(inbound):
     return json.dumps(response)
 
 
-def transfer_sfr_return(inbound):
+def transfer_pipr_return(inbound):
     """
     Function takes necessary information to perform a transfer order and print a corresponding label
     """
@@ -257,14 +252,14 @@ def transfer_sfr_return(inbound):
         data.update({"real_quant": f'{cantidad}'})
         data.update({"line": f'{subline}'})
 
-        r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC_RE/Execute/', data=json.dumps(data))
+        r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/PAPIPE_RE/Execute/', data=json.dumps(data))
         # print(r.text)
 
     response = {"serial": serial_num, "result": f'"{transfer_order}"', "error": error}
     return json.dumps(response)
 
 
-def reprint_sf(inbound):
+def reprint_pip(inbound):
     """
     Function takes the necessary information to reprint a Handling Unit label
     """
@@ -300,14 +295,14 @@ def reprint_sf(inbound):
     data.update({"line": f'{subline}'})
 
     r = requests.post(
-        f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC/Execute/', data=json.dumps(data))
+        f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/PAPIPE/Execute/', data=json.dumps(data))
     # print(r.text)
 
     response = {"serial": serial_num, "result": f'"Reprint OK"', "error": "N/A"}
     return json.dumps(response)
 
 
-def reprint_sfr(inbound):
+def reprint_pipr(inbound):
     """
     Functions reprints a corresponding label
     """
@@ -343,7 +338,7 @@ def reprint_sfr(inbound):
     data.update({"line": f'{subline}'})
 
     r = requests.post(
-        f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/VULC_RE/Execute/',
+        f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/PAPIPE_RE/Execute/',
         data=json.dumps(data))
     # print(r.text)
 

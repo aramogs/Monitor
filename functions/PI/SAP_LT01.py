@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(con, storage_location, sap_num, quantity, from_s_type, from_s_bin, to_s_type, to_s_bin):
+def Main(con, storage_location, sap_num, quantity):
     """
     Function takes a material number and quantity to perform transfer order
     The transfer order is from 102/103 to VUL/V02
@@ -37,31 +37,45 @@ def Main(con, storage_location, sap_num, quantity, from_s_type, from_s_bin, to_s
         session.findById("wnd[0]/tbar[0]/okcd").text = "/nLT01"
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/usr/ctxtLTAK-LGNUM").text = "521"
-        session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").text = "998"
+        session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").text = "100"
         session.findById("wnd[0]/usr/ctxtLTAP-MATNR").text = sap_num
         session.findById("wnd[0]/usr/txtRL03T-ANFME").text = quantity
         session.findById("wnd[0]/usr/ctxtLTAP-WERKS").text = "5210"
         session.findById("wnd[0]/usr/ctxtLTAP-LGORT").text = storage_location
         session.findById("wnd[0]").sendVKey(0)
-        session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
-        session.findById("wnd[0]/usr/ctxtLTAP-VLTYP").text = from_s_type
+        session.findById("wnd[0]/tbar[1]/btn[5]").press()
+        session.findById("wnd[0]/usr/ctxtLTAP-LETYP").text = "IP"
+        session.findById("wnd[0]/usr/ctxtLTAP-VLTYP").text = "102"
         session.findById("wnd[0]/usr/ctxtLTAP-VLBER").text = "001"
-        session.findById("wnd[0]/usr/txtLTAP-VLPLA").text = from_s_bin
-        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = to_s_type
+        session.findById("wnd[0]/usr/txtLTAP-VLPLA").text = "103"
+        session.findById("wnd[0]").sendVKey(0)
+        session.findById("wnd[0]").sendVKey(0)
+        session.findById("wnd[0]/tbar[0]/btn[11]").press()
+        session.findById("wnd[0]/usr/ctxtLTAK-LGNUM").text = "521"
+        session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").text = "199"
+        session.findById("wnd[0]/usr/ctxtLTAP-MATNR").text = sap_num
+        session.findById("wnd[0]/usr/txtRL03T-ANFME").text = quantity
+        session.findById("wnd[0]/usr/ctxtLTAP-WERKS").text = "5210"
+        session.findById("wnd[0]/usr/ctxtLTAP-LGORT").text = storage_location
+        session.findById("wnd[0]").sendVKey(0)
+        session.findById("wnd[0]/tbar[1]/btn[5]").press()
+        session.findById("wnd[0]/usr/ctxtLTAP-LETYP").text = "IP"
+        session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
+        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "VUL"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
-        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = to_s_bin
+        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "V02"
         session.findById("wnd[0]").sendVKey(0)
+        serial_num = session.findById("wnd[0]/usr/ctxtLTAP-NLENR").Text
         session.findById("wnd[0]").sendVKey(0)
+        session.findById("wnd[0]/tbar[0]/btn[11]").press()
 
         result = session.findById("wnd[0]/sbar/pane[0]").Text
-
-        session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
-        session.findById("wnd[0]").sendVKey(0)
         try:
             session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
         except:
             pass
-        response = {"serial": "N/A", "result": f'{result}', "error": "N/A"}
+        response = {"serial": serial_num, "result": f'{result}', "error": "N/A"}
+
         return json.dumps(response)
 
     except:
@@ -89,6 +103,6 @@ def Main(con, storage_location, sap_num, quantity, from_s_type, from_s_bin, to_s
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    print(Main(0, "0012", "5V0005305195", "10000", "102", "RETRABAJO", "102", "103"))
+    Main(0, "0012", "5000010050A0", "6")
 
 # -End-------------------------------------------------------------------

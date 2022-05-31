@@ -134,8 +134,12 @@ def cycle_count_transfer(inbound):
             else:
                 DB.insert_cycle_transfer(storage_type=storage_type, storage_bin=storage_bin, storage_unit=x["serial_num"], emp_num=emp_num, status="WRONGBIN-ERROR", sap_result=x["result"])
                 pass
+            
+    if len(inbound["listed_storage_units"]) == 0 and len(inbound["unlisted_storage_units"]) == 0 and len(inbound["not_found_storage_units"]) == 0:
+        DB.insert_cycle_transfer(storage_type=storage_type, storage_bin=storage_bin, storage_unit="", emp_num=emp_num, status="OKBIN", sap_result="")
 
     response = json.dumps({"result": f'{not_found_response + "," + unlisted_response}', "error": "N/A"})
     if json.loads(response)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
+
     return response

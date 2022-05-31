@@ -40,7 +40,7 @@ def transfer_rework_in(inbound):
     to_stype = "102"
     to_sbin = "RETRABAJO"
 
-    response = json.loads(SAP_LS24.Main(con, sap_num[1:], from_stype, from_sbin))
+    response = json.loads(SAP_LS24.Main(con, storage_location, sap_num[1:], from_stype, from_sbin))
     if response["error"] != "N/A":
         return json.dumps({"serial": "N/A", "result": "N/A", "error": f'{response["error"]}'})
     else:
@@ -48,7 +48,7 @@ def transfer_rework_in(inbound):
             err = round(((int(quantity) - int(response["result"])) / int(response["result"]))*100, 2)
             return json.dumps({"serial": "N/A", "result": "N/A", "error": f'Requested amount exceeded by {err}% of avaiable material'})
         else:
-            response = json.loads(SAP_LT01.Main(con, sap_num[1:], quantity, from_stype, from_sbin, to_stype, to_sbin))
+            response = json.loads(SAP_LT01.Main(con, storage_location, sap_num[1:], quantity, from_stype, from_sbin, to_stype, to_sbin))
 
         return json.dumps(response)
 
@@ -59,20 +59,20 @@ def transfer_rework_out(inbound):
     quantity = inbound["cantidad"]
     con = inbound["con"]
     storage_location = inbound["storage_location"]
-    from_Stype = "102"
-    from_Sbin = "RETRABAJO"
-    to_Stype = "102"
-    to_Sbin = "103"
+    from_s_type = "102"
+    from_s_bin = "RETRABAJO"
+    to_s_type = "102"
+    to_s_bin = "103"
 
-    response = json.loads(SAP_LS24.Main(con, sap_num[1:], from_Stype, from_Sbin))
+    response = json.loads(SAP_LS24.Main(con, storage_location, sap_num[1:], from_s_type, from_s_bin))
     if response["error"] != "N/A":
         return json.dumps({"serial": "N/A", "result": "N/A", "error": f'{response["error"]}'})
     else:
         if int(response["result"]) < int(quantity):
             err = round(((int(quantity) - int(response["result"])) / int(response["result"])) * 100, 2)
             return json.dumps({"serial": "N/A", "result": "N/A",
-                               "error": f'Requested amount exceeded by {err}% of avaiable material'})
+                               "error": f'Requested amount exceeded by {err}% of available material'})
         else:
-            response = json.loads(SAP_LT01.Main(con, sap_num[1:], quantity, from_Stype, from_Sbin, to_Stype, to_Sbin))
+            response = json.loads(SAP_LT01.Main(con, storage_location, sap_num[1:], quantity, from_s_type, from_s_bin, to_s_type, to_s_bin))
 
         return json.dumps(response)

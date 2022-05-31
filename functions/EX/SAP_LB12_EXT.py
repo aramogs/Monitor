@@ -54,7 +54,7 @@ def Main(con, serial):
             session.findById("wnd[0]/tbar[0]/btn[11]").press()
             result = session.findById("wnd[0]/sbar/pane[0]").Text
 
-            session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
+            # session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
             # session.findById("wnd[0]").sendVKey(0)
             response = {"serial_num": serial, "result": result, "error": "N/A"}
 
