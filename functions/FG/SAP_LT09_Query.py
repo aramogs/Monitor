@@ -54,27 +54,18 @@ def Main(con, serial_num):
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/usr/txtLEIN-LENUM").text = serial_num
         session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").text = "999"
-        # session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").setFocus()
-        # session.findById("wnd[0]/usr/ctxtLTAK-BWLVS").caretPosition = 3
-
-
         session.findById("wnd[0]").sendVKey(0)
-
-
-
-        # session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").setFocus()
-        # session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").caretPosition = 6
         material_number = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").Text
         quant = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtRL03T-ANFME[1,0]").Text
         material_description = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtLTAP-MAKTX[12,0]").Text
 
-        session.findById("wnd[0]/tbar[0]/btn[12]").press()
-        session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-        session.findById("wnd[0]/tbar[0]/btn[12]").press()
+        # session.findById("wnd[0]/tbar[0]/btn[12]").press()
+        # session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
+        # session.findById("wnd[0]/tbar[0]/btn[12]").press()
         # Se crea respuesta y se carga en un Json con dumps
 
-        response = {"material_number": material_number,"error": "N/A"}
-        return (json.dumps(response))
+        response = {"material_number": material_number, "error": "N/A"}
+        return json.dumps(response)
     except:
 
         if session.Children.Count == 2:
@@ -85,7 +76,7 @@ def Main(con, serial_num):
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 
-        return (json.dumps(response))
+        return json.dumps(response)
 
     finally:
         session = None
@@ -96,7 +87,5 @@ def Main(con, serial_num):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main(123456789)
+    print(Main(0, "0180014642"))
 # -End-------------------------------------------------------------------
-
-

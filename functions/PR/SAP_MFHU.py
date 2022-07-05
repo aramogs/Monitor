@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(con, serial_num):
+def Main(con, storage_location, product_version, serial_num):
     """
     Function takes a serial number and performs a backflush
     If everything is right the function returns no errors
@@ -40,7 +40,8 @@ def Main(con, serial_num):
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]/usr/ctxtVHURMEAE-EXIDV_I").text = serial_num
         session.findById("wnd[0]/usr/ctxtVHURMEAE-WERKS").text = "5210"
-        session.findById("wnd[0]/usr/txtVHURMEAE-VERID").text = "1"
+        session.findById("wnd[0]/usr/ctxtVHURMEAE-ALORT").text = storage_location
+        session.findById("wnd[0]/usr/txtVHURMEAE-VERID").text = product_version
         # session.findById("wnd[0]/usr/txtVHURMEAE-VERID").setFocus()
         # session.findById("wnd[0]/usr/txtVHURMEAE-VERID").caretPosition = 1
         session.findById("wnd[0]").sendVKey(0)
@@ -70,7 +71,6 @@ def Main(con, serial_num):
             pass
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
-
 
         if "not" in messages[0]:
             #messages.pop(0)

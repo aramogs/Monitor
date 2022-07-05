@@ -55,17 +55,30 @@ def Main(con, serials):
             # print(e)
             pass
 
-        # session.findById("wnd[1]/usr/ssubD0500_SUBSCREEN:SAPLSLVC_DIALOG:0501/cntlG51_CONTAINER/shellcont/shell").currentCellRow = 10
-        # session.findById("wnd[1]/usr/ssubD0500_SUBSCREEN:SAPLSLVC_DIALOG:0501/cntlG51_CONTAINER/shellcont/shell").selectedRows = "10"
-        # session.findById("wnd[1]/usr/ssubD0500_SUBSCREEN:SAPLSLVC_DIALOG:0501/cntlG51_CONTAINER/shellcont/shell").clickCurrentCell()
         x = 0
         y = 0
+        z = 0
         response_list = []
         master_error = []
+        found_serials = []
         quantity_check = ""
         part_number = ""
         container = ""
         lower_gr_date = datetime.datetime.strptime("01/01/3000", "%m/%d/%Y").date()
+
+        try:
+            while True:
+                serial_ = session.findById("wnd[0]/usr/cntlCONTAINER_2000/shellcont/shell").GetCellValue(z, "EXIDV")
+                found_serials.append(serial_)
+                z += 1
+        except:
+            pass
+        no_trailing_zeros = [item.lstrip('0') for item in serials]
+        not_found = list(set(no_trailing_zeros) - set(found_serials))
+
+        if len(not_found) != 0:
+            for serial in not_found:
+                master_error.append({"serial_num": serial, "part_number": "", "gr_date": "", "error": f"Not Found"})
         try:
             for serial in serials:
                 serial_ = session.findById("wnd[0]/usr/cntlCONTAINER_2000/shellcont/shell").GetCellValue(x, "EXIDV")
@@ -140,7 +153,6 @@ def Main(con, serials):
                 return json.dumps({"serial": "N/A", "error": f'{" Verify Handling Units - Dates not in range of 30 days"}'})
             y += 1
 
-
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
         response = {"result": f'{response_list}', "error": "N/A", "lower_gr_date": f'{lower_gr_date}', "part_number": part_number, "single_container": container}
@@ -168,10 +180,11 @@ def Main(con, serials):
 # -Main------------------------------------------------------------------
 
 if __name__ == '__main__':
-    Main(["171689403", "171689404", "171689405", "171689406", "171689407", "171689408", "171689409", "171689410", "171689411", "171689412", "171689413", "171689414", "171689415"
-         ,"171689416", "171689417", "171689418", "171689419", "171689420", "171689421", "171689422", "171689423", "171689424", "171689425", "171689426", "171689427","171689428"
-         ,"171689429", "171689430", "171689431", "171689432", "171689433", "171689434", "171689435", "171689436", "171689437", "171689438", "171689439", "171689440",
-          "171689441", "171689442"])
-    # Main(["171689403", "171689404", "171689405"])
+    print(Main(0, ["171689403", "171689404", "171689405", "171689406", "171689407", "171689408", "171689409", "171689410", "171689411", "171689412", "171689413", "171689414",
+                   "171689415"
+        , "171689416", "171689417", "171689418", "171689419", "171689420", "171689421", "171689422", "171689423", "171689424", "171689425", "171689426", "171689427", "171689428"
+        , "171689429", "171689430", "171689431", "171689432", "171689433", "171689434", "171689435", "171689436", "171689437", "171689438", "171689439", "171689440",
+                   "171689441", "171689442"]))
+    #  print(Main(0,["171689436", "171689421", "171689433"]))
 
 # -End-------------------------------------------------------------------

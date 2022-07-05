@@ -11,17 +11,19 @@ import json
 import re
 # import datetime
 import requests
-from functions.DB.Functions import *
 
-from functions.FG import SAP_LS24
-from functions.FG import SAP_LT09_Query
-from functions import SAP_LS11
-from functions import SAP_LT09_Transfer
-from functions import SAP_LT09_Transfer_Redis
-from functions import SAP_LT09_Single_Transfer
+
 from functions import SAP_Alive
 from functions import SAP_Login
 from functions import SAP_ErrorWindows
+
+from functions.DB.Functions import *
+from functions.FG import SAP_LS24
+from functions.FG import SAP_LT09_Query
+from functions.FG import SAP_LS11
+from functions.FG import SAP_LT09_Transfer
+from functions.FG import SAP_LT09_Transfer_Redis
+from functions.FG import SAP_LT09_Single_Transfer
 from functions.FG import SAP_LT09_Pack
 from functions.FG import SAP_POP3
 from functions.FG import SAP_HU02
@@ -58,7 +60,7 @@ def transfer_fg(inbound):
     """
     serial_num = inbound["serial_num"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
     result_lt09 = json.loads(SAP_LT09_Query.Main(con, serial_num))
 
     if result_lt09["error"] != "N/A":
@@ -67,7 +69,7 @@ def transfer_fg(inbound):
             sap_error_windows()
     else:
         material_number = result_lt09["material_number"]
-        response = SAP_LS24.Main(con, material_number)
+        response = SAP_LS24.Main(con, storage_location, material_number)
     return response
 
 
@@ -84,7 +86,7 @@ def transfer_fg_confirmed(inbound):
     station_hash = inbound["station"]
     con = inbound["con"]
     # storage_location = inbound["storage_location"]
-
+    station_hash = station_hash.replace(":", "-")
     bin_exist = SAP_LS11.Main(con, storage_type, storage_bin)
     if json.loads(bin_exist)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f"Storage Bin does not exist at Storage Type {storage_type}"})
@@ -198,7 +200,7 @@ def master_fg_gm_create(inbound):
             for x in serials:
                 DB.insert_master_transfer(emp_num, part_number, x, lt09_result[0]["serial_num"], lt09_result[0]["result"])
             # With this the station is forced into the code
-            station = "402"
+            station = inbound["station"]
             # Used to get the printer judged by the station
             printe = DB.select_printer(station)
             printer = printe[0][0]

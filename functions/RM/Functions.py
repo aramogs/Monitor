@@ -16,9 +16,9 @@ from functions.DB.Functions import *
 from functions import SAP_Alive
 from functions import SAP_Login
 from functions import SAP_ErrorWindows
-from functions import SAP_LS11
-from functions import SAP_LT09_Transfer
-from functions import SAP_LT09_Transfer_Redis
+from functions.RM import SAP_LS11
+from functions.RM import SAP_LT09_Transfer
+from functions.RM import SAP_LT09_Transfer_Redis
 from functions.RM import SAP_LT01
 from functions.RM import SAP_MM03
 from functions.RM import SAP_LT09
@@ -42,10 +42,9 @@ def partial_transfer(inbound):
         # storage_location = inbound["storage_location"]
 
         response = json.loads(SAP_LT09.Main(con, serial_num))
-        storage_type = storage_unit_location(con, serial_num)
+        storage_type = response["storage_type"]
         if storage_type != "MP":
-            response = {"serial": "N/A", "material": "N/A", "material_description": "N/A", "material_w": "N/A", "cantidad": "N/A",
-                        "error": "Partial Transfer only available for Storage Type MP"}
+            response = {"serial": "N/A", "material": "N/A", "material_description": "N/A", "material_w": "N/A", "cantidad": "N/A", "error": "Partial Transfer only available for Storage Type MP"}
             return json.dumps(response)
 
         material_number = response["material_number"]
@@ -55,7 +54,7 @@ def partial_transfer(inbound):
         error = response["error"]
 
         if material_number != "N/A":
-            material_w = material_weigth(con, material_number)
+            material_w = json.loads(SAP_MM03.Main(con, material_number))["net_weight"]
 
         else:
             material_w = "N/A"
@@ -70,12 +69,12 @@ def partial_transfer(inbound):
         return json.dumps(response)
 
 
-def material_weigth(con, _material):
-    """
-    Function takes material number, checks material weight and returns it
-    """
-    response = json.loads(SAP_MM03.Main(con, _material))
-    return response["net_weight"]
+# def material_weigth(con, _material):
+#     """
+#     Function takes material number, checks material weight and returns it
+#     """
+#     response = json.loads(SAP_MM03.Main(con, _material))
+#     return response["net_weight"]
 
 
 def storage_unit_location(con, _storage_unit):
@@ -100,9 +99,9 @@ def partial_transfer_confirmed(inbound):
     cantidad_restante = inbound["cantidad_restante"]
     user_id = inbound["user_id"]
     con = inbound["con"]
-#     # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_LT01.Main(con, material, cantidad, serial_num))
+    response = json.loads(SAP_LT01.Main(con, storage_location, material, cantidad, serial_num))
     result = response["result"]
     error = response["error"]
 
@@ -113,8 +112,8 @@ def partial_transfer_confirmed(inbound):
         result_insert = int(re.sub(r"\D", "", result, 0))
         if int(result_insert) != 0 or error != "N/A":
             print_label(station, material, material_description, serial_num, cantidad_restante)
-            if len(station) > 5:
-                station = "web"
+            # if len(station) > 5:
+            #     station = "web"
             DB.insert_partial_transfer(emp_num=user_id, part_num=material, no_serie=serial_num, linea=station,
                                        transfer_order=result_insert)
     else:
@@ -202,9 +201,9 @@ def raw_fifo_verify(inbound):
     material = inbound["material"]
     storage_type = inbound["storage_type"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_LS24.Main(con, material, storage_type))
+    response = json.loads(SAP_LS24.Main(con, storage_location, material, storage_type))
     return json.dumps(response)
 
 
@@ -242,11 +241,12 @@ def raw_mp_confirmed_v(inbound):
     """
 
     serials = (inbound["serial_num"]).split(",")
+    serials_obsolete = (inbound["serials_obsoletos"]).split(",")
     emp_num = inbound["user_id"]
     raw_id = inbound["raw_id"]
     shift = inbound["shift"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
     storage_type = "MP"
 
     if shift == "T1":
@@ -257,6 +257,8 @@ def raw_mp_confirmed_v(inbound):
         storage_bin = "ITVINDEL3"
 
     response = SAP_LT09_Transfer.Main(con, serials, storage_type, storage_bin)
+    response_cyclic = SAP_LT09_Transfer.Main(con, serials_obsolete, "MP1", "CICLICRAW1")
+    # print(response_cyclic)
     if json.loads(response)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
         # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "
@@ -276,9 +278,9 @@ def location_mp_material(inbound):
     material_number = inbound["material"]
     storage_type = inbound["storage_type"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
 
-    response = SAP_LS24.Main(con, material_number, storage_type)
+    response = SAP_LS24.Main(con, storage_location, material_number, storage_type)
     return response
 
 
@@ -288,7 +290,7 @@ def location_mp_serial(inbound):
     """
     serial_num = inbound["serial_num"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
 
     result_lt09 = json.loads(SAP_LT09_Query.Main(con, serial_num))
     storage_type = inbound["storage_type"]
@@ -298,7 +300,7 @@ def location_mp_serial(inbound):
             sap_error_windows()
     else:
         material_number = result_lt09["material_number"]
-        response = SAP_LS24.Main(con, material_number, storage_type)
+        response = SAP_LS24.Main(con, storage_location, material_number, storage_type)
     return response
 
 
@@ -322,8 +324,8 @@ def print_label(station, material, material_description, serial, cantidad_restan
     """
     Function prints the corresponding label
     """
-    if len(station) > 5:
-        station = "web"
+    # if len(station) > 5:
+    #     station = "web"
 
     printer = DB.get_printer(f'{station}')
 

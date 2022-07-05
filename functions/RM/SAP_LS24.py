@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(con, part_num, storage_type):
+def Main(con, storage_location, part_num, storage_type):
     """
     Function used to check the available quantity of material
     In this case is used to check all the storage units corresponding the the Part Number and the FIFO dates
@@ -40,7 +40,7 @@ def Main(con, part_num, storage_type):
         session.findById("wnd[0]/usr/ctxtRL01S-LGNUM").text = "521"
         session.findById("wnd[0]/usr/ctxtRL01S-MATNR").text = part_num
         session.findById("wnd[0]/usr/ctxtRL01S-WERKS").text = "5210"
-        session.findById("wnd[0]/usr/txtRL01S-LGORT").text = ""
+        session.findById("wnd[0]/usr/txtRL01S-LGORT").text = storage_location
         session.findById("wnd[0]/usr/ctxtRL01S-BESTQ").text = "*"
         session.findById("wnd[0]/usr/ctxtRL01S-SOBKZ").text = "*"
         session.findById("wnd[0]/usr/ctxtRL01S-LGTYP").text = storage_type
@@ -52,9 +52,9 @@ def Main(con, part_num, storage_type):
             error = session.findById("wnd[0]/sbar/pane[0]").Text
             if error != "":
                 session.findById("wnd[0]/tbar[0]/btn[15]").press()
-                session.findById("wnd[0]/tbar[0]/btn[15]").press()
+                # session.findById("wnd[0]/tbar[0]/btn[15]").press()
                 response = {"result": "N/A", "error": error}
-                return (json.dumps(response))
+                return json.dumps(response)
             else:
                 raise Exception('I know Python!')
         except:
@@ -82,7 +82,7 @@ def Main(con, part_num, storage_type):
                         q = {
                             "storage_bin": session.findById(f'wnd[0]/usr/lbl[5,{y}]').Text,
                             "gr_date": session.findById(f'wnd[0]/usr/lbl[54,{y}]').Text,
-                            "storage_unit": session.findById(f'wnd[0]/usr/lbl[65,{y}]').Text
+                            "storage_unit": session.findById(f'wnd[0]/usr/lbl[65,{y}]').Text,
                         }
                         y += 1
                         info_list.append(q)
@@ -93,7 +93,6 @@ def Main(con, part_num, storage_type):
 
             except Exception as error:
                 pass
-
 
             session.findById("wnd[0]/tbar[0]/btn[15]").press()
             session.findById("wnd[0]/tbar[0]/btn[15]").press()

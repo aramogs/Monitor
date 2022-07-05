@@ -24,9 +24,9 @@ def create_pr_hu(inbound):
     employee = inbound["employee"]
     station = inbound["station"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_MFP11.Main(con, material[1:], cantidad))
+    response = json.loads(SAP_MFP11.Main(con, storage_location, material[1:], cantidad))
     SAP_Z_UC.Main(con, "dummy")
     serial_num = response["serial_num"]
     error = response["error"]
@@ -66,11 +66,17 @@ def confirm_pr_hu(inbound):
     """
            Function takes a Handling Unit number and creates a back flush
     """
+    station = inbound["station"]
     serial_num = inbound["serial_num"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_MFHU.Main(con, serial_num))
+    product_version = DB.select_product_version(station)
+
+    if product_version[0][0] is None:
+        return json.dumps({"result": "N/A", "error": f'Product Version not configured for station: {station}'})
+
+    response = json.loads(SAP_MFHU.Main(con, storage_location, product_version[0][0], serial_num))
 
     result = response["result"]
     error = response["error"]
@@ -84,11 +90,16 @@ def confirm_pr_hu_transfer(inbound):
         Function takes a Handling Unit number and creates a back flush
         If there are no errors the function returns a transfer order number
     """
+    station = inbound["station"]
     serial_num = inbound["serial_num"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
+    product_version = DB.select_product_version(station)
 
-    response = json.loads(SAP_MFHU.Main(con, serial_num))
+    if product_version[0][0] is None:
+        return json.dumps({"result": "N/A", "error": f'Product Version not configured for station: {station}'})
+
+    response = json.loads(SAP_MFHU.Main(con, storage_location, product_version[0][0], serial_num))
 
     result = response["result"]
     error = response["error"]
@@ -135,9 +146,9 @@ def create_alternate_pr_hu(inbound):
     employee = inbound["employee"]
     station = inbound["station"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
 
-    response = json.loads(SAP_MFP11_ALT.Main(con, material[1:], cantidad))
+    response = json.loads(SAP_MFP11_ALT.Main(con, storage_location, material[1:], cantidad))
     SAP_Z_UC.Main(con, "dummy")
     serial_num = response["serial_num"]
     error = response["error"]
@@ -183,12 +194,12 @@ def create_pr_hu_del(inbound):
     cantidad = inbound["cantidad"]
     station = inbound["station"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
 
     printe = DB.select_printer(station)
     printer = printe[0][0]
 
-    response = json.loads(SAP_MFP11.Main(con, material[1:], cantidad))
+    response = json.loads(SAP_MFP11.Main(con, storage_location, material[1:], cantidad))
 
     serial_num = response["serial_num"]
     error = response["error"]
@@ -217,12 +228,12 @@ def create_alt_pr_hu_del(inbound):
     cantidad = inbound["cantidad"]
     station = inbound["station"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
 
     printe = DB.select_printer(station)
     printer = printe[0][0]
 
-    response = json.loads(SAP_MFP11_ALT.Main(con, material[1:], cantidad))
+    response = json.loads(SAP_MFP11_ALT.Main(con, storage_location, material[1:], cantidad))
 
     serial_num = response["serial_num"]
     error = response["error"]
@@ -251,12 +262,12 @@ def create_pr_hu_wm(inbound):
     cantidad = inbound["cantidad"]
     station = inbound["station"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
 
     printe = DB.select_alt_printer(station)
     printer = printe[0][0]
 
-    response = json.loads(SAP_MFP11.Main(con, material[1:], cantidad))
+    response = json.loads(SAP_MFP11.Main(con, storage_location, material[1:], cantidad))
 
     serial_num = response["serial_num"]
     error = response["error"]
@@ -285,12 +296,12 @@ def create_alt_pr_hu_wm(inbound):
     cantidad = inbound["cantidad"]
     station = inbound["station"]
     con = inbound["con"]
-    # storage_location = inbound["storage_location"]
+    storage_location = inbound["storage_location"]
 
     printe = DB.select_alt_printer(station)
     printer = printe[0][0]
 
-    response = json.loads(SAP_MFP11_ALT.Main(con, material[1:], cantidad))
+    response = json.loads(SAP_MFP11_ALT.Main(con, storage_location, material[1:], cantidad))
 
     serial_num = response["serial_num"]
     error = response["error"]

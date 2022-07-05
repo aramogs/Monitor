@@ -4,7 +4,7 @@
 
 
 # -Sub Main--------------------------------------------------------------
-def Main(con, part_num):
+def Main(con, storage_location, part_num):
     """
     Function used to check the available quantity of material
     In this case is used to check all the storage units corresponding the the Part Number and the FIFO dates
@@ -40,7 +40,7 @@ def Main(con, part_num):
         session.findById("wnd[0]/usr/ctxtRL01S-LGNUM").text = "521"
         session.findById("wnd[0]/usr/ctxtRL01S-MATNR").text = part_num
         session.findById("wnd[0]/usr/ctxtRL01S-WERKS").text = "5210"
-        session.findById("wnd[0]/usr/txtRL01S-LGORT").text = ""
+        session.findById("wnd[0]/usr/txtRL01S-LGORT").text = storage_location
         session.findById("wnd[0]/usr/ctxtRL01S-BESTQ").text = "*"
         session.findById("wnd[0]/usr/ctxtRL01S-SOBKZ").text = "*"
         session.findById("wnd[0]/usr/ctxtRL01S-LGTYP").text = "FG"
@@ -94,7 +94,6 @@ def Main(con, part_num):
             except Exception as error:
                 pass
 
-
             session.findById("wnd[0]/tbar[0]/btn[15]").press()
             session.findById("wnd[0]/tbar[0]/btn[15]").press()
             response = {"result": info_list, "error": "N/A"}
@@ -119,6 +118,6 @@ def Main(con, part_num):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("7000025767A0")
+    print(Main(0, "0014", "7000025767A0"))
 
 # -End-------------------------------------------------------------------

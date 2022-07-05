@@ -49,8 +49,8 @@ def Main(con, storage_unit):
 
         error = session.findById("wnd[0]/sbar/pane[0]").Text
         response = {"storage_type": "N/A",  "error": error}
-        session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
-        session.findById("wnd[0]").sendVKey(0)
+        # session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
+        # session.findById("wnd[0]").sendVKey(0)
 
         return json.dumps(response)
 

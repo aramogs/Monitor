@@ -139,4 +139,5 @@ def shipment_delivery(inbound):
         # print("\nTime", time.time() - start, "\n")
         return response
 
-#print(shipment_delivery({'station': 'a37ef516-e44f-423a-9ea1-7b58936cc6ee', 'serial_num': '', 'delivery': '80692028', 'cantidad': '1800', 'process': 'shipment_delivery', 'material': '', 'embarque': 'BMW2023'}))
+
+# print(shipment_delivery({'station': '00:00:00:00:00:00', 'con': 0, 'serial_num': '', 'delivery': '80692029', 'cantidad': '3456', 'process': 'shipment_delivery', 'material': '', 'embarque': 'BMW2023'}))

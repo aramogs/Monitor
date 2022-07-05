@@ -183,7 +183,7 @@ def transfer_sf(inbound):
     product_version = DB.select_product_version(station)
 
     if product_version[0][0] is None:
-        return json.dumps({"result": "N/A", "error": f'Product Version cot configured for station: {station}'})
+        return json.dumps({"result": "N/A", "error": f'Product Version not configured for station: {station}'})
 
     response = json.loads(SAP_MFHU.Main(con, storage_location, product_version[0][0], serial_num))
 

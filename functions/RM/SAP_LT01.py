@@ -8,7 +8,7 @@
 # serial_num = sys.argv[3]
 
 
-def Main(con, material, quantity, serial_num):
+def Main(con, storage_location, material, quantity, serial_num):
     """
     Function takes material number, quantity and serial number
     Then gets the serial number and withdraws the quantity from the serial number
@@ -50,7 +50,7 @@ def Main(con, material, quantity, serial_num):
         session.findById("wnd[0]/usr/txtRL03T-ANFME").text = quantity
         # session.findById("wnd[0]/usr/ctxtLTAP-ALTME").text = "PC"
         session.findById("wnd[0]/usr/ctxtLTAP-WERKS").text = "5210"
-        session.findById("wnd[0]/usr/ctxtLTAP-LGORT").text = "0011"
+        session.findById("wnd[0]/usr/ctxtLTAP-LGORT").text = storage_location
         # session.findById("wnd[0]/usr/ctxtLTAP-LGORT").setFocus()
         # session.findById("wnd[0]/usr/ctxtLTAP-LGORT").caretPosition = 4
         session.findById("wnd[0]").sendVKey(0)

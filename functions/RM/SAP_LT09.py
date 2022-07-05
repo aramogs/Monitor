@@ -58,33 +58,32 @@ def Main(con, serial_num):
 
         session.findById("wnd[0]").sendVKey(0)
 
-        # session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").setFocus()
-        # session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").caretPosition = 6
-        material_number = session.findById(
-            "wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").Text
+        material_number = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").Text
         quant = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtRL03T-ANFME[1,0]").Text
-        material_description = session.findById(
-            "wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtLTAP-MAKTX[12,0]").Text
+        material_description = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtLTAP-MAKTX[12,0]").Text
+        storage_type = session.findById("wnd[0]/usr/ctxt*LTAP-VLTYP").Text
+        storage_location = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-LGORT[6,0]").Text
 
-        session.findById("wnd[0]/tbar[0]/btn[12]").press()
-        session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-        session.findById("wnd[0]/tbar[0]/btn[12]").press()
+        # session.findById("wnd[0]/tbar[0]/btn[12]").press()
+        # session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
+        # session.findById("wnd[0]/tbar[0]/btn[12]").press()
+        session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
+        session.findById("wnd[0]").sendVKey(0)
         # Se crea respuesta y se carga en un Json con dumps
 
-        response = {"material_number": material_number, "material_description": material_description, "quant": quant,
-                    "error": "N/A"}
-        return (json.dumps(response))
+        response = {"material_number": material_number, "material_description": material_description, "quant": quant, "storage_type": storage_type, "error": "N/A"}
+        return json.dumps(response)
     except:
 
         if session.Children.Count == 2:
             session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
 
         error = session.findById("wnd[0]/sbar/pane[0]").Text
-        response = {"material_number": "N/A", "material_description": "N/A", "quant": "0", "error": error}
-        session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
-        session.findById("wnd[0]").sendVKey(0)
+        response = {"material_number": "N/A", "material_description": "N/A", "quant": "0", "storage_type": "N/A", "error": error}
+        # session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
+        # session.findById("wnd[0]").sendVKey(0)
 
-        return (json.dumps(response))
+        return json.dumps(response)
 
     finally:
         session = None

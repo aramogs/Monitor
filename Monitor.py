@@ -1,12 +1,14 @@
 import inspect
 import queue
 import signal
+import threading
 import time
+import tkinter.messagebox
+
 import pika
 import window
 from threading import Thread
 from tkinter import *
-
 
 from functions.CC.Functions import *  # Control Cycle
 from functions.FG.Functions import *  # Finished Goods
@@ -57,7 +59,7 @@ def insert_response_(response):
     inbound = json.loads(response)
     global label_text
 
-    if inbound["error"] == "N/A":
+    if inbound["error"] == "N/A" or inbound["error"][0] == "N/A":
         mainWindow.list.insert(END, f' Res     [Success]       JSON:   {inbound}')
         mainWindow.list.see(END)
         label_text["text"] = f' Res     [Success]      JSON:   {inbound}'
@@ -106,7 +108,7 @@ def process_inbound_queue(con, body):
     inbound = json.loads(body.decode(encoding="utf8"))
     storage_location = DB.select_storage_location(inbound["station"])
     if len(storage_location) == 0:
-        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
         pass
     else:
         inbound["storage_location"] = storage_location[0][0]
@@ -114,35 +116,35 @@ def process_inbound_queue(con, body):
     process = inbound["process"]
 
     ##############Raw Material##################
-    if process == "partial_transfer":
-        response = partial_transfer(inbound)
-    elif process == "partial_transfer_confirmed":
-        response = partial_transfer_confirmed(inbound)
-    elif process == "transfer_mp_confirmed":
-        response = transfer_mp_confirmed(inbound)
-    elif process == "raw_delivery_verify":
-        response = raw_delivery_verify(inbound)
-    elif process == "raw_fifo_verify":
-        response = raw_fifo_verify(inbound)
-    elif process == "raw_mp_confirmed":
-        response = raw_mp_confirmed(inbound)
-    elif process == "raw_mp_confirmed_v":
-        response = raw_mp_confirmed_v(inbound)
-    elif process == "location_mp_material":
-        response = location_mp_material(inbound)
-    elif process == "location_mp_serial":
-        response = location_mp_serial(inbound)
+    # if process == "partial_transfer":
+    #     response = partial_transfer(inbound)
+    # elif process == "partial_transfer_confirmed":
+    #     response = partial_transfer_confirmed(inbound)
+    # elif process == "transfer_mp_confirmed":
+    #     response = transfer_mp_confirmed(inbound)
+    # elif process == "raw_delivery_verify":
+    #     response = raw_delivery_verify(inbound)
+    # elif process == "raw_fifo_verify":
+    #     response = raw_fifo_verify(inbound)
+    # elif process == "raw_mp_confirmed":
+    #     response = raw_mp_confirmed(inbound)
+    # elif process == "raw_mp_confirmed_v":
+    #     response = raw_mp_confirmed_v(inbound)
+    # elif process == "location_mp_material":
+    #     response = location_mp_material(inbound)
+    # elif process == "location_mp_serial":
+    #     response = location_mp_serial(inbound)
     ##############Finished Goods##################
-    elif process == "transfer_fg":
-        response = transfer_fg(inbound)
-    elif process == "transfer_fg_confirmed":
-        response = transfer_fg_confirmed(inbound)
-    elif process == "master_fg_gm_verify":
-        response = master_fg_gm_verify(inbound)
-    elif process == "master_fg_gm_create":
-        response = master_fg_gm_create(inbound)
+    # elif process == "transfer_fg":
+    #     response = transfer_fg(inbound)
+    # elif process == "transfer_fg_confirmed":
+    #     response = transfer_fg_confirmed(inbound)
+    # elif process == "master_fg_gm_verify":
+    #     response = master_fg_gm_verify(inbound)
+    # elif process == "master_fg_gm_create":
+    #     response = master_fg_gm_create(inbound)
     ##############Sub Assembly##################
-    elif process == "transfer_sa":
+    if process == "transfer_sa":
         response = transfer_sa(inbound)
     elif process == "transfer_sa_return":
         response = transfer_sa_return(inbound)
@@ -183,8 +185,119 @@ def process_inbound_queue(con, body):
         response = create_alt_pr_hu_del(inbound)
     elif process == "create_alt_pr_hu_wm":
         response = create_alt_pr_hu_wm(inbound)
+    # ##############Shipments##################
+    # elif process == "shipment_delivery":
+    #     response = shipment_delivery(inbound)
+    ##############_NO_PROCESS_##################
+    else:
+        current_queue = inspect.stack()[0][3]
+        response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
+    return response
+
+
+def process_inbound_fg(con, body):
+    inbound = json.loads(body.decode(encoding="utf8"))
+    storage_location = DB.select_storage_location(inbound["station"])
+    if len(storage_location) == 0:
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        pass
+    else:
+        inbound["storage_location"] = storage_location[0][0]
+    inbound["con"] = con
+    process = inbound["process"]
+
+    ##############Finished Goods##################
+    if process == "transfer_fg":
+        response = transfer_fg(inbound)
+    elif process == "transfer_fg_confirmed":
+        response = transfer_fg_confirmed(inbound)
+    # elif process == "master_fg_gm_verify":
+    #     response = master_fg_gm_verify(inbound)
+    # elif process == "master_fg_gm_create":
+    #     response = master_fg_gm_create(inbound)
+
+    ##############_NO_PROCESS_##################
+    else:
+        current_queue = inspect.stack()[0][3]
+        response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
+    return response
+
+
+def process_inbound_fg_gm(con, body):
+    inbound = json.loads(body.decode(encoding="utf8"))
+    storage_location = DB.select_storage_location(inbound["station"])
+    if len(storage_location) == 0:
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        pass
+    else:
+        inbound["storage_location"] = storage_location[0][0]
+    inbound["con"] = con
+    process = inbound["process"]
+
+    ##############Master GM##################
+    if process == "master_fg_gm_verify":
+        response = master_fg_gm_verify(inbound)
+    elif process == "master_fg_gm_create":
+        response = master_fg_gm_create(inbound)
+
+    ##############_NO_PROCESS_##################
+    else:
+        current_queue = inspect.stack()[0][3]
+        response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
+    return response
+
+
+def process_inbound_rm(con, body):
+    inbound = json.loads(body.decode(encoding="utf8"))
+    storage_location = DB.select_storage_location(inbound["station"])
+    if len(storage_location) == 0:
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        pass
+    else:
+        inbound["storage_location"] = storage_location[0][0]
+    inbound["con"] = con
+    process = inbound["process"]
+
+    ##############Raw Material##################
+    if process == "partial_transfer":
+        response = partial_transfer(inbound)
+    elif process == "partial_transfer_confirmed":
+        response = partial_transfer_confirmed(inbound)
+    elif process == "transfer_mp_confirmed":
+        response = transfer_mp_confirmed(inbound)
+    elif process == "raw_delivery_verify":
+        response = raw_delivery_verify(inbound)
+    elif process == "raw_fifo_verify":
+        response = raw_fifo_verify(inbound)
+    elif process == "raw_mp_confirmed":
+        response = raw_mp_confirmed(inbound)
+    elif process == "raw_mp_confirmed_v":
+        response = raw_mp_confirmed_v(inbound)
+    elif process == "location_mp_material":
+        response = location_mp_material(inbound)
+    elif process == "location_mp_serial":
+        response = location_mp_serial(inbound)
+
+    ##############_NO_PROCESS_##################
+    else:
+        current_queue = inspect.stack()[0][3]
+        response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
+    return response
+
+
+def process_inbound_ship(con, body):
+    inbound = json.loads(body.decode(encoding="utf8"))
+    storage_location = DB.select_storage_location(inbound["station"])
+    if len(storage_location) == 0:
+        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        pass
+    else:
+        inbound["storage_location"] = storage_location[0][0]
+    inbound["con"] = con
+    process = inbound["process"]
+
     ##############Shipments##################
-    elif process == "shipment_delivery":
+    if process == "shipment_delivery":
         response = shipment_delivery(inbound)
     ##############_NO_PROCESS_##################
     else:
@@ -198,7 +311,7 @@ def process_inbound_cycle(con, body):
     storage_location = DB.select_storage_location(inbound["station"])
     if len(storage_location) == 0:
         inbound["storage_location"] = ""
-        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
         pass
     else:
         inbound["storage_location"] = storage_location[0][0]
@@ -245,7 +358,7 @@ def process_inbound_vul(con, body):
     inbound = json.loads(body.decode(encoding="utf8"))
     storage_location = DB.select_storage_location(inbound["station"])
     if len(storage_location) == 0:
-        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
         pass
     else:
         inbound["storage_location"] = storage_location[0][0]
@@ -284,7 +397,7 @@ def process_inbound_pip(con, body):
     inbound = json.loads(body.decode(encoding="utf8"))
     storage_location = DB.select_storage_location(inbound["station"])
     if len(storage_location) == 0:
-        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
         pass
     else:
         inbound["storage_location"] = storage_location[0][0]
@@ -354,7 +467,7 @@ def process_inbound_ext_labels(con, body):
     inbound = json.loads(body.decode(encoding="utf8"))
     storage_location = DB.select_storage_location(inbound["station"])
     if len(storage_location) == 0:
-        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
         pass
     else:
         inbound["storage_location"] = storage_location[0][0]
@@ -377,676 +490,111 @@ def process_inbound_ext_labels(con, body):
 #####################
 # Receiver Functions
 #####################
-def receiver_queue():
-    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
 
-    def on_request(ch, method, props, body):
-        global pika_body
-        pika_body = body
-        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
-        SAP_ErrorWindows.error_windows()
+class ReceiverFunctions(threading.Thread):
 
-        try:
-            threads_queue.put(props.reply_to)
-            sap_login_queue.put(props.reply_to)
-            sap_connections(current_queue)
-        except Exception as err:
-            error_logger(err)
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-            os.system(f'taskkill /im "Monitor.exe"')
+    def __init__(self, thread_name):
+        threading.Thread.__init__(self)
+        self.thread_name = thread_name
 
-        insert_text(body.decode(encoding="utf8"))
+    def run(self):
 
-        #######################################################
-        con = threads_queue.unfinished_tasks - threads_queue.qsize()
+        # current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
+        current_queue = self.thread_name
 
-        result_sap_alive = json.loads(SAP_Alive.Main())
-        while True:
-            if con in middle_list:
-                if con == result_sap_alive["connections"] - 1:
-                    con = 0
+        def on_request(ch, method, props, body):
+            global pika_body
+            pika_body = body
+            print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
+            SAP_ErrorWindows.error_windows()
+
+            try:
+                threads_queue.put(props.reply_to)
+                sap_login_queue.put(props.reply_to)
+                sap_connections(current_queue)
+            except Exception as err:
+                error_logger(err)
+                ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+                os.system(f'taskkill /im "Monitor.exe"')
+
+            insert_text(body.decode(encoding="utf8"))
+
+            #######################################################
+            con = threads_queue.unfinished_tasks - threads_queue.qsize()
+
+            result_sap_alive = json.loads(SAP_Alive.Main())
+            while True:
+                if con in middle_list:
+                    if con == result_sap_alive["connections"] - 1:
+                        con = 0
+                    else:
+                        con += 1
                 else:
-                    con += 1
-            else:
-                middle_list.append(con)
-                break
-        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
-        threads_queue.get()
-        try:
+                    middle_list.append(con)
+                    break
+            # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
+            threads_queue.get()
+            try:
 
-            response = eval(f"process_inbound_{current_queue}")(con, body)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            insert_response_(response)
-            print(f"Response:   [{current_queue}] %s" % str(response))
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-        except Exception as err:
-            error_logger(err)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
+                response = eval(f"process_inbound_{current_queue}")(con, body)
+                middle_list.remove(con)
+                threads_queue.task_done()
+                sap_login_queue.task_done()
+                insert_response_(response)
+                print(f"Response:   [{current_queue}] %s" % str(response))
+                ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+            except Exception as err:
+                error_logger(err)
+                middle_list.remove(con)
+                threads_queue.task_done()
+                sap_login_queue.task_done()
+                ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
+                ch.basic_ack(delivery_tag=method.delivery_tag)
 
-        #######################################################
+            #######################################################
 
-    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
-    # connection = pika.BlockingConnection(params)
-    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    # channel = connection.channel()
-    # channel.queue_declare(queue='rpc_queue', durable=True)
-    # channel.basic_qos(prefetch_count=1)
-    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    # print(f" [{current_queue}] Awaiting RPC requests")
-    # channel.start_consuming()
-
-    try:
-        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
-        connection = pika.BlockingConnection(params)
-        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
-        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
-        # channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
-        channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
-        # channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
-
-        print(f"[{current_queue}] Awaiting RPC requests")
-
-        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
-
-        channel.start_consuming()
-    except Exception as e:
-        print(f"Exception:   [{current_queue}] %s" % str(e))
-        error_logger(e)
-        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [Error]:   {e}'
-        time.sleep(2)
-        eval(f"receiver_{current_queue}")
-
-
-def receiver_cycle():
-    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
-
-    def on_request(ch, method, props, body):
-        global pika_body
-        pika_body = body
-        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
-        SAP_ErrorWindows.error_windows()
+        # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
+        # connection = pika.BlockingConnection(params)
+        # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        # channel = connection.channel()
+        # channel.queue_declare(queue='rpc_queue', durable=True)
+        # channel.basic_qos(prefetch_count=1)
+        # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+        # print(f" [{current_queue}] Awaiting RPC requests")
+        # channel.start_consuming()
 
         try:
-            threads_queue.put(props.reply_to)
-            sap_login_queue.put(props.reply_to)
-            sap_connections(current_queue)
-        except Exception as err:
-            error_logger(err)
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-            os.system(f'taskkill /im "Monitor.exe"')
-
-        insert_text(body.decode(encoding="utf8"))
-
-        #######################################################
-        con = threads_queue.unfinished_tasks - threads_queue.qsize()
-
-        result_sap_alive = json.loads(SAP_Alive.Main())
-        while True:
-            if con in middle_list:
-                if con == result_sap_alive["connections"] - 1:
-                    con = 0
-                else:
-                    con += 1
-            else:
-                middle_list.append(con)
-                break
-        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
-        threads_queue.get()
-        try:
-
-            response = eval(f"process_inbound_{current_queue}")(con, body)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            insert_response_(response)
-            print(f"Response:   [{current_queue}] %s" % str(response))
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-        except Exception as err:
-            error_logger(err)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-
-        #######################################################
-
-    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
-    # connection = pika.BlockingConnection(params)
-    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    # channel = connection.channel()
-    # channel.queue_declare(queue='rpc_queue', durable=True)
-    # channel.basic_qos(prefetch_count=1)
-    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    # print(f" [{current_queue}] Awaiting RPC requests")
-    # channel.start_consuming()
-
-    try:
-        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
-        connection = pika.BlockingConnection(params)
-        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
-        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
-        # channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
-        channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
-        # channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
-
-        print(f"[{current_queue}] Awaiting RPC requests")
-
-        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
-
-        channel.start_consuming()
-    except Exception as e:
-        print(f"Exception:   [{current_queue}] %s" % str(e))
-        error_logger(e)
-        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [Error]:   {e}'
-        time.sleep(2)
-        eval(f"receiver_{current_queue}")
-
-
-def receiver_vul():
-    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
-
-    def on_request(ch, method, props, body):
-        global pika_body
-        pika_body = body
-        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
-        SAP_ErrorWindows.error_windows()
-
-        try:
-            threads_queue.put(props.reply_to)
-            sap_login_queue.put(props.reply_to)
-            sap_connections(current_queue)
-        except Exception as err:
-            error_logger(err)
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-            os.system(f'taskkill /im "Monitor.exe"')
-
-        insert_text(body.decode(encoding="utf8"))
-
-        #######################################################
-        con = threads_queue.unfinished_tasks - threads_queue.qsize()
-
-        result_sap_alive = json.loads(SAP_Alive.Main())
-        while True:
-            if con in middle_list:
-                if con == result_sap_alive["connections"] - 1:
-                    con = 0
-                else:
-                    con += 1
-            else:
-                middle_list.append(con)
-                break
-        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
-        threads_queue.get()
-        try:
-
-            response = eval(f"process_inbound_{current_queue}")(con, body)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            insert_response_(response)
-            print(f"Response:   [{current_queue}] %s" % str(response))
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-        except Exception as err:
-            error_logger(err)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-
-        #######################################################
-
-    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
-    # connection = pika.BlockingConnection(params)
-    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    # channel = connection.channel()
-    # channel.queue_declare(queue='rpc_queue', durable=True)
-    # channel.basic_qos(prefetch_count=1)
-    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    # print(f" [{current_queue}] Awaiting RPC requests")
-    # channel.start_consuming()
-
-    try:
-        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
-        connection = pika.BlockingConnection(params)
-        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
-        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
-        # channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
-        channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
-        # channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
-
-        print(f"[{current_queue}] Awaiting RPC requests")
-
-        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
-
-        channel.start_consuming()
-    except Exception as e:
-        print(f"Exception:   [{current_queue}] %s" % str(e))
-        error_logger(e)
-        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [Error]:   {e}'
-        time.sleep(2)
-        eval(f"receiver_{current_queue}")
-
-
-def receiver_pip():
-    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
-
-    def on_request(ch, method, props, body):
-        global pika_body
-        pika_body = body
-        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
-        SAP_ErrorWindows.error_windows()
-
-        try:
-            threads_queue.put(props.reply_to)
-            sap_login_queue.put(props.reply_to)
-            sap_connections(current_queue)
-        except Exception as err:
-            error_logger(err)
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-            os.system(f'taskkill /im "Monitor.exe"')
-
-        insert_text(body.decode(encoding="utf8"))
-
-        #######################################################
-        con = threads_queue.unfinished_tasks - threads_queue.qsize()
-
-        result_sap_alive = json.loads(SAP_Alive.Main())
-        while True:
-            if con in middle_list:
-                if con == result_sap_alive["connections"] - 1:
-                    con = 0
-                else:
-                    con += 1
-            else:
-                middle_list.append(con)
-                break
-        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
-        threads_queue.get()
-        try:
-
-            response = eval(f"process_inbound_{current_queue}")(con, body)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            insert_response_(response)
-            print(f"Response:   [{current_queue}] %s" % str(response))
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-        except Exception as err:
-            error_logger(err)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-
-        #######################################################
-
-    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
-    # connection = pika.BlockingConnection(params)
-    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    # channel = connection.channel()
-    # channel.queue_declare(queue='rpc_queue', durable=True)
-    # channel.basic_qos(prefetch_count=1)
-    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    # print(f" [{current_queue}] Awaiting RPC requests")
-    # channel.start_consuming()
-
-    try:
-        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
-        connection = pika.BlockingConnection(params)
-        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
-        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
-        # channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
-        channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
-        # channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
-
-        print(f"[{current_queue}] Awaiting RPC requests")
-
-        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
-
-        channel.start_consuming()
-    except Exception as e:
-        print(f"Exception:   [{current_queue}] %s" % str(e))
-        error_logger(e)
-        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [Error]:   {e}'
-        time.sleep(2)
-        eval(f"receiver_{current_queue}")
-
-
-def receiver_rw():
-    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
-
-    def on_request(ch, method, props, body):
-        global pika_body
-        pika_body = body
-        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
-        SAP_ErrorWindows.error_windows()
-
-        try:
-            threads_queue.put(props.reply_to)
-            sap_login_queue.put(props.reply_to)
-            sap_connections(current_queue)
-        except Exception as err:
-            error_logger(err)
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-            os.system(f'taskkill /im "Monitor.exe"')
-
-        insert_text(body.decode(encoding="utf8"))
-
-        #######################################################
-        con = threads_queue.unfinished_tasks - threads_queue.qsize()
-
-        result_sap_alive = json.loads(SAP_Alive.Main())
-        while True:
-            if con in middle_list:
-                if con == result_sap_alive["connections"] - 1:
-                    con = 0
-                else:
-                    con += 1
-            else:
-                middle_list.append(con)
-                break
-        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
-        threads_queue.get()
-        try:
-
-            response = eval(f"process_inbound_{current_queue}")(con, body)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            insert_response_(response)
-            print(f"Response:   [{current_queue}] %s" % str(response))
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-        except Exception as err:
-            error_logger(err)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-
-        #######################################################
-
-    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
-    # connection = pika.BlockingConnection(params)
-    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    # channel = connection.channel()
-    # channel.queue_declare(queue='rpc_queue', durable=True)
-    # channel.basic_qos(prefetch_count=1)
-    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    # print(f" [{current_queue}] Awaiting RPC requests")
-    # channel.start_consuming()
-
-    try:
-        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
-        connection = pika.BlockingConnection(params)
-        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
-        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
-        # channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
-        channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
-        # channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
-
-        print(f"[{current_queue}] Awaiting RPC requests")
-
-        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
-
-        channel.start_consuming()
-    except Exception as e:
-        print(f"Exception:   [{current_queue}] %s" % str(e))
-        error_logger(e)
-        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [Error]:   {e}'
-        time.sleep(2)
-        eval(f"receiver_{current_queue}")
-
-
-def receiver_ext():
-    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
-
-    def on_request(ch, method, props, body):
-        global pika_body
-        pika_body = body
-        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
-        SAP_ErrorWindows.error_windows()
-
-        try:
-            threads_queue.put(props.reply_to)
-            sap_login_queue.put(props.reply_to)
-            sap_connections(current_queue)
-        except Exception as err:
-            error_logger(err)
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-            os.system(f'taskkill /im "Monitor.exe"')
-
-        insert_text(body.decode(encoding="utf8"))
-
-        #######################################################
-        con = threads_queue.unfinished_tasks - threads_queue.qsize()
-
-        result_sap_alive = json.loads(SAP_Alive.Main())
-        while True:
-            if con in middle_list:
-                if con == result_sap_alive["connections"] - 1:
-                    con = 0
-                else:
-                    con += 1
-            else:
-                middle_list.append(con)
-                break
-        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
-        threads_queue.get()
-        try:
-
-            response = eval(f"process_inbound_{current_queue}")(con, body)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            insert_response_(response)
-            print(f"Response:   [{current_queue}] %s" % str(response))
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-        except Exception as err:
-            error_logger(err)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-
-        #######################################################
-
-    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
-    # connection = pika.BlockingConnection(params)
-    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    # channel = connection.channel()
-    # channel.queue_declare(queue='rpc_queue', durable=True)
-    # channel.basic_qos(prefetch_count=1)
-    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    # print(f" [{current_queue}] Awaiting RPC requests")
-    # channel.start_consuming()
-
-    try:
-        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
-        connection = pika.BlockingConnection(params)
-        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
-        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
-        # channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
-        channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
-        # channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
-
-        print(f"[{current_queue}] Awaiting RPC requests")
-
-        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
-
-        channel.start_consuming()
-    except Exception as e:
-        print(f"Exception:   [{current_queue}] %s" % str(e))
-        error_logger(e)
-        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [Error]:   {e}'
-        time.sleep(2)
-        eval(f"receiver_{current_queue}")
-
-
-def receiver_ext_labels():
-    current_queue = re.sub("receiver_", "", (inspect.stack()[0][3])).lower()
-
-    def on_request(ch, method, props, body):
-        global pika_body
-        pika_body = body
-        print(f"Request:    [{current_queue}] %s" % json.loads(json.dumps(body.decode(encoding="UTF8"))))
-        SAP_ErrorWindows.error_windows()
-
-        try:
-            threads_queue.put(props.reply_to)
-            sap_login_queue.put(props.reply_to)
-            sap_connections(current_queue)
-        except Exception as err:
-            error_logger(err)
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-            os.system(f'taskkill /im "Monitor.exe"')
-
-        insert_text(body.decode(encoding="utf8"))
-
-        #######################################################
-        con = threads_queue.unfinished_tasks - threads_queue.qsize()
-
-        result_sap_alive = json.loads(SAP_Alive.Main())
-        while True:
-            if con in middle_list:
-                if con == result_sap_alive["connections"] - 1:
-                    con = 0
-                else:
-                    con += 1
-            else:
-                middle_list.append(con)
-                break
-        # print(f"[{current_queue}] unfinished", threads_queue.unfinished_tasks, "size", threads_queue.qsize(), "** CON", con, "list", middle_list)
-        threads_queue.get()
-        try:
-
-            response = eval(f"process_inbound_{current_queue}")(con, body)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            insert_response_(response)
-            print(f"Response:   [{current_queue}] %s" % str(response))
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id), body=str(response))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-        except Exception as err:
-            error_logger(err)
-            middle_list.remove(con)
-            threads_queue.task_done()
-            sap_login_queue.task_done()
-            ch.basic_publish(exchange='', routing_key=props.reply_to, properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                             body=str(json.dumps({"serial": "N/A", "error": f'{err}'})))
-            ch.basic_ack(delivery_tag=method.delivery_tag)
-
-        #######################################################
-
-    # params = pika.ConnectionParameters(heartbeat=600, blocked_connection_timeout=300)
-    # connection = pika.BlockingConnection(params)
-    # # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    # channel = connection.channel()
-    # channel.queue_declare(queue='rpc_queue', durable=True)
-    # channel.basic_qos(prefetch_count=1)
-    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-    # print(f" [{current_queue}] Awaiting RPC requests")
-    # channel.start_consuming()
-
-    try:
-        params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
-        connection = pika.BlockingConnection(params)
-        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
-        channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
-        # channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
-        channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
-        # channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
-
-        print(f"[{current_queue}] Awaiting RPC requests")
-
-        mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
-
-        channel.start_consuming()
-    except Exception as e:
-        print(f"Exception:   [{current_queue}] %s" % str(e))
-        error_logger(e)
-        mainWindow.list.insert(END, f' Res     [Error]:  {e}')
-        mainWindow.list.see(END)
-        label_text["text"] = f' Res     [Error]:   {e}'
-        time.sleep(2)
-        eval(f"receiver_{current_queue}")
+            params = pika.ConnectionParameters(heartbeat=900, blocked_connection_timeout=600)
+            connection = pika.BlockingConnection(params)
+            # connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+            channel = connection.channel()
+            channel.queue_declare(queue=f'rpc_{current_queue}', durable=True)
+            channel.basic_qos(prefetch_count=1)
+            channel.basic_consume(queue=f'rpc_{current_queue}', on_message_callback=on_request)
+            print(f"[{current_queue}] Awaiting RPC requests")
+            mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}')
+            mainWindow.list.see(END)
+            label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}'
+
+            if self.thread_name == "queue":
+                channel.queue_declare(queue=f'rpc_{current_queue}_low', durable=True)
+                channel.basic_consume(queue=f'rpc_{current_queue}_low', on_message_callback=on_request)
+                print(f"[{current_queue}_low] Awaiting RPC requests")
+                mainWindow.list.insert(END, f' Res     [Success]:  Pika Connection Established {current_queue}_low')
+                mainWindow.list.see(END)
+                label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}_low'
+
+            channel.start_consuming()
+        except Exception as e:
+            print(f"Exception:   [{current_queue}] %s" % str(e))
+            error_logger(e)
+            mainWindow.list.insert(END, f' Res     [Error]:  {e}')
+            mainWindow.list.see(END)
+            label_text["text"] = f' Res     [Error]:   {e}'
+            time.sleep(2)
+            eval(f"receiver_{current_queue}")
 #####################
 # Receiver Functions
 #####################
@@ -1086,19 +634,18 @@ if __name__ == '__main__':
     threads_queue = queue.Queue()
     sap_login_queue = queue.Queue()
 
-    receive_thread = Thread(target=receiver_queue)
-    receive_thread_cycle = Thread(target=receiver_cycle)
-    receive_thread_vul = Thread(target=receiver_vul)
-    receive_thread_pip = Thread(target=receiver_pip)
-    receive_thread_rw = Thread(target=receiver_rw)
-    receive_thread_ext = Thread(target=receiver_ext)
-    receive_thread_ext_labels = Thread(target=receiver_ext_labels)
+    #####################
+    # Beginning Threads
+    #####################
+    if not json.loads(f'{os.getenv("THREADS")}'):
+        tkinter.messagebox.showerror("No Threads", "No threads check .env file")
+        os.kill(os.getpid(), signal.SIGTERM)
+    else:
+        for th in json.loads(f'{os.getenv("THREADS")}'):
+            try:
+                ReceiverFunctions(th).start()
+            except Exception as e:
+                tkinter.messagebox.showerror("Incorrect Thread", e)
+                os.kill(os.getpid(), signal.SIGTERM)
 
-    receive_thread.start()
-    receive_thread_cycle.start()
-    receive_thread_vul.start()
-    receive_thread_pip.start()
-    receive_thread_rw.start()
-    receive_thread_ext.start()
-    receive_thread_ext_labels.start()
     master.mainloop()

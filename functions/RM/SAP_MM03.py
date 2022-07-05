@@ -46,16 +46,15 @@ def Main(con, material):
         # session.findById("wnd[1]/tbar[0]/btn[19]").press()
         # session.findById("wnd[1]/usr/tblSAPLMGMMTC_VIEW").getAbsoluteRow(0).selected = -1
         # session.findById("wnd[1]/tbar[0]/btn[0]").press()
-        net_weight = session.findById(
-            "wnd[0]/usr/tabsTABSPR1/tabpSP01/ssubTABFRA1:SAPLMGMM:2004/subSUB5:SAPLMGD1:2007/txtMARA-NTGEW").Text
+        net_weight = session.findById("wnd[0]/usr/tabsTABSPR1/tabpSP01/ssubTABFRA1:SAPLMGMM:2004/subSUB5:SAPLMGD1:2007/txtMARA-NTGEW").Text
 
         session.findById("wnd[0]/tbar[0]/btn[15]").press()
 
         response = {"net_weight": net_weight}
-        return (json.dumps(response))
+        return json.dumps(response)
 
     except:
-        return (sys.exc_info()[0])
+        return sys.exc_info()[0]
 
     finally:
         session = None
