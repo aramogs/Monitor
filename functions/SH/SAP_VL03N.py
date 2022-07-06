@@ -31,9 +31,10 @@ def Main(con, delivery):
         session.findById("wnd[0]/tbar[1]/btn[18]").press()
         try:
             try:
-                session.findById("wnd[0]/mbar/menu[2]/menu[0]/menu[4]").select()
-            except:
                 session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6INH/ssubTAB:SAPLV51G:6040/tblSAPLV51GTC_HU_005/txtHUMV4-HISTU[0,0]").setFocus()
+            except:
+                session.findById("wnd[0]/mbar/menu[2]/menu[0]/menu[4]").select()
+                pass
         except:
             error = session.findById("wnd[0]/sbar").Text
             response = {"result": "N/A", "error": error}
