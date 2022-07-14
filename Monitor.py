@@ -643,6 +643,7 @@ if __name__ == '__main__':
     else:
         for th in json.loads(f'{os.getenv("THREADS")}'):
             try:
+                ReceiverFunctions(th).setDaemon(True)
                 ReceiverFunctions(th).start()
             except Exception as e:
                 tkinter.messagebox.showerror("Incorrect Thread", e)
