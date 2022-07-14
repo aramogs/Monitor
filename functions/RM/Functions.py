@@ -134,6 +134,7 @@ def transfer_mp_confirmed(inbound):
     storage_type = inbound["storage_type"]
     station_hash = inbound["station"]
     con = inbound["con"]
+    station_hash = station_hash.replace(":", "-")
     # storage_location = inbound["storage_location"]
 
     for serial in serials:
