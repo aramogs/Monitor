@@ -45,18 +45,23 @@ def Main(con, serial_num_list, storage_type, storage_bin):
                 session.findById("wnd[0]").sendVKey(0)
                 session.findById("wnd[0]/usr/ctxt*LTAP-NLTYP").text = storage_type
                 session.findById("wnd[0]/usr/txt*LTAP-NLPLA").text = storage_bin
+                certificate_number = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtLTAP-ZEUGN[8,0]").Text
+                material = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/ctxtLTAP-MATNR[0,0]").Text
+                material_description = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtLTAP-MAKTX[12,0]").Text
+                quantity = session.findById("wnd[0]/usr/subD0171_S:SAPML03T:1711/tblSAPML03TD1711/txtRL03T-ANFME[1,0]").Text
                 session.findById("wnd[0]/tbar[0]/btn[11]").press()
                 result = session.findById("wnd[0]/sbar/pane[0]").Text
                 # Getting only the transfer order and not the text
-                response_list.append({"serial_num": serial_num, "result": int(re.sub(r"\D", "", result, 0))})
+                response_list.append({"serial_num": serial_num, "result": int(re.sub(r"\D", "", result, 0)), "certificate_number": certificate_number,
+                                      "material": material, "material_description": material_description, "quantity": quantity.replace(".000", "").replace(",", "")})
 
             except:
                 result = session.findById("wnd[0]/sbar/pane[0]").Text
-                response_list.append({"serial_num": serial_num, "result": result})
+                response_list.append({"serial_num": serial_num, "result": result, "certificate_number": "N/A",
+                                      "material": "N/A", "material_description": "N/A", "quantity": "N/A"})
 
                 session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
                 session.findById("wnd[0]").sendVKey(0)
-
 
         session.findById("wnd[0]/tbar[0]/btn[15]").press()
         try:
@@ -70,13 +75,14 @@ def Main(con, serial_num_list, storage_type, storage_bin):
 
     except:
         error = session.findById("wnd[0]/sbar/pane[0]").Text
-        response = {"result": "N/A", "error": error}
+        response = {"serial_num": "N/A", "result": "N/A", "error": error, "certificate_number": "N/A",
+                    "material": "N/A", "material_description": "N/A", "quantity": "N/A"}
 
         session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 
-        return (json.dumps(response))
+        return json.dumps(response)
 
     finally:
         session = None

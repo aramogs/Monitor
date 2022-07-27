@@ -44,12 +44,14 @@ def partial_transfer(inbound):
         response = json.loads(SAP_LT09.Main(con, serial_num))
         storage_type = response["storage_type"]
         if storage_type != "MP":
-            response = {"serial": "N/A", "material": "N/A", "material_description": "N/A", "material_w": "N/A", "cantidad": "N/A", "error": "Partial Transfer only available for Storage Type MP"}
+            response = {"serial": "N/A", "material": "N/A", "material_description": "N/A", "material_w": "N/A", "cantidad": "N/A",
+                        "error": "Partial Transfer only available for Storage Type MP", "certificate_number": "N/A"}
             return json.dumps(response)
 
         material_number = response["material_number"]
         material_description = response["material_description"]
         quant = response["quant"].replace(".000", "").replace(",", "")
+        certificate_number = response["certificate_number"]
 
         error = response["error"]
 
@@ -62,10 +64,11 @@ def partial_transfer(inbound):
         if error == "":
             sap_error_windows()
 
-        response = {"serial": serial_num, "material": material_number, "material_description": material_description, "material_w": material_w, "cantidad": quant, "error": error}
+        response = {"serial": serial_num, "material": material_number, "material_description": material_description, "material_w": material_w, "cantidad": quant, "error": error,
+                    "certificate_number": certificate_number}
         return json.dumps(response)
     except KeyError:
-        response = {"serial": "N/A", "material": "N/A", "material_description": "N/A", "material_w": "N/A", "cantidad": "N/A", "error": "VERIFY JSON"}
+        response = {"serial": "N/A", "material": "N/A", "material_description": "N/A", "material_w": "N/A", "cantidad": "N/A", "error": "VERIFY JSON", "certificate_number": "N/A"}
         return json.dumps(response)
 
 
@@ -100,6 +103,7 @@ def partial_transfer_confirmed(inbound):
     user_id = inbound["user_id"]
     con = inbound["con"]
     storage_location = inbound["storage_location"]
+    certificate_number = inbound["certificate_number"]
 
     response = json.loads(SAP_LT01.Main(con, storage_location, material, cantidad, serial_num))
     result = response["result"]
@@ -111,7 +115,8 @@ def partial_transfer_confirmed(inbound):
     if re.sub(r"\D", "", result, 0) != "":
         result_insert = int(re.sub(r"\D", "", result, 0))
         if int(result_insert) != 0 or error != "N/A":
-            print_label(station, material, material_description, serial_num, cantidad_restante)
+            print_label(station, material, material_description, serial_num, certificate_number, cantidad_restante, "TRA")
+            print_label(station, material, material_description, serial_num, certificate_number, cantidad, "TRAB")
             # if len(station) > 5:
             #     station = "web"
             DB.insert_partial_transfer(emp_num=user_id, part_num=material, no_serie=serial_num, linea=station,
@@ -192,7 +197,6 @@ def raw_delivery_verify(inbound):
 
         insert_result = DB.insert_raw_delivery(values=array_of_arrays)
         response = {"result": f"{se16_response['result']}", "error": "N/A"}
-    print(response)
     # response = json.dumps({"serial": "N/A", "error": f"N/A"})
     return json.dumps(response)
 
@@ -213,6 +217,7 @@ def raw_mp_confirmed(inbound):
     Function takes one or several serial numbers and performs the corresponding transfer orders to the corresponding bin
     After everything is done it sends a list of errors if there are any
     """
+    station = inbound["station"]
     serials = (inbound["serial_num"]).split(",")
     emp_num = inbound["user_id"]
     raw_id = inbound["raw_id"]
@@ -230,6 +235,7 @@ def raw_mp_confirmed(inbound):
         # json.loads(re.sub... Carga cada arreglo dentro de la respuesta a un json
         # for x in json.loads cada respuesta cargada del arreglo es iterada
     for x in json.loads(re.sub(r"'", "\"", json.loads(response)["result"])):
+        print_label(station, x["material"], x["material_description"], x["serial_num"], x["certificate_number"], x["quantity"], "TRAB")
         DB.insert_raw_movement(raw_id=raw_id, storage_type=storage_type_db, emp_num=emp_num, no_serie=x["serial_num"], result=x["result"])
         pass
     return response
@@ -321,7 +327,7 @@ def sap_error_windows():
     sap_login()
 
 
-def print_label(station, material, material_description, serial, cantidad_restante):
+def print_label(station, material, material_description, serial, lote, cantidad_restante, label):
     """
     Function prints the corresponding label
     """
@@ -330,8 +336,7 @@ def print_label(station, material, material_description, serial, cantidad_restan
 
     printer = DB.get_printer(f'{station}')
 
-    data = {"material": f'{material}', "descripcion": f'{material_description}', "serial": f'{serial}', "cantidad": f'{cantidad_restante}', "printer": f'{printer}'}
+    data = {"material": f'{material}', "descripcion": f'{material_description}', "serial": f'{serial}', "lote": f'{lote}', "cantidad": f'{cantidad_restante}', "printer": f'{printer}'}
 
-    r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/TRA/Execute/',
-                      data=json.dumps(data))
+    r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/{label}/Execute/', data=json.dumps(data))
     # print(r.text)
