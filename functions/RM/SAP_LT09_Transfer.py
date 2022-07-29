@@ -78,7 +78,7 @@ def Main(con, serial_num_list, storage_type, storage_bin):
         response = {"serial_num": "N/A", "result": "N/A", "error": error, "certificate_number": "N/A",
                     "material": "N/A", "material_description": "N/A", "quantity": "N/A"}
 
-        session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
+        # session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 

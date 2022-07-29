@@ -115,7 +115,8 @@ def partial_transfer_confirmed(inbound):
     if re.sub(r"\D", "", result, 0) != "":
         result_insert = int(re.sub(r"\D", "", result, 0))
         if int(result_insert) != 0 or error != "N/A":
-            print_label(station, material, material_description, serial_num, certificate_number, cantidad_restante, "TRA")
+            if int(cantidad_restante) > 0:
+                print_label(station, material, material_description, serial_num, certificate_number, cantidad_restante, "TRA")
             print_label(station, material, material_description, serial_num, certificate_number, cantidad, "TRAB")
             # if len(station) > 5:
             #     station = "web"
@@ -226,8 +227,11 @@ def raw_mp_confirmed(inbound):
     # storage_location = inbound["storage_location"]
     storage_type = "102"
     storage_bin = "104"
+    printer = DB.get_printer(f'{station}')
 
     response = SAP_LT09_Transfer.Main(con, serials, storage_type, storage_bin)
+    response_printer = json.loads(response)
+    response_printer.update({"printer": printer})
     if json.loads(response)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f'{response["error"]}'})
         # re.sub("Busca comillas ' simples, se reemplazan con comillas dobles "
@@ -238,7 +242,7 @@ def raw_mp_confirmed(inbound):
         print_label(station, x["material"], x["material_description"], x["serial_num"], x["certificate_number"], x["quantity"], "TRAB")
         DB.insert_raw_movement(raw_id=raw_id, storage_type=storage_type_db, emp_num=emp_num, no_serie=x["serial_num"], result=x["result"])
         pass
-    return response
+    return json.dumps(response_printer)
 
 
 def raw_mp_confirmed_v(inbound):
@@ -336,7 +340,8 @@ def print_label(station, material, material_description, serial, lote, cantidad_
 
     printer = DB.get_printer(f'{station}')
 
-    data = {"material": f'{material}', "descripcion": f'{material_description}', "serial": f'{serial}', "lote": f'{lote}', "cantidad": f'{cantidad_restante}', "printer": f'{printer}'}
+    data = {"material": f'{material}', "descripcion": f'{material_description}', "serial": f'{serial}', "lote": f'{lote}', "cantidad": f'{cantidad_restante}',
+            "printer": f'{printer}', "labels": "1"}
 
     r = requests.post(f'http://{os.getenv("BARTENDER_SERVER")}:{os.getenv("BARTENDER_PORT")}/Integration/{label}/Execute/', data=json.dumps(data))
-    # print(r.text)
+    print(r)
