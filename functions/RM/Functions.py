@@ -220,6 +220,7 @@ def raw_mp_confirmed(inbound):
     """
     station = inbound["station"]
     serials = (inbound["serial_num"]).split(",")
+    serials_obsolete = (inbound["serials_obsoletos"]).split(",")
     emp_num = inbound["user_id"]
     raw_id = inbound["raw_id"]
     storage_type_db = inbound["storage_type"]
@@ -230,6 +231,7 @@ def raw_mp_confirmed(inbound):
     printer = DB.get_printer(f'{station}')
 
     response = SAP_LT09_Transfer.Main(con, serials, storage_type, storage_bin)
+    response_cyclic = SAP_LT09_Transfer.Main(con, serials_obsolete, "MP", "CICLICORAW")
     response_printer = json.loads(response)
     response_printer.update({"printer": printer})
     if json.loads(response)["error"] != "N/A":
