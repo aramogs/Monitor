@@ -267,12 +267,15 @@ def transfer_ext_confirmed(inbound):
     station_hash = inbound["station"]
     con = inbound["con"]
     # storage_location = inbound["storage_location"]
+    max_storage_unit_bin = 5
 
     bin_exist = SAP_LS11.Main(con, storage_type, storage_bin)
+    serials_bin = len(serials) + int(json.loads(bin_exist)["quantity"])
     if json.loads(bin_exist)["error"] != "N/A":
         response = json.dumps({"serial": "N/A", "error": f"Storage Bin does not exist at Storage Type {storage_type}"})
-        # if json.loads(bin_exist)["error"] == "":
-        #     response = json.dumps({"serial": "N/A", "error": "No Storage Bin like this in Storage Type FG"})
+    # If storage bin begins with R then check if the amount of storage units exceeds 5 (Maximum amount of stare units per bin for Extrusion)
+    elif storage_bin[0] == "r" or storage_bin[0] == "R" and serials_bin > max_storage_unit_bin:
+        response = json.dumps({"serial": "N/A", "error": f"Exceeded amount of Storage Units per Bin: {serials_bin - max_storage_unit_bin}"})
 
     else:
         response = SAP_LT09_Transfer_Redis.Main(con, serials, storage_type, storage_bin, station_hash)

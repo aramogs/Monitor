@@ -8,6 +8,7 @@ def Main(con):
         import time
         import math
         import traceback
+        import time
 
         SapGuiAuto = win32com.client.GetObject("SAPGUI")
 
@@ -43,9 +44,9 @@ def Main(con):
             pass
 
         iterations = math.ceil(max_scroll / original_position)
-        # print(f'MAX: {max_scroll}')
-        # print(f'Original {original_position}')
-        # print(f'Iterations {iterations}')
+        print(f'MAX: {max_scroll}')
+        print(f'Original {original_position}')
+        print(f'Iterations {iterations}')
         text_iterations = {}
         text_iterations2 = {}
         text_iterations3 = {}
@@ -57,9 +58,6 @@ def Main(con):
             text_iterations2["iteration{0}".format(x)] = f'session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6INH/ssubTAB:SAPLV51G:6040/tblSAPLV51GTC_HU_005/txtHUMV4-IDENT[1,{x}]").Text.strip()'
             text_iterations3["iteration{0}".format(x)] = f'session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6INH/ssubTAB:SAPLV51G:6040/tblSAPLV51GTC_HU_005/txtHUMV4-QUANTITY[3,{x}]").Text.strip()'
             text_iterations4["iteration{0}".format(x)] = f'session.findById("wnd[0]/usr/tabsTS_HU_VERP/tabpUE6INH/ssubTAB:SAPLV51G:6040/tblSAPLV51GTC_HU_005/txtHUMV4-MATNR[2,{x}]").Text.strip()'
-
-
-
 
         for i in range(iterations):
             for (key, value), (key2, value2), (key3, value3), (key4, value4) in zip(text_iterations.items(), text_iterations2.items(), text_iterations3.items(), text_iterations4.items()):
@@ -128,6 +126,6 @@ def Main(con):
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
     # print(Main([{'storage_unit': '0178010857', 'stock': '72'},{'storage_unit': '0177482588', 'stock': '72'}]))
-    print(Main())
+    print(Main(0))
 
 # -End-------------------------------------------------------------------

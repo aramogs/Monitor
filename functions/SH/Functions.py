@@ -140,4 +140,4 @@ def shipment_delivery(inbound):
         return response
 
 
-# print(shipment_delivery({'station': '00:00:00:00:00:00', 'con': 0, 'serial_num': '', 'delivery': '80759519', 'cantidad': '3456', 'process': 'shipment_delivery', 'material': '', 'embarque': 'BMW2023'}))
+# print(shipment_delivery({'station': '00:00:00:00:00:00', 'con': 0, 'serial_num': '', 'delivery': '80770108', 'cantidad': '4904', 'process': 'shipment_delivery', 'material': '', 'embarque': 'BMW2023'}))

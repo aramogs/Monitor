@@ -40,27 +40,22 @@ def Main(con, storage_type, storage_bin):
         session.findById("wnd[0]/usr/ctxtS1_LGNUM").text = "521"
         session.findById("wnd[0]/usr/ctxtS1_LGTYP-LOW").text = storage_type
         session.findById("wnd[0]/usr/ctxtS1_LGPLA-LOW").text = storage_bin
-        session.findById("wnd[0]/usr/ctxtS1_LGPLA-LOW").setFocus()
-        # session.findById("wnd[0]/usr/ctxtS1_LGPLA-LOW").caretPosition = 6
+        session.findById("wnd[0]/usr/ctxtP_VARI").text = "/zdel"
         session.findById("wnd[0]/tbar[1]/btn[8]").press()
-        # session.findById("wnd[0]/usr/lbl[5,6]").setFocus()
         bin = session.findById("wnd[0]/usr/lbl[5,6]").Text
-        # session.findById("wnd[0]/usr/lbl[5,6]").caretPosition = 6
-        # session.findById("wnd[0]").sendVKey(2)
-        # session.findById("wnd[0]/tbar[0]/btn[15]").press()
-        # session.findById("wnd[0]/tbar[0]/btn[15]").press()
+        quantity = session.findById("wnd[0]/usr/lbl[22,6]").Text.strip()
         session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
         session.findById("wnd[0]").sendVKey(0)
 
-
-        response = {"result": bin, "error": "N/A"}
+        print(quantity.strip())
+        response = {"result": bin, "quantity": quantity, "error": "N/A"}
         return json.dumps(response)
 
     except:
       session.findById("wnd[0]/tbar[0]/btn[15]").press()
       session.findById("wnd[0]/tbar[0]/btn[15]").press()
       error = session.findById("wnd[0]/sbar/pane[0]").Text
-      response = {"result": "N/A", "error": error}
+      response = {"result": "N/A", "quantity": "N/A", "error": error}
       return json.dumps(response)
 
     finally:
@@ -72,6 +67,6 @@ def Main(con, storage_type, storage_bin):
 
 # -Main------------------------------------------------------------------
 if __name__ == '__main__':
-    Main("FG", "ACREDIT TA")
+    Main(0, "EXT", "R45C06")
 
 # -End-------------------------------------------------------------------
