@@ -91,7 +91,7 @@ def transfer_pip_confirmed(inbound):
             # json.loads(re.sub... Carga cada arreglo dentro de la respuesta a un json
             # for x in json.loads cada respuesta cargada del arreglo es iterada
         for x in json.loads(re.sub(r"'", "\"", json.loads(response)["result"])):
-            DB.insert_complete_transfer(emp_num=emp_num, no_serie=x["serial_num"], result=x["result"], area="VUL")
+            DB.insert_complete_transfer(emp_num=emp_num, no_serie=x["serial_num"], result=x["result"], area="VUL", storage_bin=storage_bin)
             pass
 
     return response

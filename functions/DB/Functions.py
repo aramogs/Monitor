@@ -115,14 +115,14 @@ class DB:
             pass
 
     @staticmethod
-    def insert_complete_transfer(emp_num, no_serie, result, area):
+    def insert_complete_transfer(emp_num, no_serie, result, area, storage_bin):
         """
         Function to insert information about transfer order
         """
         try:
             db = mysql.connector.connect(**warehouse_config)
-            query = f'INSERT INTO complete_transfer (emp_num, no_serie, result, area) ' \
-                    f'VALUES ({emp_num}, {no_serie}, "{result}", "{area}")'
+            query = f'INSERT INTO complete_transfer (emp_num, no_serie, result, area, storage_bin) ' \
+                    f'VALUES ({emp_num}, {no_serie}, "{result}", "{area}", "{storage_bin}")'
             cursor = db.cursor()
             cursor.execute(query)
             db.commit()

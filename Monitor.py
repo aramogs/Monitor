@@ -199,7 +199,7 @@ def process_inbound_fg(con, body):
     inbound = json.loads(body.decode(encoding="utf8"))
     storage_location = DB.select_storage_location(inbound["station"])
     if len(storage_location) == 0:
-        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
         pass
     else:
         inbound["storage_location"] = storage_location[0][0]
@@ -211,11 +211,6 @@ def process_inbound_fg(con, body):
         response = transfer_fg(inbound)
     elif process == "transfer_fg_confirmed":
         response = transfer_fg_confirmed(inbound)
-    # elif process == "master_fg_gm_verify":
-    #     response = master_fg_gm_verify(inbound)
-    # elif process == "master_fg_gm_create":
-    #     response = master_fg_gm_create(inbound)
-
     ##############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
