@@ -199,7 +199,7 @@ def process_inbound_fg(con, body):
     inbound = json.loads(body.decode(encoding="utf8"))
     storage_location = DB.select_storage_location(inbound["station"])
     if len(storage_location) == 0:
-        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
         pass
     else:
         inbound["storage_location"] = storage_location[0][0]

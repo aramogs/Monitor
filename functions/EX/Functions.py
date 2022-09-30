@@ -96,7 +96,7 @@ def transfer_ext_rp(inbound):
     for material in material_list:
 
         serial = material["serial"]
-        to_sbin = "GREEN"
+        to_sbin = "POTS"
 
         if len(str(serial)) < 10:
             serial = "0" + str(serial)
@@ -181,7 +181,7 @@ def storage_unit_ext_pr(inbound):
     operator_name = inbound["operator_name"]
     operator_id = inbound["operator_id"]
     printed_type = inbound["impresoType"]
-    from_sbin = "GREEN"
+    from_sbin = "POTS"
     to_stype = "EXT"
     to_sbin = "TEMPR"
     con = inbound["con"]
