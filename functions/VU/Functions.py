@@ -42,28 +42,48 @@ def sap_error_windows():
     sap_login()
 
 
-def transfer_vul(inbound):
+def transfer_vul_serial(inbound):
     """
         Functions takes a Finished Goods serial number and finds
         the corresponding material number
     """
     serial_num = inbound["serial_num"]
+    con = inbound["con"]
+    storage_location = inbound["storage_location"]
+
+    result_lt09 = json.loads(SAP_LT09_Query.Main(con, serial_num))
+    if result_lt09["error"] != "N/A":
+        response = json.dumps({"serial": "N/A", "error": f'{result_lt09["error"]}'})
+        if result_lt09["error"] == "":
+            sap_error_windows()
+    else:
+        material_number = result_lt09["material_number"]
+        response = SAP_LS24.Main(con, storage_location, material_number)
+    return response
+
+
+def transfer_vul_material(inbound):
+    """
+        Functions takes a Finished Goods serial number and finds
+        the corresponding material number
+    """
     material = inbound["material"]
     con = inbound["con"]
     storage_location = inbound["storage_location"]
-    if material == "":
-        result_lt09 = json.loads(SAP_LT09_Query.Main(con, serial_num))
-        if result_lt09["error"] != "N/A":
-            response = json.dumps({"serial": "N/A", "error": f'{result_lt09["error"]}'})
-            if result_lt09["error"] == "":
-                sap_error_windows()
-        else:
-            material_number = result_lt09["material_number"]
-            response = SAP_LS24.Main(con, storage_location, material_number)
-        return response
-    else:
-        response = SAP_LS24.Main(con, storage_location, material)
-        return response
+    response = SAP_LS24.Main(con, storage_location, material)
+    return response
+
+
+def transfer_vul_mandrel(inbound):
+    """
+        Functions takes a Finished Goods serial number and finds
+        the corresponding material number
+    """
+    material = inbound["material"]
+    con = inbound["con"]
+    storage_location = inbound["storage_location"]
+    response = SAP_LS24.Main(con, storage_location, material)
+    return response
 
 
 def transfer_vul_confirmed(inbound):

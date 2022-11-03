@@ -361,8 +361,12 @@ def process_inbound_vul(con, body):
     process = inbound["process"]
 
     ##############Vulcanized Transfers##################
-    if process == "transfer_vul":
-        response = transfer_vul(inbound)
+    if process == "transfer_vul_serial":
+        response = transfer_vul_serial(inbound)
+    elif process == "transfer_vul_material":
+        response = transfer_vul_material(inbound)
+    elif process == "transfer_vul_mandrel":
+        response = transfer_vul_mandrel(inbound)
     elif process == "transfer_vul_confirmed":
         response = transfer_vul_confirmed(inbound)
     elif process == "audit_ext":
@@ -431,7 +435,7 @@ def process_inbound_ext(con, body):
     inbound = json.loads(body.decode(encoding="utf8"))
     storage_location = DB.select_storage_location(inbound["station"])
     if len(storage_location) == 0:
-        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        # return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
         pass
     else:
         inbound["storage_location"] = storage_location[0][0]
@@ -445,8 +449,10 @@ def process_inbound_ext(con, body):
         response = transfer_ext_rp(inbound)
     elif process == "storage_unit_ext_pr":
         response = storage_unit_ext_pr(inbound)
-    elif process == "transfer_ext":
-        response = transfer_ext(inbound)
+    elif process == "transfer_ext_mandrel":
+        response = transfer_ext_mandrel(inbound)
+    elif process == "transfer_ext_serial":
+        response = transfer_ext_serial(inbound)
     elif process == "transfer_EXT_confirmed":
         response = transfer_ext_confirmed(inbound)
     elif process == "verify_rubber":

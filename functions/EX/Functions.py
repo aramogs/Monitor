@@ -233,7 +233,18 @@ def storage_unit_ext_pr(inbound):
     return json.dumps(response)
 
 
-def transfer_ext(inbound):
+def transfer_ext_mandrel(inbound):
+    """
+        Functions takes a Finished Goods serial number and finds
+        the corresponding material number
+    """
+    con = inbound["con"]
+    material = inbound["material"]
+    response = SAP_LS24_EXT.Main(con, material)
+    return response
+
+
+def transfer_ext_serial(inbound):
     """
         Functions takes a Finished Goods serial number and finds
         the corresponding material number
@@ -251,6 +262,7 @@ def transfer_ext(inbound):
     else:
         material_number = result_lt09["material_number"]
         response = SAP_LS24_EXT.Main(con, material_number)
+
     return response
 
 
