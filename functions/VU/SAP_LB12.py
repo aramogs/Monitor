@@ -50,7 +50,7 @@ def Main(con, serial_num):
         session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
         session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "VUL"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
-        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "TEMPB"
+        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "TEMPB_VUL"
         session.findById("wnd[0]/usr/ctxtLTAP-NLENR").text = f'0{serial_num}'
         # session.findById("wnd[0]/usr/ctxtLTAP-NLENR").setFocus()
         # session.findById("wnd[0]/usr/ctxtLTAP-NLENR").caretPosition = 10

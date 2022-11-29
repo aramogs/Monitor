@@ -67,7 +67,6 @@ def Main(con, serial_num_list, storage_type, storage_bin, station_hash):
                 session.findById("wnd[0]/tbar[0]/okcd").text = "/n"
                 session.findById("wnd[0]").sendVKey(0)
 
-
         session.findById("wnd[0]/tbar[0]/btn[15]").press()
         try:
             session.findById("wnd[1]/usr/btnSPOP-OPTION2").press()

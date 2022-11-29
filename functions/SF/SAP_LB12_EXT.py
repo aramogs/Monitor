@@ -39,7 +39,7 @@ def Main(con, serial):
         session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
         session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "EXT"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
-        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "TEMPB"
+        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "TEMPB_EXT"
         session.findById("wnd[0]/usr/ctxtLTAP-NLENR").text = f'0{serial}'
         session.findById("wnd[0]").sendVKey(0)
         session.findById("wnd[0]").sendVKey(0)

@@ -63,7 +63,7 @@ def Main(con, storage_location, sap_num, quantity):
         session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
         session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "VUL"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
-        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "TEMPR"
+        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "TEMPR_VUL"
         session.findById("wnd[0]").sendVKey(0)
         serial_num = session.findById("wnd[0]/usr/ctxtLTAP-NLENR").Text
         session.findById("wnd[0]").sendVKey(0)

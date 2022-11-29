@@ -183,7 +183,7 @@ def storage_unit_ext_pr(inbound):
     printed_type = inbound["impresoType"]
     from_sbin = "POTS"
     to_stype = "EXT"
-    to_sbin = "TEMPR"
+    to_sbin = "TEMPR_EXT"
     con = inbound["con"]
     storage_location = inbound["storage_location"]
     # printer = f'\\\\tftdelsrv003\{inbound["impresora"]}'

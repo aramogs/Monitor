@@ -120,8 +120,7 @@ def partial_transfer_confirmed(inbound):
             print_label(station, material, material_description, serial_num, certificate_number, cantidad, "TRAB")
             # if len(station) > 5:
             #     station = "web"
-            DB.insert_partial_transfer(emp_num=user_id, part_num=material, no_serie=serial_num, linea=station,
-                                       transfer_order=result_insert)
+            DB.insert_partial_transfer(emp_num=user_id, part_num=material, no_serie=serial_num, linea=station, transfer_order=result_insert)
     else:
         error = result
 

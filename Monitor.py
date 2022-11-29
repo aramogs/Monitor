@@ -144,12 +144,12 @@ def process_inbound_queue(con, body):
     # elif process == "master_fg_gm_create":
     #     response = master_fg_gm_create(inbound)
     ##############Sub Assembly##################
-    if process == "transfer_sa":
-        response = transfer_sa(inbound)
-    elif process == "transfer_sa_return":
-        response = transfer_sa_return(inbound)
-    elif process == "reprint_sa":
-        response = reprint_sa(inbound)
+    # if process == "transfer_sa":
+    #     response = transfer_sa(inbound)
+    # elif process == "transfer_sa_return":
+    #     response = transfer_sa_return(inbound)
+    # elif process == "reprint_sa":
+    #     response = reprint_sa(inbound)
     # ##############Semi Finished##################
     # elif process == "handling_sf":
     #     response = handling_sf(inbound)
@@ -167,7 +167,7 @@ def process_inbound_queue(con, body):
     # elif process == "transfer_rework_out":
     #     response = transfer_rework_out(inbound)
     ##############Production##################
-    elif process == "create_pr_hu":
+    if process == "create_pr_hu":
         response = create_pr_hu(inbound)
     elif process == "confirm_pr_hu":
         response = confirm_pr_hu(inbound)
@@ -384,6 +384,33 @@ def process_inbound_vul(con, body):
         response = reprint_sf(inbound)
     elif process == "reprint_sfr":
         response = reprint_sfr(inbound)
+
+    ##############_NO_PROCESS_##################
+    else:
+        current_queue = inspect.stack()[0][3]
+        response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
+    return response
+
+
+def process_inbound_sa(con, body):
+    inbound = json.loads(body.decode(encoding="utf8"))
+    storage_location = DB.select_storage_location(inbound["station"])
+    if len(storage_location) == 0:
+        return json.dumps({"error": f'Device not allowed: {inbound["station"]}'})
+        pass
+    else:
+        inbound["storage_location"] = storage_location[0][0]
+    inbound["con"] = con
+    process = inbound["process"]
+
+    ##############Sub Assembly##################
+    if process == "handling_sa":
+        response = handling_sa(inbound)
+    elif process == "transfer_sa":
+        response = transfer_sa(inbound)
+    elif process == "reprint_sa":
+        response = reprint_sa(inbound)
+
 
     ##############_NO_PROCESS_##################
     else:
