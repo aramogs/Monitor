@@ -48,10 +48,10 @@ def Main(con, serial_num):
         session.findById("wnd[0]/tbar[1]/btn[5]").press()
         session.findById("wnd[0]/usr/ctxtLTAP-LETYP").text = "001"
         session.findById("wnd[0]/usr/ctxtLTAP-LDEST").text = "dummy"
-        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "SEM"
+        session.findById("wnd[0]/usr/ctxtLTAP-NLTYP").text = "102"
         session.findById("wnd[0]/usr/ctxtLTAP-NLBER").text = "001"
-        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "TEMPB_SEM"
-        session.findById("wnd[0]/usr/ctxtLTAP-NLENR").text = f'0{serial_num}'
+        session.findById("wnd[0]/usr/txtLTAP-NLPLA").text = "103"
+        # session.findById("wnd[0]/usr/ctxtLTAP-NLENR").text = f'0{serial_num}'
         # session.findById("wnd[0]/usr/ctxtLTAP-NLENR").setFocus()
         # session.findById("wnd[0]/usr/ctxtLTAP-NLENR").caretPosition = 10
         session.findById("wnd[0]").sendVKey(0)
