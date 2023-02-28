@@ -72,13 +72,13 @@ def cycle_count_transfer(inbound):
     storage_type = inbound["storage_type"]
     storage_bin = inbound["storage_bin"]
     station = re.sub(":", "-", inbound["station"])
-    st = ""
-    sb = ""
+    # st = ""
+    # sb = ""
     emp_num = inbound["user_id"]
     not_found_response = ""
     unlisted_response = ""
     con = inbound["con"]
-    storage_location = inbound["storage_location"]
+    # storage_location = inbound["storage_location"]
 
     #############################################################################################################################################
     #############################################################################################################################################

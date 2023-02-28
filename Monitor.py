@@ -7,7 +7,7 @@ import tkinter.messagebox
 
 import pika
 import window
-from threading import Thread
+# from threading import Thread
 from tkinter import *
 
 from functions.CC.Functions import *  # Control Cycle
@@ -30,7 +30,7 @@ def quit_window():
     os.kill(os.getpid(), signal.SIGTERM)
 
 
-def show_master_top(e):
+def show_master_top(es):
     master_top.deiconify()
     master.withdraw()
 
@@ -85,9 +85,9 @@ def error_logger(err):
     logging.basicConfig(filename='.\\logs\\error_{}.log'.format(error_t), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logging.error(
         f'START - ########################################################################################\nJSON:     {pika_body}\nERROR: {err}',
-        exc_info=True)  # Con esto se logea
+        exc_info=True)  # Con esto se genera log
     logging.error(f'END - ########################################################################################')
-    # os.system(f'taskkill /im "Monitor.exe"')
+    # os.system(f' taskkill /im "Monitor.exe"')
 
 
 def sap_connections(current_queue):
@@ -115,7 +115,7 @@ def process_inbound_queue(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Raw Material##################
+    # #############Raw Material##################
     # if process == "partial_transfer":
     #     response = partial_transfer(inbound)
     # elif process == "partial_transfer_confirmed":
@@ -134,7 +134,7 @@ def process_inbound_queue(con, body):
     #     response = location_mp_material(inbound)
     # elif process == "location_mp_serial":
     #     response = location_mp_serial(inbound)
-    ##############Finished Goods##################
+    # #############Finished Goods##################
     # elif process == "transfer_fg":
     #     response = transfer_fg(inbound)
     # elif process == "transfer_fg_confirmed":
@@ -143,7 +143,7 @@ def process_inbound_queue(con, body):
     #     response = master_fg_gm_verify(inbound)
     # elif process == "master_fg_gm_create":
     #     response = master_fg_gm_create(inbound)
-    ##############Sub Assembly##################
+    # #############Sub Assembly##################
     # if process == "transfer_sa":
     #     response = transfer_sa(inbound)
     # elif process == "transfer_sa_return":
@@ -166,7 +166,7 @@ def process_inbound_queue(con, body):
     #     response = transfer_rework_in(inbound)
     # elif process == "transfer_rework_out":
     #     response = transfer_rework_out(inbound)
-    ##############Production##################
+    # #############Production##################
     if process == "create_pr_hu":
         response = create_pr_hu(inbound)
     elif process == "confirm_pr_hu":
@@ -188,7 +188,7 @@ def process_inbound_queue(con, body):
     # ##############Shipments##################
     # elif process == "shipment_delivery":
     #     response = shipment_delivery(inbound)
-    ##############_NO_PROCESS_##################
+    # #############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -206,12 +206,12 @@ def process_inbound_fg(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Finished Goods##################
+    # #############Finished Goods##################
     if process == "transfer_fg":
         response = transfer_fg(inbound)
     elif process == "transfer_fg_confirmed":
         response = transfer_fg_confirmed(inbound)
-    ##############_NO_PROCESS_##################
+    # #############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -229,13 +229,13 @@ def process_inbound_fg_gm(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Master GM##################
+    # #############Master GM##################
     if process == "master_fg_gm_verify":
         response = master_fg_gm_verify(inbound)
     elif process == "master_fg_gm_create":
         response = master_fg_gm_create(inbound)
 
-    ##############_NO_PROCESS_##################
+    # #############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -253,7 +253,7 @@ def process_inbound_rm(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Raw Material##################
+    # #############Raw Material##################
     if process == "partial_transfer":
         response = partial_transfer(inbound)
     elif process == "partial_transfer_confirmed":
@@ -273,7 +273,7 @@ def process_inbound_rm(con, body):
     elif process == "location_mp_serial":
         response = location_mp_serial(inbound)
 
-    ##############_NO_PROCESS_##################
+    # #############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -291,10 +291,10 @@ def process_inbound_ship(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Shipments##################
+    # #############Shipments##################
     if process == "shipment_delivery":
         response = shipment_delivery(inbound)
-    ##############_NO_PROCESS_##################
+    # #############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -313,12 +313,12 @@ def process_inbound_cycle(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Control Cycle##################
+    # #############Control Cycle##################
     if process == "cycle_count_status":
         response = cycle_count_status(inbound)
     elif process == "cycle_count_transfer":
         response = cycle_count_transfer(inbound)
-    ##############_NO_PROCESS_##################
+    # #############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -337,12 +337,12 @@ def process_inbound_rw(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Re Work##################
+    # #############Re Work##################
     if process == "transfer_rework_in":
         response = transfer_rework_in(inbound)
     elif process == "transfer_rework_out":
         response = transfer_rework_out(inbound)
-    ##############_NO_PROCESS_##################
+    # ############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -360,7 +360,7 @@ def process_inbound_vul(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Vulcanized Transfers##################
+    # #############Vulcanized Transfers##################
     if process == "transfer_vul_serial":
         response = transfer_vul_serial(inbound)
     elif process == "transfer_vul_material":
@@ -371,7 +371,7 @@ def process_inbound_vul(con, body):
         response = transfer_vul_confirmed(inbound)
     elif process == "audit_ext":
         response = audit_ext(inbound)
-    ##############Vulcanized##################
+    # #############Vulcanized##################
     elif process == "handling_sf":
         response = handling_sf(inbound)
     elif process == "transfer_sf":
@@ -385,7 +385,7 @@ def process_inbound_vul(con, body):
     elif process == "reprint_sfr":
         response = reprint_sfr(inbound)
 
-    ##############_NO_PROCESS_##################
+    # #############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -403,7 +403,7 @@ def process_inbound_sa(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Sub Assembly##################
+    # #############Sub Assembly##################
     if process == "handling_sa":
         response = handling_sa(inbound)
     elif process == "transfer_sa":
@@ -411,8 +411,7 @@ def process_inbound_sa(con, body):
     elif process == "reprint_sa":
         response = reprint_sa(inbound)
 
-
-    ##############_NO_PROCESS_##################
+    # #############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -430,14 +429,14 @@ def process_inbound_pip(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############PA Pipes Transfers##################
+    # #############PA Pipes Transfers##################
     if process == "transfer_pip":
         response = transfer_pip(inbound)
     elif process == "transfer_pip_confirmed":
         response = transfer_pip_confirmed(inbound)
     elif process == "audit_pip":
         response = audit_pip(inbound)
-    ##############PA Pipes##################
+    # #############PA Pipes##################
     elif process == "handling_pip":
         response = handling_pip(inbound)
     elif process == "transfer_pip":
@@ -451,7 +450,7 @@ def process_inbound_pip(con, body):
     elif process == "reprint_pipr":
         response = reprint_pipr(inbound)
 
-    ##############_NO_PROCESS_##################
+    # #############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -469,7 +468,7 @@ def process_inbound_ext(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Extrusion##################
+    # #############Extrusion##################
     if process == "confirm_ext_hu":
         response = confirm_ext_hu(inbound)
     elif process == "transfer_ext_rp":
@@ -484,7 +483,7 @@ def process_inbound_ext(con, body):
         response = transfer_ext_confirmed(inbound)
     elif process == "verify_rubber":
         response = verify_rubber(inbound)
-    ##############_NO_PROCESS_##################
+    # #############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -502,10 +501,10 @@ def process_inbound_ext_labels(con, body):
     inbound["con"] = con
     process = inbound["process"]
 
-    ##############Extrusion Labels##################
+    # #############Extrusion Labels##################
     if process == "handling_ext":
         response = handling_ext(inbound)
-    ##############_NO_PROCESS_##################
+    # #############_NO_PROCESS_##################
     else:
         current_queue = inspect.stack()[0][3]
         response = json.dumps({"error": f'invalid_process: {process} for: {current_queue}'})
@@ -615,12 +614,12 @@ class ReceiverFunctions(threading.Thread):
                 label_text["text"] = f' Res     [success]:   Pika Connection Established {current_queue}_low'
 
             channel.start_consuming()
-        except Exception as e:
-            print(f"Exception:   [{current_queue}] %s" % str(e))
-            error_logger(e)
-            mainWindow.list.insert(END, f' Res     [Error]:  {e}')
+        except Exception as err_:
+            print(f"Exception:   [{current_queue}] %s" % str(err_))
+            error_logger(err_)
+            mainWindow.list.insert(END, f' Res     [Error]:  {err_}')
             mainWindow.list.see(END)
-            label_text["text"] = f' Res     [Error]:   {e}'
+            label_text["text"] = f' Res     [Error]:   {err_}'
             time.sleep(2)
             eval(f"receiver_{current_queue}")
 #####################
@@ -674,7 +673,7 @@ if __name__ == '__main__':
                 ReceiverFunctions(th).setDaemon(True)
                 ReceiverFunctions(th).start()
             except Exception as e:
-                tkinter.messagebox.showerror("Incorrect Thread", e)
+                tkinter.messagebox.showerror("Incorrect Thread", f'{e}')
                 os.kill(os.getpid(), signal.SIGTERM)
 
     master.mainloop()
