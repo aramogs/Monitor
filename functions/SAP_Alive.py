@@ -1,68 +1,59 @@
-# -Begin-----------------------------------------------------------------
+import multiprocessing
+import win32com.client
+import os
+import json
+import pythoncom
+import time
+import schedule
+from functions import SAP_Login
 
-# -Includes--------------------------------------------------------------
+
+def get_sapgui():
+    pythoncom.CoInitialize()
+    return win32com.client.GetObject("SAPGUI")
 
 
-# -Sub Main--------------------------------------------------------------
-def Main():
-    """
-    Function checks if SAP has a window open if not sends an error
-    """
-    import win32com.client
-    import json
-    import pythoncom
+
+def main():
     try:
-        pythoncom.CoInitialize()
-        SapGuiAuto = win32com.client.GetObject("SAPGUI")
-        if not type(SapGuiAuto) == win32com.client.CDispatch:
-            return
+        sapgui_process = multiprocessing.Process(target=get_sapgui)
+        sapgui_process.start()
+        sapgui_process.join(timeout=30)
 
-        application = SapGuiAuto.GetScriptingEngine
-        if not type(application) == win32com.client.CDispatch:
-            SapGuiAuto = None
-            return
+        if sapgui_process.is_alive():
+            sapgui_process.terminate()
+            sapgui_process.join()  # Wait for the termination to complete
 
-        connection = application.Children(0)
-        if not type(connection) == win32com.client.CDispatch:
-            application = None
-            SapGuiAuto = None
-            return
-
-        if connection.DisabledByServer == True:
-            application = None
-            SapGuiAuto = None
-            return
-
-        session = connection.Children(0)
-
-        if not type(session) == win32com.client.CDispatch:
-            connection = None
-            application = None
-            SapGuiAuto = None
-            return
-
-        if session.Info.IsLowSpeedConnection == True:
-            connection = None
-            application = None
-            SapGuiAuto = None
-            return
-
-        response = {"sap_status": "ok", "connections": len(application.Children)}
-        return json.dumps(response)
-
-    except:
-        response = {"sap_status": "error", "connections": 0}
-        return json.dumps(response)
-
-    finally:
-        session = None
-        connection = None
-        application = None
-        SapGuiAuto = None
+        if sapgui_process.exitcode != 0:
+            # print("SAPGUI retrieval process failed.")
+            os.system(f'taskkill /f /im "Monitor.exe"')
+            os.system(f'taskkill /f /im "saplogon.exe"')
+            SAP_Login.Main()
+            response = {"sap_status": "error", "connections": 0}
+            return json.dumps(response)
+        else:
+            pythoncom.CoInitialize()
+            SapGuiAuto = get_sapgui()
+            application = SapGuiAuto.GetScriptingEngine
+            # print("SAPGUI retrieved successfully.")
+            response = {"sap_status": "ok", "connections": len(application.Children)}
+            return json.dumps(response)
+            # Your code to work with SAPGUI goes here
+    except Exception as e:
+        # Handle other exceptions if needed
+        print(f"An error occurred: {e}")
 
 
-# -Main------------------------------------------------------------------
-if __name__ == '__main__':
-    print(Main())
+def job():
+    result = main()
+    print(result)
 
-# -End-------------------------------------------------------------------
+
+if __name__ == "__main__":
+    # Schedule the job to run every minute
+    schedule.every(1).minutes.do(job)
+
+    # Run the job continuously
+    while True:
+        schedule.run_pending()
+        time.sleep(1)

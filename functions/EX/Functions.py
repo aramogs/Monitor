@@ -52,7 +52,6 @@ def confirm_ext_hu(inbound):
     storage_location = inbound["storage_location"]
     response_list = []
 
-
     product_version = DB.select_product_version(station)
 
     if product_version[0][0] is None:
@@ -116,6 +115,9 @@ def handling_ext(inbound):
     Gets the serial number and returns it to the client
     If there are no errors the function prints a label
     """
+
+
+
     material = inbound["material"]
     quantity = inbound["cantidad"]
     line = inbound["line"]
@@ -181,11 +183,17 @@ def storage_unit_ext_pr(inbound):
     operator_name = inbound["operator_name"]
     operator_id = inbound["operator_id"]
     printed_type = inbound["impresoType"]
-    from_sbin = "GREEN"
+    # from_sbin = "GREEN"
     to_stype = "EXT"
     to_sbin = "TEMPR_EXT"
     con = inbound["con"]
     storage_location = inbound["storage_location"]
+
+    if storage_location == "0012":
+        from_sbin = "GREEN"
+    if storage_location == "0002":
+        from_sbin = "101"
+
     # printer = f'\\\\tftdelsrv003\{inbound["impresora"]}'
 
     response = json.loads(SAP_LS24.Main(con, storage_location, numero_parte, from_sbin))

@@ -4,12 +4,13 @@ import signal
 import threading
 import time
 import tkinter.messagebox
-
+import schedule
 import pika
 import window
 # from threading import Thread
 from tkinter import *
 
+from functions import SAP_Count
 from functions.CC.Functions import *  # Control Cycle
 from functions.FG.Functions import *  # Finished Goods
 from functions.PR.Functions import *  # Production
@@ -93,11 +94,11 @@ def error_logger(err):
 def sap_connections(current_queue):
     qsize = sap_login_queue.qsize()
     sap_login_queue.get()
-    result_sap_alive = json.loads(SAP_Alive.Main())
-    if result_sap_alive["sap_status"] == "error" or result_sap_alive["connections"] < sap_login_queue.unfinished_tasks:
+    result_sap_count = json.loads(SAP_Count.main())
+    if result_sap_count["sap_status"] == "error" or result_sap_count["connections"] < sap_login_queue.unfinished_tasks:
         print(f"[{current_queue}] Error SAP Connection Down")
         sap_login()
-        if json.loads(SAP_Alive.Main())["connections"] < qsize:
+        if json.loads(SAP_Count.main())["connections"] < qsize:
             sap_connections(current_queue)
 
 
@@ -185,6 +186,8 @@ def process_inbound_queue(con, body):
         response = create_alt_pr_hu_del(inbound)
     elif process == "create_alt_pr_hu_wm":
         response = create_alt_pr_hu_wm(inbound)
+    elif process == "create_mes_pr_hu":
+        response = create_mes_pr_hu(inbound)
     # ##############Shipments##################
     # elif process == "shipment_delivery":
     #     response = shipment_delivery(inbound)
@@ -550,7 +553,7 @@ class ReceiverFunctions(threading.Thread):
             #######################################################
             con = threads_queue.unfinished_tasks - threads_queue.qsize()
 
-            result_sap_alive = json.loads(SAP_Alive.Main())
+            result_sap_alive = json.loads(SAP_Count.main())
             while True:
                 if con in middle_list:
                     if con == result_sap_alive["connections"] - 1:
@@ -621,10 +624,20 @@ class ReceiverFunctions(threading.Thread):
             mainWindow.list.see(END)
             label_text["text"] = f' Res     [Error]:   {err_}'
             time.sleep(2)
-            eval(f"receiver_{current_queue}")
+            # eval(f"receiver_{current_queue}")
 #####################
 # Receiver Functions
 #####################
+
+
+def sap_alive_loop():
+    while True:
+        result_alive = json.loads(SAP_Alive.main())
+        if result_alive["sap_status"] == "error":
+            insert_text(json.dumps({"status": "ERROR", "process": "SAP_ALIVE"}))
+        else:
+            insert_text(json.dumps({"status": "OK", "process": "SAP_ALIVE"}))
+        threading.Event().wait(60)
 
 
 if __name__ == '__main__':
@@ -664,6 +677,9 @@ if __name__ == '__main__':
     #####################
     # Beginning Threads
     #####################
+    sap_alive_thread = threading.Thread(target=sap_alive_loop, daemon=True)
+    sap_alive_thread.start()
+
     if not json.loads(f'{os.getenv("THREADS")}'):
         tkinter.messagebox.showerror("No Threads", "No threads check .env file")
         os.kill(os.getpid(), signal.SIGTERM)

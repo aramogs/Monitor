@@ -206,6 +206,23 @@ class DB:
             logger(e)
             pass
 
+    def select_printer_bartender(estacion):
+        """
+        Function to get printer from station id
+        """
+        try:
+            db = mysql.connector.connect(**b10_config)
+            query = f'SELECT impre_alt FROM station_conf WHERE no_estacion = "{estacion}"'
+            cursor = db.cursor(buffered=True)
+            cursor.execute(query)
+            db.commit()
+            db.close()
+            return cursor.fetchall()
+        except Exception as e:
+            print("DB-Error:   [x] %s" % str(e))
+            logger(e)
+            pass
+
     @staticmethod
     def select_alt_printer(estacion):
         """

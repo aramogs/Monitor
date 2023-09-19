@@ -25,6 +25,9 @@ def Main():
         # Necesario par correr win32com.client en Threading
         # pythoncom.CoInitialize()
 
+        sapmin = ctypes.windll.user32.FindWindowW(None, "SAP Logon 800")
+        ctypes.windll.user32.ShowWindow(sapmin, 6)
+
         sapmin = ctypes.windll.user32.FindWindowW(None, "SAP Logon 760")
         ctypes.windll.user32.ShowWindow(sapmin, 6)
 

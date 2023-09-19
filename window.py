@@ -9,6 +9,14 @@ import dotenv
 import center_tk_window
 from setproctitle import setproctitle
 
+
+BACKGROUND_COLOR = "#152532"
+TEXT_COLOR = "#FCBD1E"
+TEXT_COLOR2 = "#f7f7f7"
+IMAGE_PATH = "./img/image.ico"
+LOGO_IMAGE_PATH = "./img/logo.png"
+
+
 setproctitle('Monitor')
 windll.shell32.SetCurrentProcessExplicitAppUserModelID("app_icon")
 
@@ -29,14 +37,14 @@ except Exception as e:
 
 class MainApplication:
     def __init__(self, parent):
-        self._img_icon = "./img/image.ico"
+        self._img_icon = IMAGE_PATH
         self._model = os.popen("wmic csproduct get name").read().replace("\n", "").replace("  ", "").replace("Name", "")
         self._service_tag = os.popen("wmic bios get serialnumber").read().replace("\n", "").replace("  ", "").replace(" ", "").replace("SerialNumber", "")
         self._my_system = platform.uname()
-        self._background_color = "#152532"
-        self._text_color = "#FCBD1E"
-        self._text_color2 = "#f7f7f7"
-        self._logo_image = PhotoImage(file=r"./img/logo.png").subsample(10, 10)
+        self._background_color = BACKGROUND_COLOR
+        self._text_color = TEXT_COLOR
+        self._text_color2 = TEXT_COLOR2
+        self._logo_image = PhotoImage(file=rf"{LOGO_IMAGE_PATH}").subsample(10, 10)
         self._commit_number = os.environ["commit"]
 
         self.parent = parent
